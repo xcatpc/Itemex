@@ -8,16 +8,27 @@ With this plugin, players can sell or buy any item on a free market, by create a
 Usage: (autocompletion in konsole)
 /ix help
 /ix price | prints the current buy and sell orders
+
 /ix price <itemid> | prints the current buy and sell orders
+  
 /ix buy | buy what is in right hand on best price (existing sellorder needed)
+  
 /ix sell | sell what is in right hand on best price (existing buyorder needed)
+  
 /ix buy <itemname> <amount> <limit/market> <price> | create buy order
+  
 /ix sell <itemname> <amount> <limit/market> <price> | create sell order
+  
 *market is not implemented
+
 /ix withdraw list | list all your available payouts
+  
 /ix withdraw <itemname> <amount> | withdraw
+  
 /ix gui | Graphical User Interface (*create limit orders)
+  
 *after implementation of market it will be switched to it
+  
 
 TO DO:
 
