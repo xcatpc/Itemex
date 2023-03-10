@@ -1,0 +1,11 @@
+name: Itemex
+version: '${project.version}'
+main: sh.ome.itemex.Itemex
+api-version: 1.19
+authors: [ oMesh_ ]
+description: Item Exchange System - Trade all Items on a free market in the terminal
+website: ome.sh
+commands:
+  ix:
+    description: Itemex commands overviews
+    usage: /<command> <price/buy/sell> <market/limit/stoplimit> <itemname> <amount>
