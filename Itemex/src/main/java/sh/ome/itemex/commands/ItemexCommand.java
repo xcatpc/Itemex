@@ -1,20 +1,17 @@
 package sh.ome.itemex.commands;
-
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.*;
 import org.bukkit.entity.Player;
-import org.bukkit.event.entity.CreeperPowerEvent;
-import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import sh.ome.itemex.Itemex;
-
-import java.security.spec.RSAOtherPrimeInfo;
 import java.util.ArrayList;
+import java.util.UUID;
 
 import static java.lang.Float.parseFloat;
 import static java.lang.Integer.parseInt;
@@ -23,59 +20,69 @@ public class ItemexCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String s, String[] strings) {
+
+
+
         if( command.getName().equalsIgnoreCase("ix")) {
             String reply_command = "";
 
             if(strings.length == 0) {
-                reply_command = ChatColor.BOLD + "ix = ITEMEX = Item Exchange" + ChatColor.WHITE + "\n.\nusage: /ix <" + ChatColor.BLUE + "price" +  ChatColor.WHITE + "/" + ChatColor.GREEN + "buy" + ChatColor.WHITE + "/" + ChatColor.RED + "sell" + ChatColor.WHITE + "> *<itemname> *<amount> *<limit> *<price> ; see more information at " + ChatColor.BOLD + "/ix help" + ChatColor.WHITE;
+                Player p = null;
+                if(sender instanceof Player) {
+                    reply_command = reply_command + print_help(true);
+                    p = (Player) sender;
+                    generateGUI(p, 1);
+                }
+                else
+                    reply_command = reply_command + print_help(false);
+
             }
-            else {
+            else {  // more than 1 parameter
                 Player p = null;
                 if(sender instanceof Player) {
                     p = (Player) sender;
-                    //System.out.println("USERID: " +p.getUniqueId());
                 }
                 else if( sender instanceof ConsoleCommandSender) {
-                    //System.out.println("SERVER TERMINAL 1 ###############");
-                        //System.out.println(strings[3]);
-                        //p = Bukkit.getPlayer( UUID.fromString( strings[3] ) ); //UUID
-                        p = Bukkit.getPlayerExact( strings[3] ); // NAME
-                        //System.out.println("Name: " + p.getName());
+                    System.out.println("SERVER TERMINAL");
+                    System.out.println("Players Name: " + strings[strings.length-1]);
+                    //p = Bukkit.getPlayerExact( strings[strings.length-1] ); // NAME
+                    //OfflinePlayer op = Bukkit.getOfflinePlayer(UUID.fromString( strings[strings.length-1] ));
+                    //System.out.println("Name: " + op.getName());
+                    System.out.println("Return (break);");
+
+                    return true;
                 }
                 else if( sender instanceof BlockCommandSender) {
+                    OfflinePlayer op;
                     if(strings.length == 4) {
-                        p = Bukkit.getPlayer(strings[4]);
+                        op = Bukkit.getOfflinePlayer(UUID.fromString( strings[strings.length-1] ));
                     }
                     else if(strings.length == 6) {
-                        p = Bukkit.getPlayer(strings[6]);
+                        op = Bukkit.getOfflinePlayer(UUID.fromString( strings[strings.length-1] ));
                     }
+                    return true;
                 }
+
+
+
 
 
                 if(strings[0].equals("help")) {
-                    reply_command = "\n";
-                    //p.sendMessage(ChatColor.DARK_RED + "You don't have permission to use this command!");
-                    reply_command = reply_command + ChatColor.GOLD + "ix = ITEMEX = Item Exchange v0.13" + ChatColor.WHITE + "\n.\n";
-                    reply_command = reply_command + "USAGE: \n" + ChatColor.GREEN + "/ix buy " + ChatColor.DARK_GRAY + "| buy what is in right hand on market price " +
-                            "\n" + ChatColor.GREEN + "/ix sell " + ChatColor.DARK_GRAY + "| sell what is in right hand on market price" +
-                            "\n" + ChatColor.GREEN + "/ix price " + ChatColor.DARK_GRAY + "| prints the current buy and sell orders" +
-                            "\n" + ChatColor.GREEN + "/ix price <itemid> " + ChatColor.DARK_GRAY + "| prints the current buy and sell orders\n#" +
-                            //"\n - /ix buy <itemname> <amount>" +
-                            //"\n - /ix sell <itemname> <amount>\n#" +
-                            "\n" + ChatColor.GREEN + "/ix buy <itemname> <amount> limit <price> " + ChatColor.DARK_GRAY + "| create buy order" +
-                            "\n" + ChatColor.GREEN + "/ix sell <itemname> <amount> limit <price> " + ChatColor.DARK_GRAY + "| create sell order\n#" +
-
-                            "\n" + ChatColor.GREEN + "/ix withdraw list " + ChatColor.DARK_GRAY + "| list all your available payouts" +
-                            "\n" + ChatColor.GREEN + "/ix withdraw <itemname> <amount> " + ChatColor.DARK_GRAY + "| withdraw " + ChatColor.DARK_PURPLE +
-                            "\n.\nThis version is in alpha, if you have any problems or suggestions please write me to xcatpc@proton.me" + ChatColor.WHITE;
-                    reply_command = reply_command + "\n";
+                    if(sender instanceof Player)
+                        reply_command = reply_command + print_help(true);
+                    else
+                        reply_command = reply_command + print_help(false);
                 }
+
+
+
+
 
                 else if(strings[0].equals("buy") ) {
                     //Order buyorder = new Order();
                     int item_counter=0;
 
-                    if(strings.length == 1 || strings.length == 2) { // /ix buy
+                    if(strings.length == 1 || strings.length == 2) { // /ix buy given itemID or whatisinmyrighthand
                         reply_command = "\n\n\n";
                         // check if something is in right hand
                         sqliteDb.OrderBuffer[] orders;
@@ -86,51 +93,77 @@ public class ItemexCommand implements CommandExecutor {
                         else
                             itemid = strings[1].toUpperCase();
 
-                        orders = sqliteDb.selectItem( itemid );
+                        orders = sqliteDb.getBestOrders( itemid );
 
                         // check if there is a sell order with enough amount (1)
                         int last_sell_order=-1;
                         for(int x=0; x<=7; x++) {
+                            String[] ordertype;
                             if(orders[0] == null)
                                 reply_command = reply_command + "There are no buy or sell orders.\nYou can create one with: /ix buy <itemname> <amount> limit <price>";
                             if(orders[x] == null) {
                                 break;
                             }
-
-                            else if(orders[x].ordertype.equals("sell")) {
-                                last_sell_order = x;
-                                //reply_command = reply_command + ChatColor.RED + orders[x].ordertype + "order  " + ChatColor.WHITE + orders[x].itemid + "  " + orders[x].amount + "  $ " + orders[x].price + "\n";
+                            else {
+                                ordertype = orders[x].ordertype.split(":", 2);
                             }
-                            //else
-                                //reply_command = reply_command + ChatColor.GREEN + orders[x].ordertype + "order  " + ChatColor.WHITE + orders[x].itemid + "  " + orders[x].amount + "  $ " + orders[x].price + "\n";
+
+                            if(ordertype[0].equals("sell")) {
+                                last_sell_order = x;
+                            }
+
                         }
                         if(last_sell_order == -1) { // no (last) sell orders
                             reply_command = reply_command + "\nThere are no sell orders to buy. You can create a buy order with: /ix buy <itemname> <amount> limit <price>";
                         }
                         else {
                             //create buy order
-                            reply_command = reply_command + create_buy_order(p, itemid, orders[last_sell_order].price, 1);
+                            //reply_command = reply_command + create_buy_order(p, itemid, orders[last_sell_order].price, 1);    // replaced with create order
+                            reply_command = reply_command + create_order(p, itemid, 0, 1, "buy", "market");
                         }
 
                     } // end ix buy
 
+                    else if(strings.length == 5 || strings.length == 6) { // /ix buy <itemid> <amount> limit <price>
+                        float price = parseFloat(strings[4]);
+                        int amount = 0;
+                        boolean buy_order_ok = true;
 
-                    else if(strings.length == 5 || strings.length == 6) { // /ix buy limit <price> <itemname> <amount>
-                        // amount
-                        int i_amount = 0;
-                        if(strings[2].equals("max")) {
-                            i_amount = item_counter;
+                        //proof amount
+                        if(strings[2].equals("max"))
+                            amount = item_counter;
+                        else
+                            amount = parseInt(strings[2]);
+                        if(amount <= 0)
+                            buy_order_ok = false;
+
+                        //proof market or limit
+                        if(!strings[3].equals("limit") && !strings[3].equals("market")) {
+                            reply_command = reply_command + "Wrong market option: " + strings[3] + " only limit and market accepted!";
+                            buy_order_ok = false;
                         }
-                        else {
-                            i_amount = parseInt(strings[2]);
+                        if(strings[3].equals("limit")) {
+                            if(price <= 0) {
+                                reply_command = reply_command + "Price is not allowed lower than 0 at limit! Price:" + price;
+                                buy_order_ok = false;
+                            }
                         }
-                        reply_command = reply_command + create_buy_order(p, strings[1], parseFloat(strings[4]), i_amount);
+
+                        if(buy_order_ok)
+                            reply_command = reply_command + create_order(p, strings[1], parseFloat(strings[4]), amount, "buy", strings[3]);
+
+
                     }
                     else {
                         reply_command = "argc count is: " + strings.length +"\n";
                         reply_command = reply_command + "Wrong command: use: /ix buy *<itemname> *<limit> *<price> *<amount> | * == optional";
                     }
                 } // end buy
+
+
+
+
+
                 else if(strings[0].equals("sell") ) {
                     Order sellorder = new Order();
 
@@ -142,9 +175,7 @@ public class ItemexCommand implements CommandExecutor {
                         }
 
                         else {
-                            //System.out.println("- ITEM in command: " + strings[1]);
                             boolean item_found = false;
-                            //reply_command = "/ix sell <itemname> <amount> limit <price> " + p.getName();
                             // check if player have the amount of items provided at the parameter
                             int item_counter=0;
                             for (ItemStack item : p.getInventory().getContents()) { //check inventory of player
@@ -161,23 +192,27 @@ public class ItemexCommand implements CommandExecutor {
                         }
                         if(!itemid.equals("AIR")) {
                             sqliteDb.OrderBuffer[] orders;
-                            orders = sqliteDb.selectItem( itemid );
+                            orders = sqliteDb.getBestOrders( itemid );
                             // check if there is a buy order with enough amount (1)
                             int first_buy_order=-1;
                             for(int x=0; x<=7; x++) {
+                                String[] ordertype;
                                 if(orders[0] == null)
                                     reply_command = reply_command + "There are no buy or sell orders.\nYou can create one with: /ix sell <itemname> <amount> limit <price>";
                                 if(orders[x] == null) {
                                     break;
                                 }
+                                else {
+                                    ordertype = orders[x].ordertype.split(":", 2);
+                                }
 
-                                if(orders[x].ordertype.equals("buy")) {
+                                if(ordertype[0].equals("buy")) {
                                     if( first_buy_order == -1)
                                         first_buy_order = x;
-                                    reply_command = reply_command + ChatColor.GREEN + orders[x].ordertype + "order  " + ChatColor.WHITE + orders[x].itemid + "  " + orders[x].amount + "  $ " + orders[x].price + "\n";
+                                    reply_command = reply_command + ChatColor.GREEN + ordertype[0] + "order  " + ChatColor.WHITE + orders[x].itemid + "  " + orders[x].amount + "  $ " + orders[x].price + "\n";
                                 }
                                 else {
-                                    reply_command = reply_command + ChatColor.RED + orders[x].ordertype + "order  " + ChatColor.WHITE + orders[x].itemid + "  " + orders[x].amount + "  $ " + orders[x].price + "\n";
+                                    reply_command = reply_command + ChatColor.RED + ordertype[0] + "order  " + ChatColor.WHITE + orders[x].itemid + "  " + orders[x].amount + "  $ " + orders[x].price + "\n";
                                 }
 
                             }
@@ -185,7 +220,8 @@ public class ItemexCommand implements CommandExecutor {
                                 reply_command = reply_command + "\nThere are no buy orders to sell. You can create a sell order with: /ix sell <itemname> <amount> limit <price>";
                             }
                             else {
-                               create_sell_order(p, itemid, 1, orders[first_buy_order].price);
+                               // create_sell_order(p, itemid, 1, orders[first_buy_order].price); //replaced with create order
+                                reply_command = reply_command + create_order(p, itemid, 0,1, "sell", "market");
                             }
                         }
                         else {
@@ -196,56 +232,59 @@ public class ItemexCommand implements CommandExecutor {
                         }
                     }
 
-                    else if(strings.length == 5 || strings.length == 6) { // /ix sell limit
+                    else if(strings.length == 5 || strings.length == 6) { // /ix sell <itemid> <amount> limit <price>
+                        float price = parseFloat(strings[4]);
+                        int amount = 0;
+                        boolean sell_order_ok = true;
+                        //System.out.println("ix sell limit: " + price);
+
+                        // proof price
+                        if(!strings[3].equals("limit") && !strings[3].equals("market")) {
+                            reply_command = reply_command + "Wrong market option: " + strings[3] + " only limit and market accepted!";
+                            sell_order_ok = false;
+                        }
+                        if(strings[3].equals("limit")) {
+                            if(price <= 0) {
+                                reply_command = reply_command + "Price is not allowed lower than 0 at limit! Price:" + price;
+                                sell_order_ok = false;
+                            }
+                        }
+
+
                         boolean item_found = false;
                         //reply_command = "/ix sell <itemname> <amount> limit <price> " + p.getName();
+
                         // check if player have the amount of items provided at the parameter
                         int item_counter=0;
                         for (ItemStack item : p.getInventory().getContents()) { //check inventory of player
                             if(item != null && strings[1].equalsIgnoreCase(item.getType().toString())) { //searching only for items with the given ID from command
-                                reply_command = reply_command + " " + item.getAmount() + "x" + item.getType() + "\n";
+                                //reply_command = reply_command + " " + item.getAmount() + "x" + item.getType() + "\n";
                                 item_counter = item_counter + item.getAmount();
                                 item_found = true;
                             }
                         }
-                        // amount
-                        if(strings[2].equals("max")) { 
+
+                        // proof amount
+                        if(strings[2].equals("max"))
                             sellorder.amount = item_counter;
-                        }
-                        else {
+                        else
                             sellorder.amount = parseInt(strings[2]);
-                        }
 
-                        if(item_found) {
-                            /*
-                            p.getInventory().removeItem(new ItemStack(Material.getMaterial(strings[1].toUpperCase()), sellorder.amount));
-
-                            // create sell order (RAM)
-                            sellorder.uuid = p.getUniqueId().toString();
-                            sellorder.itemid = strings[1];
-                            sellorder.ordertype = "sell"; // sell
-
-                            sellorder.price = parseFloat(strings[4]);
-
-                            // if no or rest => create sell order and store in db
-                            sqliteDb db_sellorder = new sqliteDb(sellorder);
-
-                             */
-                            create_sell_order( p, strings[1], sellorder.amount, parseFloat(strings[4])) ;
-
-
-                            /*
-                            if( db_sellorder.createSellOrder() ) {
-                                reply_command = "Sellorder created!";
+                        if( strings.equals("market") )
+                            sellorder.amount = 0;
+                        else
+                            if(sellorder.amount <=0) {
+                                reply_command = reply_command + "Price is not allowed lower than 0 at limit! Price:" + price;
+                                sell_order_ok = false;
                             }
                             else {
-                                reply_command = "ERROR! Sellorder NOT created!";
+                                if(item_found) {
+                                    if(sell_order_ok)
+                                        reply_command = reply_command + create_order( p, strings[1], parseFloat(strings[4]), sellorder.amount, "sell", strings[3] );
+                                }
+                                else
+                                    reply_command = reply_command + "No given items found in your inventory. Please check the correct name with: /ix whatIsInMyRightHand";
                             }
-                             */
-                        }
-                        else {
-                            reply_command = "No given items found in your inventory. Please check the correct name with: /ix whatIsInMyRightHand";
-                        }
                     } // end ix sell limit
 
                     else {
@@ -254,6 +293,9 @@ public class ItemexCommand implements CommandExecutor {
                     }
                 } // end sell
 
+
+
+
                 else if(strings[0].equals("price") ) {
                     reply_command = "\n\n\n------------------------\n";
 
@@ -261,11 +303,11 @@ public class ItemexCommand implements CommandExecutor {
                     sqliteDb.OrderBuffer[] orders = new sqliteDb.OrderBuffer[0];
 
                     if(strings.length == 1) { // /ix price
-                        orders = sqliteDb.selectItem( p.getInventory().getItemInHand().getType().toString().toUpperCase() );
+                        orders = sqliteDb.getBestOrders( p.getInventory().getItemInHand().getType().toString().toUpperCase() );
                         reply_command = reply_command + "Prices of the ITEM: " + p.getInventory().getItemInHand().getType().toString() + "\n";
                     }
                     else  if(strings.length == 2) { // /ix price <item id>
-                        orders = sqliteDb.selectItem( strings[1].toUpperCase() );
+                        orders = sqliteDb.getBestOrders( strings[1].toUpperCase() );
                         reply_command = reply_command + "Prices of the ITEM: " + strings[1].toUpperCase() + "\n";
                     }
 
@@ -274,19 +316,80 @@ public class ItemexCommand implements CommandExecutor {
 
 
                     for(int x=0; x<=7; x++) {
+                        String[] ordertype;
                         if(orders[x] == null)
                             break;
-                        if(orders[x].ordertype.equals("sell"))
-                            reply_command = reply_command + ChatColor.RED + orders[x].ordertype + "order  " + ChatColor.WHITE + orders[x].itemid + "  " + orders[x].amount + "  $ " + orders[x].price + "\n";
                         else
-                            reply_command = reply_command + ChatColor.GREEN + orders[x].ordertype + "order  " + ChatColor.WHITE + orders[x].itemid + "  " + orders[x].amount + "  $ " + orders[x].price + "\n";
+                            ordertype = orders[x].ordertype.split(":", 2);
+
+                        if(ordertype[0].equals("sell"))
+                            reply_command = reply_command + ChatColor.RED + ordertype[0] + "order  " + ChatColor.WHITE + orders[x].itemid + "  " + orders[x].amount + "  $ " + orders[x].price + "\n";
+                        else
+                            reply_command = reply_command + ChatColor.GREEN + ordertype[0] + "order  " + ChatColor.WHITE + orders[x].itemid + "  " + orders[x].amount + "  $ " + orders[x].price + "\n";
                     }
                     reply_command = reply_command + "-----------\n";
 
                 } // end price
+
+
+
                 else if(strings[0].equals("whatIsInMyRightHand") ) {
                     reply_command = p.getInventory().getItemInHand().getType().toString();
                 }
+
+
+
+                else if(strings[0].equals("order") ) {
+
+                    if(strings.length == 1) {
+                        reply_command = "/ix order <close | edit | list>";
+                    }
+                    else if( strings[1].equals("close") ) {
+                        reply_command = reply_command + "not implemented";
+                        //sqliteDb.closeOrder("tablename", 14);
+                    }
+                    else if( strings[1].equals("edit") ) {
+                        reply_command = reply_command + "not implemented";
+                        //sqliteDb.updateOrder("tabelname", 14, 13, (float)4055.49, "sell:limit");
+                    }
+                    else if( strings[1].equals("list") ) {
+                        String itemid="*";
+
+                        sqliteDb.OrderBuffer[] buy_list = sqliteDb.getOrdersOfPlayer(p.getUniqueId().toString(), itemid, true, 1); //true = buy ; false = sell
+                        reply_command = reply_command + "\nList of all your Buyorders: \nORDER ID- ITEMID - AMOUNT - PRICE - ORDERTYPE\n";
+                        for(int i=0; i<10; i++){
+                            if(buy_list[i] == null) {
+                                //System.out.println("NULL");
+                                break;
+                            }
+                            else {
+                                reply_command = reply_command +  ChatColor.GREEN + buy_list[i].id + " " +buy_list[i].itemid + " " + buy_list[i].amount + " " + buy_list[i].price + " " + buy_list[i].ordertype + "\n" + ChatColor.WHITE;
+                            }
+
+                            // output: 25461234
+                        } // end for
+
+                        sqliteDb.OrderBuffer[] sell_list = sqliteDb.getOrdersOfPlayer(p.getUniqueId().toString(), itemid, false, 1); //true = buy ; false = sell
+                        reply_command = reply_command + "\nList of all your Sellorders: \nORDER ID- ITEMID - AMOUNT - PRICE - ORDERTYPE\n";                        for(int i=0; i<10; i++){
+                            if(sell_list[i] == null) {
+                                //System.out.println("NULL");
+                                break;
+                            }
+
+                            else {
+                                reply_command = reply_command + ChatColor.RED + sell_list[i].id + " " + sell_list[i].itemid + " " + sell_list[i].amount + " " + sell_list[i].price + " " + sell_list[i].ordertype + " " + ChatColor.WHITE;
+                            }
+
+                            // output: 25461234
+                        } // end for
+
+                    }
+
+                } // end order
+
+
+
+
                 else if(strings[0].equals("withdraw") ) {
                     if(strings.length == 1) { // /ix withdraw list
                         reply_command = reply_command + " /ix withdraw list \n";
@@ -345,13 +448,6 @@ public class ItemexCommand implements CommandExecutor {
                             free_space = this_item_stacks * max_stack - this_item_count;
                             free_space = free_space + max_items;
 
-                            /*
-                            reply_command = reply_command + "max_stack <itemid>: " + max_stack + "\n";
-                            reply_command = reply_command + "max_items (emtpy stacks) : " + max_items + "\n";
-                            reply_command = reply_command + "this_item_count: ("+ payouts[i].itemid +"): " + this_item_count + "\n";
-                            reply_command = reply_command + "this_item_stacks: ("+ payouts[i].itemid +"): " + this_item_stacks + "\n";
-                            reply_command = reply_command + "Empty space: " + free_space + "\n";
-                            */
 
                             // send items with amount of free_space to inventory
                             int x = 0;
@@ -380,8 +476,6 @@ public class ItemexCommand implements CommandExecutor {
                                 sqliteDb.updatePayout(p.getUniqueId().toString(), payouts[i].id, payouts[i].itemid, payouts[i].amount-x ); //update the amount
                             }
                         }
-
-
                     }
                     else {
                         reply_command = reply_command + "Wrong syntax. Please look at: /help";
@@ -389,16 +483,23 @@ public class ItemexCommand implements CommandExecutor {
                 }
 
 
+
+
                 else if(strings[0].equals("gui") ) {
                     generateGUI(p, 1);
                 }
 
 
-                else {
+
+
+                else
                     reply_command = "Option not found!: " + strings[0] + "\n use /ix help";
-                }
+
             } // end else more than 1 args
 
+
+
+            // Send reply to p
             if(sender instanceof Player) {
                 Player p = (Player) sender;
                 Economy economy = Itemex.getEconomy();
@@ -413,15 +514,22 @@ public class ItemexCommand implements CommandExecutor {
             }
             else if( sender instanceof ConsoleCommandSender) {
                 //System.out.println("This is from the server command box");
-                //System.out.println(reply_command);
+                System.out.println(reply_command);
             }
             else if( sender instanceof BlockCommandSender) {
                 //System.out.println("This is from the command block");
-                //System.out.println(reply_command);
+                System.out.println(reply_command);
             }
         }
         return true;
     } //  end onCommand
+
+
+
+
+
+
+
 
 
     static class Order
@@ -433,54 +541,37 @@ public class ItemexCommand implements CommandExecutor {
         public float price;
     };
 
-
-    public static String create_buy_order(Player p, String itemid, float last_price, int amount) {
-        Order buyorder = new Order();
-        String reply_command;
-        // create sell order (RAM)
-        buyorder.amount = amount;  // always 1 with this command
-        buyorder.uuid = p.getUniqueId().toString();
-        buyorder.itemid = itemid;
-        buyorder.ordertype = "buy"; // sell
-        buyorder.price = last_price;
-
-        // if no or rest => create buy order and store in db
-        sqliteDb db_buyorder = new sqliteDb(buyorder);
-
-        if( db_buyorder.createBuyOrder() ) {
-            reply_command =  ChatColor.GREEN + "BUYORDER " + ChatColor.WHITE + "created! " + ChatColor.BOLD + "[1] " + itemid + ChatColor.WHITE ;
-        }
-        else {
-            reply_command =  "ERROR! Buyorder NOT created!";
-        }
-        return reply_command;
-    }
-
-
-    public static String create_sell_order(Player p, String itemid, int amount, float price) {
-        Order sellorder = new Order();
+    public static String create_order(Player p, String itemid, float price, int amount, String buy_or_sell, String market_option) {
         String reply_command = "";
-        reply_command = reply_command + "\nFIRST BUY ORDER: " + price;
+
+        Order order = new Order();
         // create sell order (RAM)
-        sellorder.amount = amount;
-        sellorder.uuid = p.getUniqueId().toString();
-        sellorder.itemid = itemid;
-        sellorder.ordertype = "sell"; // sell
-        sellorder.price = price;
+        order.amount = amount;
+        order.uuid = p.getUniqueId().toString();
+        order.itemid = itemid;
+        order.ordertype = buy_or_sell + ":" + market_option;
+        order.price = price;
 
-        // if no or rest => create sell order and store in db
-        sqliteDb db_sellorder = new sqliteDb(sellorder);
+        sqliteDb db_order = new sqliteDb(order);
 
-        if( db_sellorder.createSellOrder() ) {
-            reply_command = ChatColor.RED + "SELLORDER " + ChatColor.WHITE + ChatColor.BOLD+  "[" + amount + "] " + itemid.toUpperCase() + ChatColor.WHITE + " created!";
+        //System.out.println("AT create_order, buy_or_sell: " + buy_or_sell);
+
+        if(buy_or_sell.equals("sell")) {
+            if( db_order.createSellOrder() )
+                reply_command = ChatColor.RED + "SELLORDER " + ChatColor.WHITE + ChatColor.BOLD+  "[" + amount + "] " + itemid.toUpperCase() + ChatColor.WHITE + " created!";
+            else
+                reply_command = "ERROR! Sellorder NOT created!";
+            p.getInventory().removeItem(new ItemStack(Material.getMaterial(itemid.toUpperCase()), amount));
         }
-        else {
-            reply_command = "ERROR! Sellorder NOT created!";
+        else if(buy_or_sell.equals("buy")) {
+            if( db_order.createBuyOrder() )
+                reply_command =  ChatColor.GREEN + "BUYORDER " + ChatColor.WHITE + "created! " + ChatColor.BOLD + "[1] " + itemid + ChatColor.WHITE ;
+            else
+                reply_command = "ERROR! Buyorder NOT created!";
         }
-        p.getInventory().removeItem(new ItemStack(Material.getMaterial(itemid.toUpperCase()), amount));
-
         return reply_command;
     }
+
 
 
     public void generateGUI(Player p, int count) {
@@ -569,17 +660,6 @@ public class ItemexCommand implements CommandExecutor {
         itemMeta.setLore(item_lore);
         item.setItemMeta(itemMeta);
 
-        /*
-        //only for test how many items are available
-        int item_counter=0;
-        for (Material material : Material.values()) {
-            item_counter++;
-        }
-        float fields = 5*9-2;
-        System.out.println("ITEMCOUNTER: " + item_counter + " GUI with 6*9-2 buttons= " + (float)item_counter / fields + " sites");
-
-         */
-
         int x = 8;
         for (Material material : Material.values()) {
             //System.out.println(x + " " + material);
@@ -603,7 +683,52 @@ public class ItemexCommand implements CommandExecutor {
 
         inv.setItem(4, item);
 
-
         p.openInventory(inv);
     }
+
+
+    private String print_help(boolean player_or_console) {
+        String gold;
+        String white;
+        String green;
+        String dark_gray;
+        String dark_purple;
+
+        if(player_or_console) {
+            gold = ChatColor.GOLD.toString();
+            white = ChatColor.WHITE.toString();
+            green = ChatColor.GREEN.toString();
+            dark_gray = ChatColor.DARK_GRAY.toString();
+            dark_purple = ChatColor.DARK_PURPLE.toString();
+        }
+        else {
+            gold = "";
+            white = "";
+            green = "";
+            dark_gray = "";
+            dark_purple = "";
+        }
+
+        String reply_command = "\n";
+        reply_command = reply_command + gold + "ix = ITEMEX = Item Exchange v0.15" + white + "\n.\n";
+        reply_command = reply_command + "USAGE: \n" + green + "/ix buy " + dark_gray + "| buy what is in right hand on market price " +
+                "\n" + green + "/ix gui " + dark_gray + "| Graphical User Interface\n." +
+
+                "\n" + green + "/ix sell " + dark_gray + "| sell what is in right hand on market price" +
+                "\n" + green + "/ix price " + dark_gray + "| prints the current buy and sell orders" +
+                "\n" + green + "/ix price <itemid> " + dark_gray + "| prints the current buy and sell orders\n." +
+
+                "\n" + green + "/ix buy <itemname> <amount> <limit | market> <price> " + dark_gray + "| create buy order" +
+                "\n" + green + "/ix sell <itemname> <amount> <limit | market> <price> " + dark_gray + "| create sell order\n." +
+
+                "\n" + green + "/ix order list <item id>" + dark_gray + "| list all own buy- and sellorders" +
+                "\n" + green + "/ix order edit <order id> <amount> <price> " + dark_gray + "| edit the price of an existing order" +
+                "\n" + green + "/ix order close <order id> " + dark_gray + "| list all your available payouts\n." +
+
+                "\n" + green + "/ix withdraw list " + dark_gray+ "| list all your available payouts" +
+                "\n" + green + "/ix withdraw <itemname> <amount> " + dark_gray + "| withdraw " + dark_purple +
+                "\n.\nThis version is in alpha, if you have any problems or suggestions please write me to xcatpc@proton.me" + white;
+        reply_command = reply_command + "\n";
+        return reply_command;
+    } // end print_help
 }

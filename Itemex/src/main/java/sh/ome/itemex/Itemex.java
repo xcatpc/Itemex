@@ -1,3 +1,27 @@
+// new version change version in: pom.xml, Itemex.java, ItemexCommand (help)
+
+//TODO
+// new orders must be sort down (Because old orders should be fulfilled first if price is equal)
+// implement order (edit, list, close) !already started!
+
+
+/*
+changelog 0.14:
+- market orders (sell and buy orders with this type will get fulfilled with every order) (The GUI generates only market orders)
+- implemented /ix order <edit/list/close> with autocomplete
+- if buyer don't have enough money -> close order
+- moved all db related functions (methods) to the sqliteDb class (more order)
+- moved the database into the plugin folder (Itemex)
+- added a config file (does not much right now)
+- improved update checker (checks on start and every 24h)
+- nice update message
+- rewrite a lot of code for better readability despaghettification^^
+- print help and open gui on command /ix if user is Player
+
+
+ */
+
+
 package sh.ome.itemex;
 
 import net.milkbowl.vault.economy.Economy;
@@ -7,17 +31,15 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import sh.ome.itemex.Listeners.PlayerJoin;
-import sh.ome.itemex.commands.FulfillOrder;
+import sh.ome.itemex.shedule.FulfillOrder;
 import sh.ome.itemex.commands.ItemexCommand;
 import sh.ome.itemex.commands.commandAutoComplete;
 import sh.ome.itemex.commands.sqliteDb;
 import sh.ome.itemex.events.clickEventGUI;
+import sh.ome.itemex.shedule.UpdateItemex;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.sql.SQLException;
-import java.util.Scanner;
 
 public final class Itemex extends JavaPlugin implements Listener {
 
@@ -27,10 +49,10 @@ public final class Itemex extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
-        String version = "0.13";
+        String version = "0.15";
         // Plugin startup logic
 
-        System.out.println("\n\n\n\n\n");
+        System.out.println("\n\n");
         System.out.println("  88");
         System.out.println("  88    ,d");
         System.out.println("  88    88");
@@ -41,27 +63,8 @@ public final class Itemex extends JavaPlugin implements Listener {
         System.out.println("  88    \"Y888  `\"Ybbd8\"'  88      88      88   `\"Ybbd8\"'  8P'     `Y8  ");
         System.out.println("");
 
-        System.out.println("ITEMEX v0.13 - Free Market Item Exchange Plugin loaded.");
-
-        URL url = null;
-        try {
-            url = new URL("https://www.omesh.io/itemex/version.txt");
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-        }
-        try {
-            String text = new Scanner( url.openStream() ).useDelimiter("\\A").next();
-            if(!text.equalsIgnoreCase(version))
-                System.out.println(" ### UPDATE AVAILABLE! ### You have " + version + " and " + text + " is ready to download from: \nhttps://www.spigotmc.org/resources/itemex-players-can-exchange-all-items-with-other-players-free-market.108398/");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        System.out.println("\n\n\n\n\n");
-
-
-
-        System.out.println("");
+        System.out.println("ITEMEX v" + version + " - Free Market Item Exchange Plugin loaded. Usage: /ix help");
+        System.out.println("\n\n");
 
         getCommand("ix").setExecutor(new ItemexCommand());
         getCommand("ix").setTabCompleter(new commandAutoComplete());
@@ -69,6 +72,8 @@ public final class Itemex extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(new clickEventGUI(), this);
 
         getConfig().options().copyDefaults();
+        saveDefaultConfig();
+
         sqliteDb.createDBifNotExists();
 
         plugin = this;  // make this private static Itemex accessable in other files
@@ -80,13 +85,23 @@ public final class Itemex extends JavaPlugin implements Listener {
         }
 
         Plugin plugin = Bukkit.getServer().getPluginManager().getPlugin("Itemex");
+        //Fulfill Order
         Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
             try {
                 new FulfillOrder();
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
-        }, 0, 40); //20 == 1 second
+        }, 0, 40); //20 == 1 second 40
+
+        //Check update
+        Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
+            try {
+                new UpdateItemex(version);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }, 0, 1728000); //20 == 1 second 1,728,000 = 24h
 
     }
 

@@ -34,12 +34,14 @@ public class clickEventGUI implements Listener {
 
                 if( e.getClick().isLeftClick() ) {
                     float s_price = Float.parseFloat(price[1]);
-                    ItemexCommand.create_buy_order(p, itemid, s_price, amount);                // price[1] == best sell order
+                    //ItemexCommand.create_buy_order(p, itemid, s_price, amount);              // price[1] == best sell order //REPLACED
+                    ItemexCommand.create_order(p, itemid, s_price, amount, "buy", "market");
                     p.sendMessage("BUY " + amount + " " + itemid +" price: " + s_price );      // price[1] == best sell order
                 }
                 else if ( e.getClick().isRightClick() ) {
                     float b_price = Float.parseFloat(price[0]);
-                    ItemexCommand.create_sell_order(p, itemid, amount, b_price);               // price[1] == best sell order
+                    //ItemexCommand.create_sell_order(p, itemid, amount, b_price);             // price[1] == best sell order //REPLACED
+                    ItemexCommand.create_order(p, itemid, b_price, amount, "sell", "market");
                     p.sendMessage("SELL " + amount + " " + itemid +" price: " + b_price );     // price[0] == best buy order
                 }
                 else if( e.getClick().toString().equalsIgnoreCase("SWAP_OFFHAND")) {
@@ -180,24 +182,27 @@ public class clickEventGUI implements Listener {
 
 
     private String[] get_price(String item){
+        //System.out.println("At get_price: " + item);
         String r_value[];
         r_value = new String[2];
         String buy = "-";
         String sell = "-";
+        String[] ordertype;
         sqliteDb.OrderBuffer[] orders = new sqliteDb.OrderBuffer[0];
-        orders = sqliteDb.selectItem( item );
+        orders = sqliteDb.getBestOrders( item );
         for(int x=0; x<=7; x++) {
 
             if(orders[x] == null) {
                 break;
             }
+            ordertype = orders[x].ordertype.split(":", 2);
 
-            if(orders[x].ordertype.equals("sell")) {
+            if(ordertype[0].equals("sell")) {
                 //System.out.println(orders[x].ordertype + " " + orders[x].price);
                 sell = String.valueOf(orders[x].price);
 
             }
-            else {
+            else if(ordertype[0].equals("buy")) {
                 //System.out.println(orders[x].ordertype + " " + orders[x].price);
                 if(buy.equals("-")) {
                     buy = String.valueOf(orders[x].price);
