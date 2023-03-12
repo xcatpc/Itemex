@@ -10,7 +10,8 @@
 /*
 
 changelog 0.15:
-
+- implement autoupdate (server must be restarted, but reload plugin if a updates is downloaded)
+- implement bstats
 
 changelog 0.14:
 - market orders (sell and buy orders with this type will get fulfilled with every order) (The GUI generates only market orders)
@@ -111,18 +112,24 @@ public final class Itemex extends JavaPlugin implements Listener {
             try {
                 new FulfillOrder();
             } catch (SQLException e) {
+                System.out.println("Problem with Fulfill Order Scheduler");
                 throw new RuntimeException(e);
             }
         }, 0, 40); //20 == 1 second 40
 
+
         //Check update
+
         Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
             try {
                 new UpdateItemex(version);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        }, 0, 1728000); //20 == 1 second 1,728,000 = 24h
+
+            System.out.println("Problem with Update Itemex Scheduler");
+
+        }, 0, 1728000); //20 == 1 second 1,728,000 = 24h */
 
     }
 

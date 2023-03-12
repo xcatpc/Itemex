@@ -26,7 +26,6 @@ public class UpdateItemex {
         String ANSI_CYAN = "\u001B[36m";
         String ANSI_WHITE = "\u001B[37m";
 
-        //url = new URL("https://ome.sh/itemex/version.txt");
         url = new URL("https://ome.sh/itemex/version.txt");
         file_url = "https://ome.sh/itemex/jar";
 
@@ -37,20 +36,20 @@ public class UpdateItemex {
             System.out.println("Exception: " + e);
         }
 
-        try (BufferedInputStream in = new BufferedInputStream(new URL(file_url).openStream());
-             FileOutputStream fileOutputStream = new FileOutputStream("./plugins/itemex-" + server_version + ".jar")) {
-            byte dataBuffer[] = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {
-                fileOutputStream.write(dataBuffer, 0, bytesRead);
-            }
-        } catch (IOException e) {
-            System.out.println("Unable to download new version.");
-        }
-
-
 
         if(!server_version.equalsIgnoreCase(version)) {
+
+            try (BufferedInputStream in = new BufferedInputStream(new URL(file_url).openStream());
+                 FileOutputStream fileOutputStream = new FileOutputStream("./plugins/itemex-" + server_version + ".jar")) {
+                byte dataBuffer[] = new byte[1024];
+                int bytesRead;
+                while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {
+                    fileOutputStream.write(dataBuffer, 0, bytesRead);
+                }
+            } catch (IOException e) {
+                System.out.println("Unable to download new version.");
+            }
+
             System.out.println("\n ###--------------------------------------------------------------------###");
             System.out.println("\n");
             System.out.println("  88");
@@ -69,6 +68,9 @@ public class UpdateItemex {
             System.out.println(ANSI_GREEN + "Successfully downloaded new version: " + server_version  + ". " + ANSI_RED + "Reload necessary!" + ANSI_RESET);
             //System.out.println("\n" + ANSI_YELLOW + "AVAILABLE! You have " + version + " and " + server_version + " is ready to download from: " + ANSI_RESET + " \n" + ANSI_GREEN + "https://www.spigotmc.org/resources/itemex-players-can-exchange-all-items-with-other-players-free-market.108398/" + ANSI_RESET);
             System.out.println("\n ###--------------------------------------------------------------------###\n");
+        }
+        else {
+            System.out.println(ANSI_GREEN + "You have already the newest Itemex version: v" + version + ANSI_RESET);
         }
     }
 

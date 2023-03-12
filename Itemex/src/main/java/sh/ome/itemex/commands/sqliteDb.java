@@ -209,8 +209,10 @@ public class sqliteDb {
 
 
     public static Payout[] getPayout(String player_uuid) {
-        //System.out.println("AT GetPayout");
+        System.out.println("UUID: " + player_uuid);
         Payout[] buffer = new Payout[1000000];
+        System.out.println("UUID2: " + player_uuid);
+
         int row_counter = 0;
 
         Connection c = null;
@@ -232,6 +234,7 @@ public class sqliteDb {
             stmt.close();
 
         } catch ( Exception e ) {
+            System.out.println("ERROR at getPayou()");
             System.err.println( e.getClass().getName() + ": " + e.getMessage() );
             System.exit(0);
         }
