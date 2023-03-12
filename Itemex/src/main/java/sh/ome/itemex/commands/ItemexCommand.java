@@ -710,7 +710,7 @@ public class ItemexCommand implements CommandExecutor {
         }
 
         String reply_command = "\n";
-        reply_command = reply_command + gold + "ix = ITEMEX = Item Exchange v0.15" + white + "\n.\n";
+        reply_command = reply_command + gold + "ix = ITEMEX = Item Exchange v" + Itemex.version + white + "\n.\n";
         reply_command = reply_command + "USAGE: \n" + green + "/ix buy " + dark_gray + "| buy what is in right hand on market price " +
                 "\n" + green + "/ix gui " + dark_gray + "| Graphical User Interface\n." +
 
