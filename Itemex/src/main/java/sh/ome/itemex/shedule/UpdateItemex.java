@@ -70,7 +70,7 @@ public class UpdateItemex {
             System.out.println("\n ###--------------------------------------------------------------------###\n");
         }
         else {
-            System.out.println(ANSI_GREEN + "You have already the newest Itemex version: v" + version + ANSI_RESET);
+            System.out.println(ANSI_GREEN + "You have already the newest Itemex version: v" + server_version + ANSI_RESET);
         }
     }
 
