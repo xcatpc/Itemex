@@ -340,50 +340,73 @@ public class ItemexCommand implements CommandExecutor {
 
 
                 else if(strings[0].equals("order") ) {
+                    int orderid = -1;
 
                     if(strings.length == 1) {
                         reply_command = "/ix order <close | edit | list>";
                     }
                     else if( strings[1].equals("close") ) {
-                        reply_command = reply_command + "not implemented";
-                        //sqliteDb.closeOrder("tablename", 14);
+                        if( strings[2].equals("buyorders") || strings[2].equals("sellorders") ) {
+                            try {
+                                orderid = Integer.parseInt(strings[3]);;
+                            } catch (NumberFormatException e) {
+                                reply_command = "OrderID must be a number!\n";
+                            }
+                            if(orderid != -1) {
+                                if( sqliteDb.PlayercloseOrder(p.getUniqueId().toString(), strings[2].toUpperCase(), orderid) )
+                                    reply_command = reply_command + ChatColor.GREEN + "Order deleted sucessfully!" + ChatColor.RESET;
+                                else
+                                    reply_command = reply_command + ChatColor.RED + "Order NOT deleted sucessfully!" + ChatColor.RESET;
+                            }
+                        }
+                        else
+                            reply_command = reply_command + ChatColor.RED + "only buyorder or sellorder are accepted!" + ChatColor.RESET;;
                     }
+
                     else if( strings[1].equals("edit") ) {
-                        reply_command = reply_command + "not implemented";
+
+                        reply_command = reply_command + "not implemented. If you need it. Write me to xcatpc@proton.me";
                         //sqliteDb.updateOrder("tabelname", 14, 13, (float)4055.49, "sell:limit");
                     }
+
                     else if( strings[1].equals("list") ) {
-                        String itemid="*";
+                        if( strings.length <= 2) {
+                            reply_command = reply_command + ChatColor.RED + "You can only use buyorders or sellorders!" + ChatColor.RESET;
+                        }
+                        else if( strings[2].equals("buyorders") || strings[2].equals("sellorders") ) {
+                            boolean buy_or_sell;
+                            String item_id = "*";
+                            if( strings.length == 4 )
+                                item_id = strings[3].toUpperCase();
+                            //reply_command = item_id;
 
-                        sqliteDb.OrderBuffer[] buy_list = sqliteDb.getOrdersOfPlayer(p.getUniqueId().toString(), itemid, true, 1); //true = buy ; false = sell
-                        reply_command = reply_command + "\nList of all your Buyorders: \nORDER ID- ITEMID - AMOUNT - PRICE - ORDERTYPE\n";
-                        for(int i=0; i<10; i++){
-                            if(buy_list[i] == null) {
-                                //System.out.println("NULL");
-                                break;
-                            }
-                            else {
-                                reply_command = reply_command +  ChatColor.GREEN + buy_list[i].id + " " +buy_list[i].itemid + " " + buy_list[i].amount + " " + buy_list[i].price + " " + buy_list[i].ordertype + "\n" + ChatColor.WHITE;
-                            }
+                            String color = ChatColor.RED.toString();
 
-                            // output: 25461234
-                        } // end for
-
-                        sqliteDb.OrderBuffer[] sell_list = sqliteDb.getOrdersOfPlayer(p.getUniqueId().toString(), itemid, false, 1); //true = buy ; false = sell
-                        reply_command = reply_command + "\nList of all your Sellorders: \nORDER ID- ITEMID - AMOUNT - PRICE - ORDERTYPE\n";                        for(int i=0; i<10; i++){
-                            if(sell_list[i] == null) {
-                                //System.out.println("NULL");
-                                break;
+                            if( strings[2].equals("buyorders") ) {
+                                buy_or_sell = true;
+                                color = ChatColor.GREEN.toString();
                             }
 
-                            else {
-                                reply_command = reply_command + ChatColor.RED + sell_list[i].id + " " + sell_list[i].itemid + " " + sell_list[i].amount + " " + sell_list[i].price + " " + sell_list[i].ordertype + " " + ChatColor.WHITE;
-                            }
+                            else
+                                buy_or_sell = false;
 
-                            // output: 25461234
-                        } // end for
+                            sqliteDb.OrderBuffer[] list = sqliteDb.getOrdersOfPlayer(p.getUniqueId().toString(), item_id, buy_or_sell, 1); //true = buy ; false = sell
+                            reply_command = reply_command + ".\nList of all your ORDERS: \nORDER ID- ITEMID - AMOUNT - PRICE - ORDERTYPE\n";
+                            for(int i=0; i<1000000; i++){
+                                if(list[i] == null) {
+                                    //System.out.println("NULL");
+                                    break;
+                                }
+                                else {
+                                    reply_command = reply_command +  color + list[i].id + " " +ChatColor.WHITE +list[i].itemid + " " + list[i].amount + " " + color + list[i].price + " " + list[i].ordertype + "\n" + ChatColor.WHITE;
+                                }
+                            } // end for
 
-                    }
+                        }
+                        else
+                            reply_command = reply_command + ChatColor.RED + "You can only use buyorders or sellorders!" + ChatColor.RESET;
+
+                    } // end of list
 
                 } // end order
 

@@ -8,6 +8,10 @@
 
 
 /*
+changelog 0.16
+- implement /ix order list  <buyorders | sellorders> *<itemid>  | * optional
+- implement /ix order edit <buyorders | sellorders> <order id>
+- implement config.yml
 
 changelog 0.15:
 - implement autoupdate (server must be restarted, but reload plugin if a updates is downloaded)
@@ -33,6 +37,7 @@ package sh.ome.itemex;
 
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -51,9 +56,16 @@ import java.sql.SQLException;
 
 public final class Itemex extends JavaPlugin implements Listener {
 
+    FileConfiguration config = getConfig();
+
     private static Itemex plugin;
     public static Economy econ = null;
-    public static String version = "0.15";
+    public static String version = "0.16";
+
+    public static boolean admin_function;
+    public static double admin_function_percentage;
+    public static double broker_fee;
+    public static boolean bstats;
 
 
 
@@ -93,10 +105,32 @@ public final class Itemex extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(new PlayerJoin(), this);
         getServer().getPluginManager().registerEvents(new clickEventGUI(), this);
 
-        getConfig().options().copyDefaults();
-        saveDefaultConfig();
 
+
+
+        // generate config file
+        config.options().copyDefaults(true);
+        saveConfig();
+        System.out.println("ITEMEX version: " + config.getString("version") );
+        this.admin_function = config.getBoolean("admin_function");
+        this.admin_function_percentage = config.getDouble("admin_function_percentage");
+        this.broker_fee = config.getDouble("broker_fee");
+        this.bstats = config.getBoolean("bstats");
+
+        // checks database
         sqliteDb.createDBifNotExists();
+
+
+        // if admin function enabled -> create admin function for every item
+        if( Itemex.admin_function ) {
+            // look if admin function already exists each item
+            // if yes skip; else look if already a buy and a sell order exists ;;;; procentrual_increase = admin_function_percentage (from config file)
+            // if only buy order ( =100/ (1/100*120+1)*1    |   #1 procentual_decrease = 100 / (1 / 100 * procentrual_increase + 1) * 1
+            //                                              |   #2 sellorder_price = buyorder_price / 100 * procentual_decrease
+            // if only sell order (buyorder_price = sellorder_price / 100 * procentrual_increase + sellorder_price)
+            // if both:  # 1. take the best buy order and decrease by the half of the percentage of config file (calculate procentual_decrease of half of procentrual_increase), that is the buy admin order. Then increate by in the config given value: that is the buy admin order
+            // if nothing # admin_function_initial_buy_price and calulate sell price
+        }
 
         plugin = this;  // make this private static Itemex accessable in other files
 

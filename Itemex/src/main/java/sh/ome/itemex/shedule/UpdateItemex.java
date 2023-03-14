@@ -1,11 +1,10 @@
 package sh.ome.itemex.shedule;
 
+import sh.ome.itemex.Itemex;
 
-import javax.swing.plaf.IconUIResource;
 import java.io.BufferedInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Scanner;
 
@@ -26,8 +25,10 @@ public class UpdateItemex {
         String ANSI_CYAN = "\u001B[36m";
         String ANSI_WHITE = "\u001B[37m";
 
+
         url = new URL("https://ome.sh/itemex/version.txt");
         file_url = "https://ome.sh/itemex/jar";
+
 
         try {
             server_version = new Scanner( url.openStream() ).useDelimiter("\\A").next();
@@ -70,7 +71,7 @@ public class UpdateItemex {
             System.out.println("\n ###--------------------------------------------------------------------###\n");
         }
         else {
-            System.out.println(ANSI_GREEN + "You have already the newest Itemex version: v" + version + ANSI_RESET);
+            System.out.println(ANSI_GREEN + "You have already the newest Itemex version: v" + server_version + ANSI_RESET);
         }
     }
 

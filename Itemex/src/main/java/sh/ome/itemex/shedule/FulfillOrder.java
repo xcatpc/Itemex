@@ -5,6 +5,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
+import sh.ome.itemex.Itemex;
 import sh.ome.itemex.commands.sqliteDb;
 
 import java.sql.*;
@@ -22,9 +23,11 @@ public class FulfillOrder {
     private long timestamp;
 
     public FulfillOrder() throws SQLException {
+
         // load buy and sell orders into RAM
         sqliteDb.OrderBuffer[] sellorders = sqliteDb.selectAll("SELLORDERS");
         sqliteDb.OrderBuffer[] buyorders = sqliteDb.selectAll("BUYORDERS");
+
 
         // FIND AND FULFILL ORDERS
         for(int x=0; x<1000000-1; x++) { //max 1b entries
@@ -35,24 +38,34 @@ public class FulfillOrder {
                     else {
                         if(sellorders[x].itemid.equals( buyorders[y].itemid )) { //check if itemid matches
 
-
-
-
+                            // if orders are limit or market
                             String[] buy_limit_or_market = buyorders[y].ordertype.split(":", 2);
                             String[] sell_limit_or_market = sellorders[x].ordertype.split(":", 2);
 
-                            if(sell_limit_or_market[1].equals("market")) {
-                                //System.out.println("Sellorder = market" + sellorders[x].id + " " + sellorders[x].amount + " " + sellorders[x].price);
+                            // if order == market -> adjust price to best market orders
+                            if(sell_limit_or_market[1].equals("market"))
                                 sellorders[x].price = buyorders[y].price;   // set the best price
-                            }
 
-                            if(buy_limit_or_market[1].equals("market")) {
-                               // System.out.println("Buyorder = market" + buyorders[y].id + " " + buyorders[y].amount + " " + buyorders[y].price);
+                            if(buy_limit_or_market[1].equals("market"))
                                 buyorders[y].price =  sellorders[x].price;  // set the best price
+
+                            // ADMIN ORDER if admin order enabled AND (sell-order OR buy-order is an admin order)
+                            // same as limit, but each single amount fullfilled price in- or decreases to spread. Default amount of spread =
+                            if( Itemex.admin_function && (sell_limit_or_market[1].equals("admin") || buy_limit_or_market[1].equals("admin")) ) { // sell and buy order cannot be the same time!
+                                if(sell_limit_or_market[1].equals("admin")) {   // if sell order is admin
+                                    System.out.println("Sellorder = admin" + sellorders[x].id + " " + sellorders[x].amount + " " + sellorders[x].price);
+                                }
+
+                                if(buy_limit_or_market[1].equals("admin")) {    // if buy order is admin
+                                    System.out.println("Buyorder = admin" + buyorders[y].id + " " + buyorders[y].amount + " " + buyorders[y].price);
+                                }
                             }
+                            // ------ TESTING END
 
 
-                            if(sellorders[x].price <= buyorders[y].price && sellorders[x].amount != 0 && buyorders[y].amount !=0)  { // if sell amount < buy amount than close sell order + update buy order
+
+                            // LIMIT ORDER OR MARKET ORDER (Marketorder adjusted aboth)
+                            else if(sellorders[x].price <= buyorders[y].price && sellorders[x].amount != 0 && buyorders[y].amount !=0)  { // if sell amount < buy amount than close sell order + update buy order
 
                                 if(sellorders[x].amount < buyorders[y].amount) {  //if buyer have enough money than true
                                     if(withdraw(sellorders[x].uuid, buyorders[y].uuid, sellorders[x].itemid, sellorders[x].amount, sellorders[x].price) ){
@@ -103,56 +116,6 @@ public class FulfillOrder {
                             }
 
 
-
-
-
-
-
-
-/*
-                            if(sellorders[x].price <= buyorders[y].price && sellorders[x].amount != 0 && buyorders[y].amount !=0)  { // if sell amount < buy amount than close sell order + update buy order
-                                if(withdraw(sellorders[x].uuid, buyorders[y].uuid, sellorders[x].itemid, sellorders[x].amount, sellorders[x].price) ){ //if buyer have enough money than true
-                                    buyorders[y].amount = buyorders[y].amount - sellorders[x].amount;
-                                    sqliteDb.updateOrder("BUYORDERS", buyorders[y].id, buyorders[y].amount, buyorders[y].price, "buy:limit");
-                                    sellorders[x].amount = 0; //close sell order
-                                    sqliteDb.closeOrder("SELLORDERS", sellorders[x].id);
-                                }
-                                else { // remove order if buyer don't have enough money
-                                    buyorders[y].amount = 0; //close buy order
-                                    //sqliteDb.closeOrder("BUYORDERS", buyorders[y].id);
-                                    System.out.println("-Debug: <= Buyer don't have enough money, buyorder with the id: " + buyorders[y].id + " removed!");
-                                }
-
-
-                                if(sellorders[x].amount > buyorders[y].amount) { // if sell amount > buy amount than update sell order + close buy order
-                                    if(withdraw(sellorders[x].uuid, buyorders[y].uuid, sellorders[x].itemid, buyorders[y].amount, sellorders[x].price) ){ //if buyer have enough money than true
-                                        sellorders[x].amount = sellorders[x].amount - buyorders[y].amount;
-                                        sqliteDb.updateOrder("SELLORDERS", sellorders[x].id, sellorders[x].amount, buyorders[y].price, "sell:limit");
-                                        buyorders[y].amount = 0; //close buy order
-                                        sqliteDb.closeOrder("BUYORDERS", buyorders[y].id);
-                                    }
-                                    else { // remove order if buyer don't have enough money
-                                        buyorders[y].amount = 0; //close buy order
-                                        sqliteDb.closeOrder("BUYORDERS", buyorders[y].id);
-                                        System.out.println("-Debug: > Buyer don't have enough money, buyorder with the id: " + buyorders[y].id + " removed!");
-                                    }
-                                }
-
-                                // if sell amount == buy amount than close buy and sell order
-                                if(sellorders[x].amount == buyorders[y].amount) {   //System.out.println("Sell amount == buyorder amount 3");
-                                    if(withdraw(sellorders[x].uuid, buyorders[y].uuid, sellorders[x].itemid, buyorders[y].amount, sellorders[x].price) ){ //if buyer have enough money than true
-                                        buyorders[y].amount = 0;
-                                        sqliteDb.closeOrder("BUYORDERS", buyorders[y].id);
-                                        sellorders[x].amount = 0; //close sell order
-                                        sqliteDb.closeOrder("SELLORDERS", sellorders[x].id);
-                                    }
-                                    else { // remove order if buyer don't have enough money
-                                        buyorders[y].amount = 0; //close buy order
-                                        sqliteDb.closeOrder("BUYORDERS", buyorders[y].id);
-                                        System.out.println("-Debug: == Buyer don't have enough money, buyorder with the id: " + buyorders[y].id + " removed!");
-                                    }
-                                }
-                            } */
 
 
                         } // end item match

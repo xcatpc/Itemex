@@ -12,6 +12,7 @@ sh\ome\itemex\shedule\Metrics$CustomChart.class
 sh\ome\itemex\commands\sqliteDb$OrderBuffer.class
 sh\ome\itemex\shedule\Metrics.class
 sh\ome\itemex\commands\ItemexCommand.class
+sh\ome\itemex\files\ConfigFile.class
 sh\ome\itemex\events\clickEventGUI.class
 sh\ome\itemex\Itemex.class
 sh\ome\itemex\shedule\Metrics$JsonObjectBuilder.class

@@ -252,11 +252,15 @@ public class sqliteDb {
         String sql;
         int row_counter = 0;
 
+        String itemid_string = "";
+        if(!itemid.equals("*"))
+            itemid_string = "AND itemid = '" + itemid + "'";
+
         //proof if buy or sell
         if(buy_or_sell) // is buy
-            sql = "SELECT * FROM BUYORDERS WHERE player_uuid = '" + player_uuid + "' ORDER by timestamp ASC LIMIT 100";
+            sql = "SELECT * FROM BUYORDERS WHERE player_uuid = '" + player_uuid + "' " + itemid_string + " ORDER by timestamp ASC";
         else
-            sql = "SELECT * FROM SELLORDERS WHERE player_uuid = '" + player_uuid + "' ORDER by timestamp ASC LIMIT 100";
+            sql = "SELECT * FROM SELLORDERS WHERE player_uuid = '" + player_uuid + "' " + itemid_string + " ORDER by timestamp ASC";
 
         try {
             Class.forName("org.sqlite.JDBC");
@@ -430,6 +434,34 @@ public class sqliteDb {
             return false;
         }
         return true;
+    } // end closeOrder
+
+
+    public static boolean PlayercloseOrder(String player_uuid, String table_name, int ID) {
+        System.out.println("AT PlayercloseOrder: " + table_name + " " + ID + " Player_uid: "+ player_uuid);
+        Connection c = null;
+        Statement stmt = null;
+        int row_affected = 0;
+
+        try {
+            Class.forName("org.sqlite.JDBC");
+            c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+            stmt = c.createStatement();
+            String sql = "DELETE FROM " + table_name + " WHERE id = " + ID + " AND player_uuid = '" + player_uuid + "'";
+
+            row_affected = stmt.executeUpdate(sql);
+            stmt.close();
+
+
+        } catch ( Exception e ) {
+            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+            System.exit(0);
+            return false;
+        }
+        if(row_affected == 1)
+            return true;
+
+        return false;
     } // end closeOrder
 
 

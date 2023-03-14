@@ -74,26 +74,21 @@ public class commandAutoComplete implements TabCompleter {
                 return options;
             }
             else if(args.length == 3) {
-                if(args[1].equals("list")) {
-                    List<String> materialNames = new ArrayList<>(Material.values().length);
-                    for (Material mat : Material.values()) {
-                        materialNames.add(mat.name().toLowerCase());
-                    }
-                    return materialNames;
-                }
-                else { // if edit and close
-                    List<String> order_options = Arrays.asList("<order id>");
-                    return order_options;
-                }
+                List<String> order_options = Arrays.asList("buyorders", "sellorders");
+                return order_options;
             }
 
-            else if(args.length == 4 && args[1].equals("edit")) {
-                List<String> edit_options = Arrays.asList("<amount>");
+            else if(args.length == 4 && ( args[1].equals("edit") || args[1].equals("close")) ) {
+                List<String> edit_options = Arrays.asList("<order id>");
                 return edit_options;
             }
-            else if(args.length == 5 && args[1].equals("edit")) {
-                List<String> edit_options = Arrays.asList("<price>");
-                return edit_options;
+            else if(args.length == 4 && args[1].equals("list")) {
+                List<String> materialNames = new ArrayList<>(Material.values().length);
+                materialNames.add("- let empty for all");
+                for (Material mat : Material.values()) {
+                    materialNames.add(mat.name().toLowerCase());
+                }
+                return materialNames;
             }
 
 

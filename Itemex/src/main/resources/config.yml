@@ -1,1 +1,14 @@
-test: "AFFE"
+# The Admin function creates a buy- and sellorder each item with a spread (gab between buy- and sellorder) of 100% by default. You can edit this
+#   variable by editing "admin_function_percentage".
+admin_function: true
+admin_function_percentage: 100.0
+
+# If there is no buy limit or sell limit order at an item, Itemex use this value for initial admin-sellorder-price and adds admin_function_percentage (default 100) to the admin-buyorder-price.
+admin_function_initial_buy_price: 100
+
+# If you want to charge a fee as server, you can simply edit the variable broker_fee. The vaule is in percentage. You can add for instance a value of 0.25 or any other.
+broker_fee: 0.0
+
+# If you want to participate to share non-personalized data, please let this setting to true. It will help to improve the plugin
+bstats: true
+
