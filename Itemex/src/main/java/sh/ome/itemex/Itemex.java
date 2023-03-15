@@ -3,8 +3,39 @@
 //TODO
 // handle exception if update server not available
 // new orders must be sort down (Because old orders should be fulfilled first if price is equal)
-// implement order (edit, list, close) !already started!
-// autoupdate
+
+
+
+/*
+changelog 0.17
+- GUI disabled - critical bug found, will be enabled at next update
+- implement broker_fee in config.yml
+- removed /order edit from help
+- better autocompletion at /ix price
+- add empty string to end of all commands (instead of username)
+- implement /ix withdraw list
+- removed LEFT and RIGHT message if click in the GUI
+- rewrite autocomplete for /sell limit orders: List only what is in the invenstory of player.
+- used items generate a sell order but will not be removed. (solution: block used items)
+- if /ix sell and /ix buy respond in: there are no orders -> send a clickable command like /ix sell diamond 1 limit 10000 (default price)
+- Message: float price limit to 2 floating point
+- /ix withdraw better messages
+- FIX /ix close order does not refund sell orders
+- Use getLogger().info() instead of System.out.println()
+- FIX - /ix order list sellorders ERROR -> at getOrdersOfPlayer: java.lang.ArrayIndexOutOfBoundsException: Index 100 out of bounds for length 100
+
+ */
+
+/* FOUND THESE BUGS. LIST ALSO SOME IMPROVEMENTS:
+- /ix withdraw list must have a parameter of page. only 100 entries can be send to player.
+- add default prices that reflects on the reserve currency (DIAMOND) (useful if no buy and sellorders are available or only a buy or sellorder) - need statistics
+- proof input of user like on /ix list everywhere. (On some commands its not checking if the values are valide)
+- GUI: on /ix gui add each 3 or 4 sell and buy orders by hoover over item and sum of all available items
+- GUI: filter out some blocks (like commandblock)
+- GUI: sort items by availibity
+- add potions and enchanted items
+
+ */
 
 
 /*
@@ -60,7 +91,7 @@ public final class Itemex extends JavaPlugin implements Listener {
 
     private static Itemex plugin;
     public static Economy econ = null;
-    public static String version = "0.16";
+    public static String version = "0.17";
 
     public static boolean admin_function;
     public static double admin_function_percentage;
@@ -86,19 +117,21 @@ public final class Itemex extends JavaPlugin implements Listener {
         String ANSI_CYAN = "\u001B[36m";
         String ANSI_WHITE = "\u001B[37m";
 
-        System.out.println("\n\n");
-        System.out.println(ANSI_CYAN + "  88" + ANSI_RESET);
-        System.out.println(ANSI_CYAN + "  88    ,d"  + ANSI_RESET);
-        System.out.println(ANSI_CYAN + "  88    88" + ANSI_RESET);
-        System.out.println(ANSI_CYAN + "  88  MM88MMM  ,adPPYba,  88,dPYba,,adPYba,  " + ANSI_BLUE + "  ,adPPYba,  8b,     ,d8" + ANSI_RESET);
-        System.out.println(ANSI_CYAN + "  88    88    a8P_____88  88P'   '88'    '8a " + ANSI_BLUE + " a8P_____88   `Y8, ,8P'" + ANSI_RESET);
-        System.out.println(ANSI_CYAN + "  88    88    8PP\"\"\"\"\"\"\"  88      88      88 " + ANSI_BLUE + " 8PP\"\"\"\"\"\"\"     )888(   " + ANSI_RESET);
-        System.out.println(ANSI_CYAN + "  88    88,   '8b,   ,aa  88      88      88  " + ANSI_BLUE + "\"8b,   ,aa   ,d8\" \"8b, " + ANSI_RESET);
-        System.out.println(ANSI_CYAN + "  88    \"Y888  `\"Ybbd8\"'  88      88      88 " + ANSI_BLUE + "  `\"Ybbd8\"'  8P'     `Y8  " + ANSI_RESET);
-        System.out.println("");
+        
 
-        System.out.println(ANSI_YELLOW + "ITEMEX v" + version + " - Free Market Item Exchange Plugin loaded. Usage: /ix help" + ANSI_RESET);
-        System.out.println("\n\n");
+        getLogger().info("\n\n");
+        getLogger().info(ANSI_CYAN + "  88" + ANSI_RESET);
+        getLogger().info(ANSI_CYAN + "  88    ,d"  + ANSI_RESET);
+        getLogger().info(ANSI_CYAN + "  88    88" + ANSI_RESET);
+        getLogger().info(ANSI_CYAN + "  88  MM88MMM  ,adPPYba,  88,dPYba,,adPYba,  " + ANSI_BLUE + "  ,adPPYba,  8b,     ,d8" + ANSI_RESET);
+        getLogger().info(ANSI_CYAN + "  88    88    a8P_____88  88P'   '88'    '8a " + ANSI_BLUE + " a8P_____88   `Y8, ,8P'" + ANSI_RESET);
+        getLogger().info(ANSI_CYAN + "  88    88    8PP\"\"\"\"\"\"\"  88      88      88 " + ANSI_BLUE + " 8PP\"\"\"\"\"\"\"     )888(   " + ANSI_RESET);
+        getLogger().info(ANSI_CYAN + "  88    88,   '8b,   ,aa  88      88      88  " + ANSI_BLUE + "\"8b,   ,aa   ,d8\" \"8b, " + ANSI_RESET);
+        getLogger().info(ANSI_CYAN + "  88    \"Y888  `\"Ybbd8\"'  88      88      88 " + ANSI_BLUE + "  `\"Ybbd8\"'  8P'     `Y8  " + ANSI_RESET);
+        getLogger().info("");
+
+        getLogger().info(ANSI_YELLOW + "ITEMEX v" + version + " - Free Market Item Exchange Plugin loaded. Usage: /ix help" + ANSI_RESET);
+        getLogger().info("\n\n");
 
         getCommand("ix").setExecutor(new ItemexCommand());
         getCommand("ix").setTabCompleter(new commandAutoComplete());
@@ -111,7 +144,6 @@ public final class Itemex extends JavaPlugin implements Listener {
         // generate config file
         config.options().copyDefaults(true);
         saveConfig();
-        System.out.println("ITEMEX version: " + config.getString("version") );
         this.admin_function = config.getBoolean("admin_function");
         this.admin_function_percentage = config.getDouble("admin_function_percentage");
         this.broker_fee = config.getDouble("broker_fee");
@@ -135,7 +167,7 @@ public final class Itemex extends JavaPlugin implements Listener {
         plugin = this;  // make this private static Itemex accessable in other files
 
         if (!setupEconomy() ) {
-            System.out.println("Disabled due to no Vault dependency found!");
+            getLogger().info("Disabled due to no Vault dependency found!");
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
@@ -146,7 +178,7 @@ public final class Itemex extends JavaPlugin implements Listener {
             try {
                 new FulfillOrder();
             } catch (SQLException e) {
-                System.out.println("Problem with Fulfill Order Scheduler");
+                getLogger().info("Problem with Fulfill Order Scheduler");
                 throw new RuntimeException(e);
             }
         }, 0, 40); //20 == 1 second 40
@@ -161,7 +193,7 @@ public final class Itemex extends JavaPlugin implements Listener {
                 throw new RuntimeException(e);
             }
 
-            System.out.println("Problem with Update Itemex Scheduler");
+            getLogger().info("Problem with Update Itemex Scheduler");
 
         }, 0, 1728000); //20 == 1 second 1,728,000 = 24h */
 
@@ -187,7 +219,7 @@ public final class Itemex extends JavaPlugin implements Listener {
     @Override
     public void onDisable() {
         // Plugin shutdown logic
-        System.out.println("ITEMEX - Free Market Item Exchange Plugin unloaded");
+        getLogger().info("ITEMEX - Free Market Item Exchange Plugin unloaded");
     }
 
     public static Itemex getPlugin() {

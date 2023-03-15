@@ -20,7 +20,7 @@ public class clickEventGUI implements Listener {
 
         Player p = (Player) e.getWhoClicked();
 
-        if(e.getView().getTitle().equalsIgnoreCase(ChatColor.BLACK + "ITEMEX")) {
+        if(e.getView().getTitle().equalsIgnoreCase(ChatColor.BLACK + "ITEMEX - Market")) {
             e.setCancelled(true);
             String s_amount = e.getView().getItem(4).getItemMeta().getLore().get(0);        // get the amount of slot 4
             int amount = Integer.parseInt( s_amount.substring(2) );                    // removes the color of the text
@@ -49,7 +49,7 @@ public class clickEventGUI implements Listener {
                     //remove it or block it
                 }
                 else{
-                    p.sendMessage(e.getClick().toString());
+                    //p.sendMessage(e.getClick().toString());
                 }
             }
 
@@ -71,7 +71,7 @@ public class clickEventGUI implements Listener {
                     update_item(amount, p, e, Material.REDSTONE_TORCH, 6, "add 16", r_value[0], r_value[1]);
                     update_item(amount, p, e, Material.SOUL_TORCH, 7, "add 64", r_value[0], r_value[1]);
 
-                    p.sendMessage(e.getClick().toString());
+                    //p.sendMessage(e.getClick().toString());
                 }
             }
 

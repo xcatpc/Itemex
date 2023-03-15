@@ -12,3 +12,9 @@ broker_fee: 0.0
 # If you want to participate to share non-personalized data, please let this setting to true. It will help to improve the plugin
 bstats: true
 
+# If promote_server == true - Your server will be promoted on the Itemex Website (under construction)
+promote_server: true
+
+# If this option is enabled you will get access to our Itemex Web Interface (will work like luckperms editor)
+webui: true
+

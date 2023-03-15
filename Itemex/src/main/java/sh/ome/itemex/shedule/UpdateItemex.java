@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Scanner;
 
+import static org.bukkit.Bukkit.getLogger;
+
 public class UpdateItemex {
     public UpdateItemex(String version) throws IOException {
         URL url = null;
@@ -34,7 +36,7 @@ public class UpdateItemex {
             server_version = new Scanner( url.openStream() ).useDelimiter("\\A").next();
         }
         catch (Exception e){
-            System.out.println("Exception: " + e);
+            getLogger().info("Exception: " + e);
         }
 
 
@@ -48,30 +50,30 @@ public class UpdateItemex {
                     fileOutputStream.write(dataBuffer, 0, bytesRead);
                 }
             } catch (IOException e) {
-                System.out.println("Unable to download new version.");
+                getLogger().info("Unable to download new version.");
             }
 
-            System.out.println("\n ###--------------------------------------------------------------------###");
-            System.out.println("\n");
-            System.out.println("  88");
-            System.out.println("  88    ,d");
-            System.out.println("  88    88");
-            System.out.println("  88  MM88MMM  ,adPPYba,  88,dPYba,,adPYba,    ,adPPYba,  8b,     ,d8");
-            System.out.println("  88    88    a8P_____88  88P'   '88'    '8a  a8P_____88   `Y8, ,8P'");
-            System.out.println("  88    88    8PP\"\"\"\"\"\"\"  88      88      88  8PP\"\"\"\"\"\"\"     )888(   ");
-            System.out.println("  88    88,   '8b,   ,aa  88      88      88  \"8b,   ,aa   ,d8\" \"8b, ");
-            System.out.println("  88    \"Y888  `\"Ybbd8\"'  88      88      88   `\"Ybbd8\"'  8P'     `Y8  ");
-            System.out.println("");
-            System.out.println(ANSI_YELLOW +"  __  _____  ___  ___ __________" + ANSI_RESET);
-            System.out.println(ANSI_YELLOW + " / / / / _ \\/ _ \\/ _ /_  __/ __/" + ANSI_RESET);
-            System.out.println(ANSI_YELLOW + "/ /_/ / ___/ // / __ |/ / / _/" + ANSI_RESET);
-            System.out.println(ANSI_YELLOW + "\\____/_/  /____/_/ |_/_/ /___/ " + ANSI_RESET);
-            System.out.println(ANSI_GREEN + "Successfully downloaded new version: " + server_version  + ". " + ANSI_RED + "Reload necessary!" + ANSI_RESET);
-            //System.out.println("\n" + ANSI_YELLOW + "AVAILABLE! You have " + version + " and " + server_version + " is ready to download from: " + ANSI_RESET + " \n" + ANSI_GREEN + "https://www.spigotmc.org/resources/itemex-players-can-exchange-all-items-with-other-players-free-market.108398/" + ANSI_RESET);
-            System.out.println("\n ###--------------------------------------------------------------------###\n");
+            getLogger().info("\n ###--------------------------------------------------------------------###");
+            getLogger().info("\n");
+            getLogger().info("  88");
+            getLogger().info("  88    ,d");
+            getLogger().info("  88    88");
+            getLogger().info("  88  MM88MMM  ,adPPYba,  88,dPYba,,adPYba,    ,adPPYba,  8b,     ,d8");
+            getLogger().info("  88    88    a8P_____88  88P'   '88'    '8a  a8P_____88   `Y8, ,8P'");
+            getLogger().info("  88    88    8PP\"\"\"\"\"\"\"  88      88      88  8PP\"\"\"\"\"\"\"     )888(   ");
+            getLogger().info("  88    88,   '8b,   ,aa  88      88      88  \"8b,   ,aa   ,d8\" \"8b, ");
+            getLogger().info("  88    \"Y888  `\"Ybbd8\"'  88      88      88   `\"Ybbd8\"'  8P'     `Y8  ");
+            getLogger().info("");
+            getLogger().info(ANSI_YELLOW +"  __  _____  ___  ___ __________" + ANSI_RESET);
+            getLogger().info(ANSI_YELLOW + " / / / / _ \\/ _ \\/ _ /_  __/ __/" + ANSI_RESET);
+            getLogger().info(ANSI_YELLOW + "/ /_/ / ___/ // / __ |/ / / _/" + ANSI_RESET);
+            getLogger().info(ANSI_YELLOW + "\\____/_/  /____/_/ |_/_/ /___/ " + ANSI_RESET);
+            getLogger().info(ANSI_GREEN + "Successfully downloaded new version: " + server_version  + ". " + ANSI_RED + "Reload necessary!" + ANSI_RESET);
+            //getLogger().info("\n" + ANSI_YELLOW + "AVAILABLE! You have " + version + " and " + server_version + " is ready to download from: " + ANSI_RESET + " \n" + ANSI_GREEN + "https://www.spigotmc.org/resources/itemex-players-can-exchange-all-items-with-other-players-free-market.108398/" + ANSI_RESET);
+            getLogger().info("\n ###--------------------------------------------------------------------###\n");
         }
         else {
-            System.out.println(ANSI_GREEN + "You have already the newest Itemex version: v" + server_version + ANSI_RESET);
+            getLogger().info(ANSI_GREEN + "You have already the newest Itemex version: v" + server_version + ANSI_RESET);
         }
     }
 

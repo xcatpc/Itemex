@@ -15,12 +15,6 @@ import static sh.ome.itemex.Itemex.econ;
 
 public class FulfillOrder {
 
-    private String uuid;
-    private String itemid;
-    private String ordertype; //sell 0, buy 1
-    private int    amount;
-    private float price;
-    private long timestamp;
 
     public FulfillOrder() throws SQLException {
 
@@ -130,27 +124,44 @@ public class FulfillOrder {
 
 
     //withdraw money and items to the players. Writes an entry into the payout db
-    private boolean withdraw(String seller_uuid, String buyer_uuid, String itemid, int amount, double price) {
+    public static boolean withdraw(String seller_uuid, String buyer_uuid, String itemid, int amount, double price) {
         //System.out.println("AT WITHDRAW");
         OfflinePlayer o_seller =  Bukkit.getOfflinePlayer(UUID.fromString(seller_uuid));
         OfflinePlayer o_buyer =  Bukkit.getOfflinePlayer(UUID.fromString(buyer_uuid));
         Player seller = Bukkit.getPlayer(UUID.fromString(seller_uuid));
         Player buyer = Bukkit.getPlayer(UUID.fromString(buyer_uuid));
-        double total = price * amount;
+
+        double sub_total = price * amount;
+        double buyer_total = sub_total + (sub_total/100*Itemex.broker_fee)/2;
+        double seller_total = sub_total - (sub_total/100*Itemex.broker_fee)/2;
         double buyer_balance = econ.getBalance(o_buyer);
 
-        if( total < buyer_balance ) {                    // check if buyer have enough money
-            econ.withdrawPlayer(o_buyer, total);         // subtract money from buyer
-            econ.depositPlayer(o_seller, total);         // give money to seller
+        if( buyer_total < buyer_balance ) {                     // check if buyer have enough money
+            econ.withdrawPlayer(o_buyer, buyer_total);          // subtract money from buyer
+            econ.depositPlayer(o_seller, seller_total);         // give money to seller
+
+            String seller_total_string = String.format("%.02f", seller_total);
+            String buyer_total_string = String.format("%.02f", buyer_total);
 
             sqliteDb.insertFullfilledOrders(seller_uuid, buyer_uuid, itemid, amount, price); // Insert Fullfilled order into db
 
+            if(seller_uuid.equals(buyer_uuid)) {   // REFUND IF PLAYER CLOSES ORDER
+                if(seller != null) {
+                    seller.sendMessage("SELLORDER CLOSED SUCESSFULLY");
+                    TextComponent message = new TextComponent(ChatColor.BLUE + "-> (CLICK HERE) You can withdraw with: /ix withdraw " + itemid +" " + amount);
+                    message.setClickEvent( new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ix withdraw " + itemid +" " + amount));
+                    buyer.spigot().sendMessage(message);
+                }
+                sqliteDb.insertPayout(seller_uuid, itemid, amount); // Insert item payout into db
+                return true;
+            }
+
             if(seller == null) {
                 //System.out.println("--DEBUG: SELLER IS OFFLINE!");
-                sqliteDb.insertPayout(seller_uuid, itemid, amount); // Insert payout into db
+                //sqliteDb.insertPayout(seller_uuid, itemid, amount); // Insert payout into db
             }
             else {
-                seller.sendMessage("SELL ORDER" + ChatColor.GREEN+ " FULFILLED!" + ChatColor.WHITE + " You sold [" + amount + "] "  + itemid + " for" + ChatColor.GREEN + " $"  + total);
+                seller.sendMessage("SELL ORDER" + ChatColor.GREEN+ " FULFILLED!" + ChatColor.WHITE + " You sold [" + amount + "] "  + itemid + " for" + ChatColor.GREEN + " $"  + seller_total_string);
             }
 
             if(buyer == null) {
@@ -159,7 +170,7 @@ public class FulfillOrder {
             }
             else {
                 sqliteDb.insertPayout(buyer_uuid, itemid, amount); // Insert item payout into db
-                buyer.sendMessage("BUY ORDER" + ChatColor.GREEN+ " FULFILLED!" + ChatColor.WHITE + " You got [" + amount + "] "  + itemid + " for" + ChatColor.RED + " $"  + total);
+                buyer.sendMessage("BUY ORDER" + ChatColor.GREEN+ " FULFILLED!" + ChatColor.WHITE + " You got [" + amount + "] "  + itemid + " for" + ChatColor.RED + " $"  + buyer_total_string);
                 //buyer.sendMessage("You can withdraw with: /ix withdraw " + itemid +" " + amount);
                 TextComponent message = new TextComponent(ChatColor.BLUE + "-> (CLICK HERE) You can withdraw with: /ix withdraw " + itemid +" " + amount);
                 message.setClickEvent( new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ix withdraw " + itemid +" " + amount));

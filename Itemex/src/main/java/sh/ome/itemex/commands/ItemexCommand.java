@@ -1,16 +1,22 @@
 package sh.ome.itemex.commands;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.chat.SelectorComponentSerializer;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.*;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import sh.ome.itemex.Itemex;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.UUID;
 
 import static java.lang.Float.parseFloat;
@@ -31,7 +37,7 @@ public class ItemexCommand implements CommandExecutor {
                 if(sender instanceof Player) {
                     reply_command = reply_command + print_help(true);
                     p = (Player) sender;
-                    generateGUI(p, 1);
+                    //generateGUI(p, 1);
                 }
                 else
                     reply_command = reply_command + print_help(false);
@@ -114,7 +120,9 @@ public class ItemexCommand implements CommandExecutor {
 
                         }
                         if(last_sell_order == -1) { // no (last) sell orders
-                            reply_command = reply_command + "\nThere are no sell orders to buy. You can create a buy order with: /ix buy <itemname> <amount> limit <price>";
+                            TextComponent message = new TextComponent(ChatColor.BLUE + "-> (CLICK HERE) There are no sell orders to buy. \nYou can create a buy order with: /ix buy " + itemid + " 1 limit <set price>");
+                            message.setClickEvent( new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ix buy " + itemid +" 1 limit <set price>"));
+                            p.spigot().sendMessage(message);
                         }
                         else {
                             //create buy order
@@ -166,11 +174,12 @@ public class ItemexCommand implements CommandExecutor {
 
                 else if(strings[0].equals("sell") ) {
                     Order sellorder = new Order();
+                    boolean is_damaged_or_enchantment = true;
 
                     if(strings.length == 1 || strings.length == 2) { // /ix sell
                         reply_command = "\n\n\n";
                         String itemid;
-                        if(strings.length == 1) {
+                        if(strings.length == 1) { // itemid is what player has in hand
                             itemid = p.getInventory().getItemInHand().getType().toString().toUpperCase();
                         }
 
@@ -190,15 +199,28 @@ public class ItemexCommand implements CommandExecutor {
                             else
                                 itemid = "AIR";
                         }
-                        if(!itemid.equals("AIR")) {
+
+                        if( p.getInventory().getItemInMainHand().getDurability() != 0 )    // GET DAMAGE 0 = no damage
+                            is_damaged_or_enchantment = false;
+
+                        else if( p.getInventory().getItemInMainHand().getEnchantments().size() != 0 )      // if there is an enchantment on the item
+                            is_damaged_or_enchantment = false;
+
+
+
+                        if(!itemid.equals("AIR") && is_damaged_or_enchantment) {
                             sqliteDb.OrderBuffer[] orders;
                             orders = sqliteDb.getBestOrders( itemid );
                             // check if there is a buy order with enough amount (1)
                             int first_buy_order=-1;
                             for(int x=0; x<=7; x++) {
                                 String[] ordertype;
-                                if(orders[0] == null)
-                                    reply_command = reply_command + "There are no buy or sell orders.\nYou can create one with: /ix sell <itemname> <amount> limit <price>";
+                                if(orders[0] == null) {
+                                    TextComponent message = new TextComponent(ChatColor.BLUE + "-> (CLICK HERE) There are no buy orders to sell. \nYou can create a sell order with: /ix sell " + itemid + " 1 limit <set price>");
+                                    message.setClickEvent( new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ix sell " + itemid +" 1 limit <set price>"));
+                                    p.spigot().sendMessage(message);
+                                }
+
                                 if(orders[x] == null) {
                                     break;
                                 }
@@ -225,7 +247,9 @@ public class ItemexCommand implements CommandExecutor {
                             }
                         }
                         else {
-                            if(strings.length == 1)
+                            if(is_damaged_or_enchantment)
+                                reply_command = "You can't sell used items or with enchantment! (at the moment)";
+                            else if(strings.length == 1)
                                 reply_command = "You have nothing in your right hand!";
                             else
                                 reply_command = "You don't have this item in your inventory!";
@@ -238,6 +262,16 @@ public class ItemexCommand implements CommandExecutor {
                         boolean sell_order_ok = true;
                         //System.out.println("ix sell limit: " + price);
 
+                        if( p.getInventory().getItemInMainHand().getDurability() != 0 ) {    // GET DAMAGE 0 = no damage
+                            reply_command = reply_command + "You can't sell used items";
+                            is_damaged_or_enchantment = false;
+                        }
+
+                        else if( p.getInventory().getItemInMainHand().getEnchantments().size() != 0 ) {    // if there is an enchantment on the item
+                            is_damaged_or_enchantment = false;
+                            reply_command = reply_command + "You can't sell enchantment items (right now)";
+                        }
+
                         // proof price
                         if(!strings[3].equals("limit") && !strings[3].equals("market")) {
                             reply_command = reply_command + "Wrong market option: " + strings[3] + " only limit and market accepted!";
@@ -249,6 +283,7 @@ public class ItemexCommand implements CommandExecutor {
                                 sell_order_ok = false;
                             }
                         }
+
 
 
                         boolean item_found = false;
@@ -278,7 +313,8 @@ public class ItemexCommand implements CommandExecutor {
                                 sell_order_ok = false;
                             }
                             else {
-                                if(item_found) {
+                                if(!is_damaged_or_enchantment) {}
+                                else if(item_found) {
                                     if(sell_order_ok)
                                         reply_command = reply_command + create_order( p, strings[1], parseFloat(strings[4]), sellorder.amount, "sell", strings[3] );
                                 }
@@ -334,7 +370,15 @@ public class ItemexCommand implements CommandExecutor {
 
 
                 else if(strings[0].equals("whatIsInMyRightHand") ) {
-                    reply_command = p.getInventory().getItemInHand().getType().toString();
+                    reply_command = "ITEMID: " + p.getInventory().getItemInHand().getType().toString();
+
+                    // GET DAMAGE 0 = no damage
+                    reply_command = reply_command + " \nDurability: " + p.getInventory().getItemInMainHand().getDurability() + "\n";
+
+                    // CHECK if ITEM HAS ENCHANTMENTS
+                    reply_command = reply_command + "Number of Enchantments: " + p.getInventory().getItemInMainHand().getEnchantments().size();
+
+
                 }
 
 
@@ -392,15 +436,15 @@ public class ItemexCommand implements CommandExecutor {
 
                             sqliteDb.OrderBuffer[] list = sqliteDb.getOrdersOfPlayer(p.getUniqueId().toString(), item_id, buy_or_sell, 1); //true = buy ; false = sell
                             reply_command = reply_command + ".\nList of all your ORDERS: \nORDER ID- ITEMID - AMOUNT - PRICE - ORDERTYPE\n";
-                            for(int i=0; i<1000000; i++){
+                            for(int i=0; i<100; i++){ // 100 is max
                                 if(list[i] == null) {
-                                    //System.out.println("NULL");
                                     break;
                                 }
                                 else {
                                     reply_command = reply_command +  color + list[i].id + " " +ChatColor.WHITE +list[i].itemid + " " + list[i].amount + " " + color + list[i].price + " " + list[i].ordertype + "\n" + ChatColor.WHITE;
                                 }
                             } // end for
+                            reply_command = reply_command + "\nand more.. please use /ix order list <sellorders | buyorders> <itemid>";
 
                         }
                         else
@@ -414,17 +458,20 @@ public class ItemexCommand implements CommandExecutor {
 
 
                 else if(strings[0].equals("withdraw") ) {
-                    if(strings.length == 1) { // /ix withdraw list
-                        reply_command = reply_command + " /ix withdraw list \n";
+                    if(strings.length == 1 || (strings.length == 2) && ( strings[1].equals("list") || strings[1].equals("_list") ) ){ // /ix withdraw list
+                        //reply_command = reply_command + " /ix withdraw list \n";
                         sqliteDb.Payout[] payouts = sqliteDb.getPayout(p.getUniqueId().toString());
-                        reply_command = reply_command + "\n\nYou can withdraw following items: \n[Amount] ItemID";
+                        reply_command = reply_command + "\n\nYou can withdraw following items: [Amount] ItemID\n";
+
                         for (int i = 0; i < payouts.length; i++) {
                             if(payouts[i] == null) { //skip empty entries
+                                if(i == 0)
+                                    reply_command = reply_command + "\n\nThere are no items to withdraw!";
                                 break;
                             }
                             reply_command = reply_command + "\n [" + payouts[i].amount + "] " + ChatColor.GREEN + payouts[i].itemid + ChatColor.WHITE +  " \n";
                         }
-                        reply_command = reply_command + "You can withdraw with /ix withdraw <itemid> <amount>";
+                        //reply_command = reply_command + "You can withdraw with /ix withdraw <itemid> <amount>";
                     }
                     else if(strings.length == 3) { // /ix withdraw <itemid> <amount>
                         reply_command = reply_command + "/ix withdraw <itemID:" + strings[1] +"> <amount:" + strings[2]+"> \n\n";
@@ -499,6 +546,7 @@ public class ItemexCommand implements CommandExecutor {
                                 sqliteDb.updatePayout(p.getUniqueId().toString(), payouts[i].id, payouts[i].itemid, payouts[i].amount-x ); //update the amount
                             }
                         }
+
                     }
                     else {
                         reply_command = reply_command + "Wrong syntax. Please look at: /help";
@@ -509,7 +557,8 @@ public class ItemexCommand implements CommandExecutor {
 
 
                 else if(strings[0].equals("gui") ) {
-                    generateGUI(p, 1);
+                    //generateGUI(p, 1);
+                    reply_command = "GUI in development!";
                 }
 
 
@@ -744,9 +793,8 @@ public class ItemexCommand implements CommandExecutor {
                 "\n" + green + "/ix buy <itemname> <amount> <limit | market> <price> " + dark_gray + "| create buy order" +
                 "\n" + green + "/ix sell <itemname> <amount> <limit | market> <price> " + dark_gray + "| create sell order\n." +
 
-                "\n" + green + "/ix order list <item id>" + dark_gray + "| list all own buy- and sellorders" +
-                "\n" + green + "/ix order edit <order id> <amount> <price> " + dark_gray + "| edit the price of an existing order" +
-                "\n" + green + "/ix order close <order id> " + dark_gray + "| list all your available payouts\n." +
+                "\n" + green + "/ix order list <buyordery | sellorders> *<item id>" + dark_gray + "| list all own buy- and sellorders" +
+                "\n" + green + "/ix order close <buyordery | sellorders> <order id> " + dark_gray + "| list all your available payouts\n." +
 
                 "\n" + green + "/ix withdraw list " + dark_gray+ "| list all your available payouts" +
                 "\n" + green + "/ix withdraw <itemname> <amount> " + dark_gray + "| withdraw " + dark_purple +

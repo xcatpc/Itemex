@@ -1,4 +1,6 @@
 package sh.ome.itemex.commands;
+import sh.ome.itemex.shedule.FulfillOrder;
+
 import java.sql.*;
 import java.time.Instant;
 
@@ -246,7 +248,7 @@ public class sqliteDb {
 
 
     public static OrderBuffer[] getOrdersOfPlayer(String player_uuid, String itemid, boolean buy_or_sell, int page){
-        OrderBuffer[] buffer = new OrderBuffer[100];
+        OrderBuffer[] buffer = new OrderBuffer[100000000];
         Connection c = null;
         Statement stmt = null;
         String sql;
@@ -280,7 +282,6 @@ public class sqliteDb {
             System.err.println( "at getOrdersOfPlayer: " + e);
             System.exit(0);
         }
-
         return buffer;
     }
 
@@ -438,11 +439,41 @@ public class sqliteDb {
 
 
     public static boolean PlayercloseOrder(String player_uuid, String table_name, int ID) {
-        System.out.println("AT PlayercloseOrder: " + table_name + " " + ID + " Player_uid: "+ player_uuid);
+        //System.out.println("AT PlayercloseOrder: " + table_name + " " + ID + " Player_uid: "+ player_uuid);
         Connection c = null;
         Statement stmt = null;
         int row_affected = 0;
+        int refund_amount = 0;
+        String refund_item_id = "";
+        double refund_price = 0;
 
+        // get the refund_amount of order
+        if(table_name.equals("SELLORDERS")) {
+            try {
+                Class.forName("org.sqlite.JDBC");
+                c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+                stmt = c.createStatement();
+                String sql = "SELECT * FROM SELLORDERS WHERE id = '" + ID + "'";
+
+                stmt.executeUpdate(sql);
+                ResultSet rs    = stmt.executeQuery(sql);
+
+                while (rs.next()) {
+                    refund_amount = rs.getInt("amount");
+                    refund_item_id = rs.getString("itemid");
+                    refund_price = rs.getDouble("price");
+                }
+                System.out.println("REFUND AMOUNT: " + refund_amount);
+                stmt.close();
+
+            } catch ( Exception e ) {
+                System.out.println("ERROR at getPayou()");
+                System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+                System.exit(0);
+            }
+        }
+
+        // delete the order
         try {
             Class.forName("org.sqlite.JDBC");
             c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
@@ -458,8 +489,20 @@ public class sqliteDb {
             System.exit(0);
             return false;
         }
-        if(row_affected == 1)
+        if(row_affected == 1) {
+            // refund
+            if(table_name.equals("SELLORDERS")) {
+                if(refund_amount != 0) {
+                    if (FulfillOrder.withdraw(player_uuid , player_uuid, refund_item_id, refund_amount, refund_price) ) {
+                        return true;
+                    }
+                    else return false;
+                }
+                else return true;
+            }
             return true;
+        }
+
 
         return false;
     } // end closeOrder
