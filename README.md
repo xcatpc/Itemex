@@ -1,3 +1,5 @@
+<img src="https://ome.sh/Itemex_logo.png">
+
 Tested MC Version: 1.19.3
 
 Requirements: Vault
@@ -10,7 +12,8 @@ Discord: https://discord.gg/wTyjfjCmEU
 
 STATUS: BETA - tested serveral hours with multiple players
 
-[MEDIA=youtube]0se7owqRkic[/MEDIA]
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/0se7owqRkic/0.jpg)](https://www.youtube.com/watch?v=0se7owqRkic)
+
 
 Don't be confused about the double notification in this video. This is because I bought and sold to myself.
 
