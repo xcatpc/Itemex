@@ -1,6 +1,11 @@
 Tested MC Version: 1.19.3
+
 Requirements: Vault
+
+SpigotMC: https://www.spigotmc.org/resources/itemex-players-can-exchange-all-items-with-other-players-free-market.108398/
+
 Github: https://github.com/xcatpc/Itemex
+
 Discord: https://discord.gg/wTyjfjCmEU
 
 STATUS: BETA - tested serveral hours with multiple players
