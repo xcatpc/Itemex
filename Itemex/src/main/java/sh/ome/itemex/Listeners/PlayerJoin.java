@@ -12,7 +12,6 @@ public class PlayerJoin implements Listener {
     public void onPlayerJoin(PlayerJoinEvent e) {
         //System.out.println("# DEBUG - PLAYER JOINED THE SERVER");
         sqliteDb.Payout[] payouts;
-
         payouts = new sqliteDb.Payout[1];
         payouts= sqliteDb.getPayout(e.getPlayer().getUniqueId().toString());
 

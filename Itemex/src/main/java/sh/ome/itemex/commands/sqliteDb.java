@@ -5,12 +5,15 @@ import java.sql.*;
 import java.time.Instant;
 
 public class sqliteDb {
+    private static int MAX_BUFFER = 10000000; // 10 MIO
     private String uuid;
     private String itemid;
     private String ordertype;
     private int    amount;
     private float price;
     private long timestamp;
+
+
 
     public sqliteDb(ItemexCommand.Order sellorder) { //constructor
         uuid = sellorder.uuid;
@@ -28,7 +31,6 @@ public class sqliteDb {
     public boolean createBuyOrder() {
         return insertIntoDB("BUYORDERS");
     }
-
 
 
     public static void createDBifNotExists() {
@@ -84,6 +86,7 @@ public class sqliteDb {
             System.err.println( e.getClass().getName() + ": " + e.getMessage() );
             System.exit(0);
         }
+
     } // end createDatabaseIfNotExists
 
 
@@ -212,7 +215,7 @@ public class sqliteDb {
 
     public static Payout[] getPayout(String player_uuid) {
         System.out.println("UUID: " + player_uuid);
-        Payout[] buffer = new Payout[1000000];
+        Payout[] buffer = new Payout[MAX_BUFFER];
         System.out.println("UUID2: " + player_uuid);
 
         int row_counter = 0;
@@ -248,7 +251,7 @@ public class sqliteDb {
 
 
     public static OrderBuffer[] getOrdersOfPlayer(String player_uuid, String itemid, boolean buy_or_sell, int page){
-        OrderBuffer[] buffer = new OrderBuffer[100000000];
+        OrderBuffer[] buffer = new OrderBuffer[MAX_BUFFER];
         Connection c = null;
         Statement stmt = null;
         String sql;
@@ -365,7 +368,7 @@ public class sqliteDb {
 
 
     public static sqliteDb.OrderBuffer[] selectAll(String table){
-        sqliteDb.OrderBuffer[] buffer = new sqliteDb.OrderBuffer[1000000];
+        sqliteDb.OrderBuffer[] buffer = new sqliteDb.OrderBuffer[MAX_BUFFER];
         String sql = null;
         if(table.equals("SELLORDERS")) {
             sql = "SELECT * FROM SELLORDERS ORDER by itemid ASC, price";
@@ -506,11 +509,6 @@ public class sqliteDb {
 
         return false;
     } // end closeOrder
-
-
-
-
-
 
 
 

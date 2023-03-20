@@ -1,22 +1,22 @@
 package sh.ome.itemex.commands;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.chat.SelectorComponentSerializer;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.*;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import sh.ome.itemex.Itemex;
+import sh.ome.itemex.files.CategoryFile;
+
 import java.util.ArrayList;
-import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 
 import static java.lang.Float.parseFloat;
@@ -37,7 +37,7 @@ public class ItemexCommand implements CommandExecutor {
                 if(sender instanceof Player) {
                     reply_command = reply_command + print_help(true);
                     p = (Player) sender;
-                    //generateGUI(p, 1);
+                    generateGUI(p, 1);
                 }
                 else
                     reply_command = reply_command + print_help(false);
@@ -105,8 +105,8 @@ public class ItemexCommand implements CommandExecutor {
                         int last_sell_order=-1;
                         for(int x=0; x<=7; x++) {
                             String[] ordertype;
-                            if(orders[0] == null)
-                                reply_command = reply_command + "There are no buy or sell orders.\nYou can create one with: /ix buy <itemname> <amount> limit <price>";
+                            //if(orders[0] == null)
+                                //reply_command = reply_command + "There are no buy or sell orders.\nYou can create one with: /ix buy <itemname> <amount> limit <price>";
                             if(orders[x] == null) {
                                 break;
                             }
@@ -120,8 +120,8 @@ public class ItemexCommand implements CommandExecutor {
 
                         }
                         if(last_sell_order == -1) { // no (last) sell orders
-                            TextComponent message = new TextComponent(ChatColor.BLUE + "-> (CLICK HERE) There are no sell orders to buy. \nYou can create a buy order with: /ix buy " + itemid + " 1 limit <set price>");
-                            message.setClickEvent( new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ix buy " + itemid +" 1 limit <set price>"));
+                            TextComponent message = new TextComponent(ChatColor.BLUE + "-> (CLICK HERE) There are no sell orders to buy. \nYou can create a buy order with: /ix buy " + itemid + " 1 limit");
+                            message.setClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix buy " + itemid +" 1 limit "));
                             p.spigot().sendMessage(message);
                         }
                         else {
@@ -216,8 +216,8 @@ public class ItemexCommand implements CommandExecutor {
                             for(int x=0; x<=7; x++) {
                                 String[] ordertype;
                                 if(orders[0] == null) {
-                                    TextComponent message = new TextComponent(ChatColor.BLUE + "-> (CLICK HERE) There are no buy orders to sell. \nYou can create a sell order with: /ix sell " + itemid + " 1 limit <set price>");
-                                    message.setClickEvent( new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ix sell " + itemid +" 1 limit <set price>"));
+                                    TextComponent message = new TextComponent(ChatColor.BLUE + "-> (CLICK HERE) There are no buy orders to sell. \nYou can create a sell order with: /ix sell " + itemid + " 1 limit ");
+                                    message.setClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix sell " + itemid +" 1 limit "));
                                     p.spigot().sendMessage(message);
                                 }
 
@@ -239,7 +239,7 @@ public class ItemexCommand implements CommandExecutor {
 
                             }
                             if(first_buy_order == -1) { // no (first) sell orders
-                                reply_command = reply_command + "\nThere are no buy orders to sell. You can create a sell order with: /ix sell <itemname> <amount> limit <price>";
+                                //reply_command = reply_command + "\nThere are no buy orders to sell. You can create a sell order with: /ix sell <itemname> <amount> limit <price>";
                             }
                             else {
                                // create_sell_order(p, itemid, 1, orders[first_buy_order].price); //replaced with create order
@@ -557,9 +557,23 @@ public class ItemexCommand implements CommandExecutor {
 
 
                 else if(strings[0].equals("gui") ) {
-                    //generateGUI(p, 1);
-                    reply_command = "GUI in development!";
+                    generateGUI(p, 1);
+
                 }
+
+
+                else if(strings[0].equals("gui_new") ) {
+                    GUI.generateGUI(p, 0);
+
+                    /*
+                    for (String cat : CategoryFile.get().getStringList("categories.CATEGORY_NAMES")) {
+                        p.sendMessage(cat);
+                    }
+
+                     */
+
+                }
+
 
 
 
@@ -656,7 +670,6 @@ public class ItemexCommand implements CommandExecutor {
         backMeta.setDisplayName("previous page");
         ArrayList<String> back_lore = new ArrayList<>();
         back_lore.add(ChatColor.GOLD + "1");
-        //back_lore.add(ChatColor.BLUE + "uups");
         backMeta.setLore(back_lore);
         back.setItemMeta(backMeta);
 
@@ -734,13 +747,53 @@ public class ItemexCommand implements CommandExecutor {
 
         int x = 8;
         for (Material material : Material.values()) {
-            //System.out.println(x + " " + material);
+            //System.out.println(x + " " + material.isBlock());
 
-            inv.setItem(x, new ItemStack(material));
+
+            ItemStack temp = new ItemStack(material);
+
+            if(temp.getItemMeta() != null) {
+                sqliteDb.OrderBuffer[] toporders = sqliteDb.getBestOrders( material.name() );
+                String s_toporder[] = new String[8];
+                for(int xx =0; xx<=7; xx++) {
+                    if(toporders[xx] != null) {
+                        String ordertype[] = toporders[xx].ordertype.split(":", 0);
+                        String format_price = String.format("%.02f", toporders[xx].price);
+                        if(ordertype[0].equals("sell"))
+                            s_toporder[xx] = ChatColor.RED + "[" +  toporders[xx].amount +"] $" + format_price;
+                        else
+                            s_toporder[xx] = ChatColor.GREEN + "[" +  toporders[xx].amount +"] $" + format_price;
+                    }
+
+                    else
+                        s_toporder[xx] = ChatColor.DARK_GRAY + "-";
+                }
+
+                ItemMeta tempMeta = temp.getItemMeta();
+                //tempMeta.setDisplayName(material.name());
+                ArrayList<String> temp_lore = new ArrayList<>();
+                temp_lore.add(ChatColor.DARK_GRAY + "[amount] <price>");
+                temp_lore.add(s_toporder[0]);
+                temp_lore.add(s_toporder[1]);
+                temp_lore.add(s_toporder[2]);
+                temp_lore.add(s_toporder[3]);
+
+                temp_lore.add(s_toporder[4]);
+                temp_lore.add(s_toporder[5]);
+                temp_lore.add(s_toporder[6]);
+                temp_lore.add(s_toporder[7]);
+
+                temp_lore.add(ChatColor.RED + "sellorders" +  ChatColor.WHITE + " | " + ChatColor.GREEN + "buyorders");
+                tempMeta.setLore(temp_lore);
+                temp.setItemMeta(tempMeta);
+
+                inv.setItem(x, temp);
+            }
+
 
             x++;
             if(x >= 54) { break; }
-        }
+        } // material values end
 
         inv.setItem(0, back);
         inv.setItem(8, next);

@@ -46,9 +46,9 @@ public class commandAutoComplete implements TabCompleter {
             else if(args.length == 3) {
                 List<String> options = null;
                 if( args[0].equals("buy") )
-                    options = Arrays.asList("1", "16", "32", "64", "1024", "2048");
+                    options = Arrays.asList("0_set amount", "1", "16", "32", "64", "1024", "2048");
                 else
-                    options = Arrays.asList("1", "16", "32", "64", "1024", "max");
+                    options = Arrays.asList("0_set amount", "1", "16", "32", "64", "1024", "max");
 
                 return options;
             }
@@ -57,7 +57,7 @@ public class commandAutoComplete implements TabCompleter {
                 return options;
             }
             else if(args.length == 5) {
-                List<String> options = Arrays.asList("10", "20", "30", "500", "5000", "1000000");
+                List<String> options = Arrays.asList("0_set price","10", "20", "30", "500", "5000", "1000000");
                 return options;
             }
             else if(args.length == 6)

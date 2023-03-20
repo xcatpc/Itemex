@@ -1,5 +1,7 @@
 package sh.ome.itemex.events;
 
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -14,13 +16,15 @@ import sh.ome.itemex.commands.sqliteDb;
 
 import java.util.ArrayList;
 
+import static java.lang.Float.parseFloat;
+
 public class clickEventGUI implements Listener {
     @EventHandler
     public void clickEvent(InventoryClickEvent e) {
 
         Player p = (Player) e.getWhoClicked();
 
-        if(e.getView().getTitle().equalsIgnoreCase(ChatColor.BLACK + "ITEMEX - Market")) {
+        if(e.getView().getTitle().equalsIgnoreCase(ChatColor.BLACK + "ITEMEX")) {
             e.setCancelled(true);
             String s_amount = e.getView().getItem(4).getItemMeta().getLore().get(0);        // get the amount of slot 4
             int amount = Integer.parseInt( s_amount.substring(2) );                    // removes the color of the text
@@ -33,16 +37,54 @@ public class clickEventGUI implements Listener {
                 String[] price = get_price( itemid );
 
                 if( e.getClick().isLeftClick() ) {
-                    float s_price = Float.parseFloat(price[1]);
-                    //ItemexCommand.create_buy_order(p, itemid, s_price, amount);              // price[1] == best sell order //REPLACED
-                    ItemexCommand.create_order(p, itemid, s_price, amount, "buy", "market");
-                    p.sendMessage("BUY " + amount + " " + itemid +" price: " + s_price );      // price[1] == best sell order
+                    if( !price[1].equals("-") ) {
+                        float s_price = parseFloat(price[1]);
+                        ItemexCommand.create_order(p, itemid, s_price, amount, "buy", "market");
+                        p.sendMessage("BUY " + amount + " " + itemid +" price: " + s_price );      // price[1] == best sell order
+                    }
+                    else {
+                        // send message to create limit buy order
+                        TextComponent message = new TextComponent(ChatColor.BLUE + "-> (CLICK HERE) There are no sell orders to buy. \nYou can create a buy order with: /ix buy " + itemid + " "+ amount +" limit ");
+                        message.setClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix buy " + itemid +" "+ amount +" limit "));
+                        p.spigot().sendMessage(message);
+                        e.getView().close();
+                    }
+
+
                 }
-                else if ( e.getClick().isRightClick() ) {
-                    float b_price = Float.parseFloat(price[0]);
-                    //ItemexCommand.create_sell_order(p, itemid, amount, b_price);             // price[1] == best sell order //REPLACED
-                    ItemexCommand.create_order(p, itemid, b_price, amount, "sell", "market");
-                    p.sendMessage("SELL " + amount + " " + itemid +" price: " + b_price );     // price[0] == best buy order
+                else if ( e.getClick().isRightClick()) {
+                    boolean item_found = false;
+                    int item_counter=0;
+
+                    // check if player have the amount of items provided by gui
+                    for (ItemStack item : p.getInventory().getContents()) { //check inventory of player
+                        if(item != null && itemid.equalsIgnoreCase(item.getType().toString())) { //searching only for items with the given ID from command
+                            item_counter = item_counter + item.getAmount();
+                            item_found = true;
+                        }
+                    }
+
+                    if( !price[0].equals("-") ) {
+                        float b_price = parseFloat(price[0]);
+
+                        if( item_found && amount <= item_counter) {
+                            ItemexCommand.create_order(p, itemid, b_price, amount, "sell", "market");
+                            p.sendMessage("SELL " + amount + " " + itemid +" price: " + b_price );     // price[0] == best buy order
+                        }
+                        else {
+                            p.sendMessage("Not enough items in inventory!");
+                        }
+                    }
+                    else {
+                        // send message to create limit sell order
+                        TextComponent message = new TextComponent(ChatColor.BLUE + "-> (CLICK HERE) There are no buy orders to sell. \nYou can create a sell order with: /ix sell " + itemid + " "+ amount + " limit ");
+                        message.setClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix sell " + itemid +" "+ amount +" limit "));
+                        p.spigot().sendMessage(message);
+                        e.getView().close();
+                    }
+
+
+
                 }
                 else if( e.getClick().toString().equalsIgnoreCase("SWAP_OFFHAND")) {
                     p.sendMessage("Swap offhand");
@@ -51,6 +93,7 @@ public class clickEventGUI implements Listener {
                 else{
                     //p.sendMessage(e.getClick().toString());
                 }
+
             }
 
             // if player clicks on items (not the menu)
@@ -62,14 +105,14 @@ public class clickEventGUI implements Listener {
                 else{
                     String r_value[] = new String[2];
                     r_value = get_price( e.getCurrentItem().getType().toString() );
-                    update_item(amount, p, e, e.getCurrentItem().getType(), 4, e.getCurrentItem().getType().toString(), r_value[0], r_value[1]);
+                    update_item(amount, p, e, e.getCurrentItem().getType(), 4, e.getCurrentItem().getType().toString(), r_value[0] + " ", r_value[1]);
 
-                    update_item(amount, p, e, Material.SOUL_TORCH, 1, "sub 64", r_value[0], r_value[1]);
-                    update_item(amount, p, e, Material.REDSTONE_TORCH, 2, "sub 16", r_value[0], r_value[1]);
-                    update_item(amount, p, e, Material.TORCH, 3, "sub 1", r_value[0], r_value[1]);
-                    update_item(amount, p, e, Material.TORCH, 5, "add 1", r_value[0], r_value[1]);
-                    update_item(amount, p, e, Material.REDSTONE_TORCH, 6, "add 16", r_value[0], r_value[1]);
-                    update_item(amount, p, e, Material.SOUL_TORCH, 7, "add 64", r_value[0], r_value[1]);
+                    update_item(amount, p, e, Material.SOUL_TORCH, 1, "sub 64", "", "");
+                    update_item(amount, p, e, Material.REDSTONE_TORCH, 2, "sub 16", "", "");
+                    update_item(amount, p, e, Material.TORCH, 3, "sub 1","", "");
+                    update_item(amount, p, e, Material.TORCH, 5, "add 1", "", "");
+                    update_item(amount, p, e, Material.REDSTONE_TORCH, 6, "add 16", "", "");
+                    update_item(amount, p, e, Material.SOUL_TORCH, 7, "add 64", "", "");
 
                     //p.sendMessage(e.getClick().toString());
                 }
@@ -119,24 +162,13 @@ public class clickEventGUI implements Listener {
                 
                 update_item(amount, p, e, e.getInventory().getItem(4).getType(), 4, e.getInventory().getItem(4).getType().toString(), r_value[0], r_value[1]);
 
-                update_item(amount, p, e, Material.SOUL_TORCH, 1, "sub 64", r_value[0], r_value[1]);
-                update_item(amount, p, e, Material.REDSTONE_TORCH, 2, "sub 16", r_value[0], r_value[1]);
-                update_item(amount, p, e, Material.TORCH, 3, "sub 1", r_value[0], r_value[1]);
-                update_item(amount, p, e, Material.TORCH, 5, "add 1", r_value[0], r_value[1]);
-                update_item(amount, p, e, Material.REDSTONE_TORCH, 6, "add 16", r_value[0], r_value[1]);
-                update_item(amount, p, e, Material.SOUL_TORCH, 7, "add 64", r_value[0], r_value[1]);
+                update_item(amount, p, e, Material.SOUL_TORCH, 1, "sub 64","", "");
+                update_item(amount, p, e, Material.REDSTONE_TORCH, 2, "sub 16", "", "");
+                update_item(amount, p, e, Material.TORCH, 3, "sub 1", "", "");
+                update_item(amount, p, e, Material.TORCH, 5, "add 1", "", "");
+                update_item(amount, p, e, Material.REDSTONE_TORCH, 6, "add 16", "", "");
+                update_item(amount, p, e, Material.SOUL_TORCH, 7, "add 64", "", "");
             }
-
-/*
-            // ONLY FOR TEST
-            switch(e.getCurrentItem().getType()) {
-                case STONE:
-                    p.closeInventory();
-                    p.setHealthScale(3.0);
-                    p.sendMessage("haha");
-                    break;
-            }
- */
 
         }
 
@@ -155,8 +187,9 @@ public class clickEventGUI implements Listener {
         ArrayList<String> item_lore = new ArrayList<>();
         item_lore.add(ChatColor.WHITE + temp_s_amount);
         if(!buy.equals("") || !sell.equals("")) {
-            item_lore.add(ChatColor.GREEN + "(left) BUY: " +sell);
-            item_lore.add(ChatColor.RED + "(right) SELL: " + buy);
+            // get sum of market price
+            item_lore.add(ChatColor.GREEN + "(left) BUY: " + amount );
+            item_lore.add(ChatColor.RED + "(right) SELL: " + amount);
         }
 
         itemMeta.setLore(item_lore);
@@ -170,14 +203,56 @@ public class clickEventGUI implements Listener {
         int max_stack = 5*9;
 
         for (Material material : Material.values()) {
+
+            ItemStack temp = new ItemStack(material);
+
             if(x >= (page*max_stack - max_stack)) {
-                inv.setItem(( x+max_stack-page*max_stack+9), new ItemStack(material));
+                if(temp.getItemMeta() != null) {
+                    sqliteDb.OrderBuffer[] toporders = sqliteDb.getBestOrders( material.name() );
+                    String s_toporder[] = new String[8];
+                    for(int xx =0; xx<=7; xx++) {
+                        if(toporders[xx] != null) {
+                            String ordertype[] = toporders[xx].ordertype.split(":", 0);
+                            String format_price = String.format("%.02f", toporders[xx].price);
+                            if(ordertype[0].equals("sell"))
+                                s_toporder[xx] = ChatColor.RED + "[" +  toporders[xx].amount +"] $" + format_price;
+                            else
+                                s_toporder[xx] = ChatColor.GREEN + "[" +  toporders[xx].amount +"] $" + format_price;
+                        }
+
+                        else
+                            s_toporder[xx] = ChatColor.DARK_GRAY + "-";
+                    }
+
+                    ItemMeta tempMeta = temp.getItemMeta();
+                    //tempMeta.setDisplayName(material.name());
+                    ArrayList<String> temp_lore = new ArrayList<>();
+                    temp_lore.add(ChatColor.DARK_GRAY + "[amount] <price>");
+                    temp_lore.add(s_toporder[0]);
+                    temp_lore.add(s_toporder[1]);
+                    temp_lore.add(s_toporder[2]);
+                    temp_lore.add(s_toporder[3]);
+
+                    temp_lore.add(s_toporder[4]);
+                    temp_lore.add(s_toporder[5]);
+                    temp_lore.add(s_toporder[6]);
+                    temp_lore.add(s_toporder[7]);
+
+                    temp_lore.add(ChatColor.RED + "sellorders" +  ChatColor.WHITE + " | " + ChatColor.GREEN + "buyorders");
+                    tempMeta.setLore(temp_lore);
+                    temp.setItemMeta(tempMeta);
+
+                   // inv.setItem(x, temp);
+                    inv.setItem(( x+max_stack-page*max_stack+9), temp);
+                }
+                //inv.setItem(( x+max_stack-page*max_stack+9), new ItemStack(material));
 
             }
             if(x >= page*max_stack-1)
                 break;
             x++;
-        }
+
+        } // Material values end
     } // end scroll_page
 
 
@@ -212,6 +287,14 @@ public class clickEventGUI implements Listener {
         }
         r_value[0] = buy;
         r_value[1] = sell;
+        return r_value;
+    }
+
+
+
+    private String[] get_price_of(String item, int amount){
+        String r_value[];
+        r_value = new String[2];
         return r_value;
     }
 

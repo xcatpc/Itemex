@@ -1,32 +1,19 @@
 // new version change version in: pom.xml, Itemex.java
 
-//TODO
-// handle exception if update server not available
-// new orders must be sort down (Because old orders should be fulfilled first if price is equal)
 
-
-
-/*
-changelog 0.17
-- GUI disabled - critical bug found, will be enabled at next update
-- implement broker_fee in config.yml
-- removed /order edit from help
-- better autocompletion at /ix price
-- add empty string to end of all commands (instead of username)
-- implement /ix withdraw list
-- removed LEFT and RIGHT message if click in the GUI
-- rewrite autocomplete for /sell limit orders: List only what is in the invenstory of player.
-- used items generate a sell order but will not be removed. (solution: block used items)
-- if /ix sell and /ix buy respond in: there are no orders -> send a clickable command like /ix sell diamond 1 limit 10000 (default price)
-- Message: float price limit to 2 floating point
-- /ix withdraw better messages
-- FIX /ix close order does not refund sell orders
-- Use getLogger().info() instead of System.out.println()
-- FIX - /ix order list sellorders ERROR -> at getOrdersOfPlayer: java.lang.ArrayIndexOutOfBoundsException: Index 100 out of bounds for length 100
-
- */
-
-/* FOUND THESE BUGS. LIST ALSO SOME IMPROVEMENTS:
+/* BUGS AND IMPROVEMENTS:
+- create categories -> config file
+- handle exception if update server not available
+- new orders must be sort down (Because old orders should be fulfilled first if price is equal)
+- remove autocomplete price at market orders
+- /ix gui load very slow because of heavy db usage -> insert all best_prices into class or hover over
+- /ix gui best sell orders wrong if no at least 4 sell and 4 buy orders!
+- remove sub and add 16 and insert 1.
+- /ix quicksell (own gui for quickselling all items)
+- /ix gui orders (list all orders) or is inside the normal /ix gui which would be better
+- at ix sell: If I hold something in the hand it most be in the list on the top
+- "confirm" on market order could be a good thing. ie. have to hold the product/price for 10seconds or something
+- include the broker_fee (the half of it) into the buy price (sell order)
 - /ix withdraw list must have a parameter of page. only 100 entries can be send to player.
 - add default prices that reflects on the reserve currency (DIAMOND) (useful if no buy and sellorders are available or only a buy or sellorder) - need statistics
 - proof input of user like on /ix list everywhere. (On some commands its not checking if the values are valide)
@@ -35,32 +22,15 @@ changelog 0.17
 - GUI: sort items by availibity
 - add potions and enchanted items
 
+SEPERATION OF:
+double buyer_total = sub_total + (sub_total/100*Itemex.broker_fee)/2;
+double seller_total = sub_total - (sub_total/100*Itemex.broker_fee)/2;
+
  */
 
-
 /*
-changelog 0.16
-- implement /ix order list  <buyorders | sellorders> *<itemid>  | * optional
-- implement /ix order edit <buyorders | sellorders> <order id>
-- implement config.yml
-
-changelog 0.15:
-- implement autoupdate (server must be restarted, but reload plugin if a updates is downloaded)
-- implement bstats
-
-changelog 0.14:
-- market orders (sell and buy orders with this type will get fulfilled with every order) (The GUI generates only market orders)
-- implemented /ix order <edit/list/close> with autocomplete
-- if buyer don't have enough money -> close order
-- moved all db related functions (methods) to the sqliteDb class (more order)
-- moved the database into the plugin folder (Itemex)
-- added a config file (does not much right now)
-- improved update checker (checks on start and every 24h)
-- nice update message
-- rewrite a lot of code for better readability despaghettification^^
-- print help and open gui on command /ix if user is Player
-
-
+changelog 0.18
+-
  */
 
 
@@ -68,12 +38,15 @@ package sh.ome.itemex;
 
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import sh.ome.itemex.Listeners.PlayerJoin;
+import sh.ome.itemex.events.ClickGUI;
+import sh.ome.itemex.files.CategoryFile;
 import sh.ome.itemex.shedule.FulfillOrder;
 import sh.ome.itemex.commands.ItemexCommand;
 import sh.ome.itemex.commands.commandAutoComplete;
@@ -91,12 +64,14 @@ public final class Itemex extends JavaPlugin implements Listener {
 
     private static Itemex plugin;
     public static Economy econ = null;
-    public static String version = "0.17";
+    public static String version = "0.17.4";
 
     public static boolean admin_function;
     public static double admin_function_percentage;
     public static double broker_fee;
     public static boolean bstats;
+
+
 
 
 
@@ -136,8 +111,8 @@ public final class Itemex extends JavaPlugin implements Listener {
         getCommand("ix").setExecutor(new ItemexCommand());
         getCommand("ix").setTabCompleter(new commandAutoComplete());
         getServer().getPluginManager().registerEvents(new PlayerJoin(), this);
-        getServer().getPluginManager().registerEvents(new clickEventGUI(), this);
-
+        getServer().getPluginManager().registerEvents(new clickEventGUI(), this);       // old GUI
+        getServer().getPluginManager().registerEvents(new ClickGUI(), this);            // new GUI
 
 
 
@@ -148,6 +123,13 @@ public final class Itemex extends JavaPlugin implements Listener {
         this.admin_function_percentage = config.getDouble("admin_function_percentage");
         this.broker_fee = config.getDouble("broker_fee");
         this.bstats = config.getBoolean("bstats");
+
+        // generate categories.yml
+        if (CategoryFile.setup())
+            CategoryFile.init();
+        CategoryFile.get().options().copyDefaults(true);
+        CategoryFile.save();
+
 
         // checks database
         sqliteDb.createDBifNotExists();
