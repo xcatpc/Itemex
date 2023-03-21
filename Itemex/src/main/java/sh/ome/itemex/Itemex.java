@@ -2,6 +2,7 @@
 
 
 /* BUGS AND IMPROVEMENTS:
+-
 - create categories -> config file
 - handle exception if update server not available
 - new orders must be sort down (Because old orders should be fulfilled first if price is equal)
@@ -38,13 +39,13 @@ package sh.ome.itemex;
 
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import sh.ome.itemex.Listeners.PlayerJoin;
+import sh.ome.itemex.RAM.TopOrders;
 import sh.ome.itemex.events.ClickGUI;
 import sh.ome.itemex.files.CategoryFile;
 import sh.ome.itemex.shedule.FulfillOrder;
@@ -57,6 +58,7 @@ import sh.ome.itemex.shedule.UpdateItemex;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Arrays;
 
 public final class Itemex extends JavaPlugin implements Listener {
 
@@ -71,6 +73,10 @@ public final class Itemex extends JavaPlugin implements Listener {
     public static double broker_fee;
     public static boolean bstats;
 
+    public TopOrders topo[] = new TopOrders[1500]; // create 1500 objects for each item ( fill in onEnable() )
+
+
+
 
 
 
@@ -78,6 +84,9 @@ public final class Itemex extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         // Plugin startup logic
+
+        // create all objects
+        Arrays.fill(topo, new TopOrders());
 
         Metrics metrics = new Metrics(this, 17928);
         metrics.addCustomChart(new Metrics.SimplePie("chart_id", () -> "My value"));
@@ -115,6 +124,13 @@ public final class Itemex extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(new ClickGUI(), this);            // new GUI
 
 
+        if (!setupEconomy() ) {
+            getLogger().info("Disabled due to no Vault dependency found!");
+            //getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+
+
 
         // generate config file
         config.options().copyDefaults(true);
@@ -125,8 +141,8 @@ public final class Itemex extends JavaPlugin implements Listener {
         this.bstats = config.getBoolean("bstats");
 
         // generate categories.yml
-        if (CategoryFile.setup())
-            CategoryFile.init();
+        CategoryFile.setup();
+        CategoryFile.init();
         CategoryFile.get().options().copyDefaults(true);
         CategoryFile.save();
 
@@ -148,11 +164,7 @@ public final class Itemex extends JavaPlugin implements Listener {
 
         plugin = this;  // make this private static Itemex accessable in other files
 
-        if (!setupEconomy() ) {
-            getLogger().info("Disabled due to no Vault dependency found!");
-            getServer().getPluginManager().disablePlugin(this);
-            return;
-        }
+
 
         Plugin plugin = Bukkit.getServer().getPluginManager().getPlugin("Itemex");
         //Fulfill Order
@@ -163,7 +175,7 @@ public final class Itemex extends JavaPlugin implements Listener {
                 getLogger().info("Problem with Fulfill Order Scheduler");
                 throw new RuntimeException(e);
             }
-        }, 0, 40); //20 == 1 second 40
+        }, 0, 1); //20 == 1 second 40
 
 
         //Check update
@@ -183,10 +195,12 @@ public final class Itemex extends JavaPlugin implements Listener {
 
     private boolean setupEconomy() {
         if (getServer().getPluginManager().getPlugin("Vault") == null) {
+            getLogger().info("VAULT not found");
             return false;
         }
         RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
         if (rsp == null) {
+            getLogger().info("VAULT rsp = null");
             return false;
         }
         econ = rsp.getProvider();

@@ -26,3 +26,4 @@ sh\ome\itemex\shedule\Metrics$MetricsBase.class
 sh\ome\itemex\shedule\Metrics$DrilldownPie.class
 sh\ome\itemex\commands\GUI.class
 sh\ome\itemex\commands\sqliteDb.class
+sh\ome\itemex\RAM\TopOrders.class

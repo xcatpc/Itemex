@@ -15,13 +15,11 @@ import static sh.ome.itemex.Itemex.econ;
 
 public class FulfillOrder {
 
-
     public FulfillOrder() throws SQLException {
 
         // load buy and sell orders into RAM
         sqliteDb.OrderBuffer[] sellorders = sqliteDb.selectAll("SELLORDERS");
         sqliteDb.OrderBuffer[] buyorders = sqliteDb.selectAll("BUYORDERS");
-
 
         // FIND AND FULFILL ORDERS
         for(int x=0; x<1000000-1; x++) { //max 1b entries
@@ -41,7 +39,7 @@ public class FulfillOrder {
                                 sellorders[x].price = buyorders[y].price;   // set the best price
 
                             if(buy_limit_or_market[1].equals("market"))
-                                buyorders[y].price =  sellorders[x].price;  // set the best price
+                                buyorders[y].price = sellorders[x].price;  // set the best price
 
                             // ADMIN ORDER if admin order enabled AND (sell-order OR buy-order is an admin order)
                             // same as limit, but each single amount fullfilled price in- or decreases to spread. Default amount of spread =
@@ -117,6 +115,8 @@ public class FulfillOrder {
                 } // end y 0 -> 1000000
             } // end sellorders[x] != null
         } // end x 0 -> 100000
+        sellorders = null;
+        buyorders = null;
     } // end fulfill method
 
 

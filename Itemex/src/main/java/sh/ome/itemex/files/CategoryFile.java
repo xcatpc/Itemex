@@ -50,6 +50,11 @@ public class CategoryFile {
         file_config = YamlConfiguration.loadConfiguration(raw_file);
     }
 
+
+    public void seDetault() {
+        //file_config.setDefaults("Test:", "Test");
+    }
+
     public static void init() {
         Map<String, List<String>> map_categories = new HashMap<String, List<String>>();
 
@@ -125,9 +130,14 @@ public class CategoryFile {
         spawn_eggs.add("DIAMOND");
         spawn_eggs.add("GOLD_INGOT");
         spawn_eggs.add("IRON_INGOT");
+        spawn_eggs.add("COAL");
         map_categories.put("SPAWN_EGGS", spawn_eggs);
 
-        file_config.set("categories", map_categories);
+        //file_config.set("categories", map_categories);
+        file_config.addDefault("test.a", "val1");
+        file_config.addDefault("test.b", "val1");
+        file_config.addDefault("test2", "val2");
+        //file_config.setDefaults(map_categories);
 
         save();
 

@@ -7,20 +7,20 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.*;
-import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import sh.ome.itemex.Itemex;
-import sh.ome.itemex.files.CategoryFile;
+import sh.ome.itemex.RAM.TopOrders;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 import static java.lang.Float.parseFloat;
 import static java.lang.Integer.parseInt;
+
+
 
 public class ItemexCommand implements CommandExecutor {
 
@@ -392,7 +392,7 @@ public class ItemexCommand implements CommandExecutor {
                     else if( strings[1].equals("close") ) {
                         if( strings[2].equals("buyorders") || strings[2].equals("sellorders") ) {
                             try {
-                                orderid = Integer.parseInt(strings[3]);;
+                                orderid = parseInt(strings[3]);;
                             } catch (NumberFormatException e) {
                                 reply_command = "OrderID must be a number!\n";
                             }
@@ -572,6 +572,43 @@ public class ItemexCommand implements CommandExecutor {
 
                      */
 
+                }
+
+
+
+
+
+                else if(strings[0].equals("toporders") ) {
+                    TopOrders topo[] = Itemex.getPlugin().topo;
+
+                    if(strings[1].equals("set")) {
+                        float[] top_price = new float[3];
+                        top_price[0] = 124;
+                        top_price[1] = 122;
+                        top_price[2] = 110;
+
+                        int[] top_amount = new int[3];
+                        top_amount[0] = 10;
+                        top_amount[1] = 150;
+                        top_amount[2] = 4;
+
+                        topo[0].updateOrders(top_price, top_price, top_amount, top_amount);
+                        topo[1].updateOrders(top_price, top_price, top_amount, top_amount);
+                        topo[2].updateOrders(top_price, top_price, top_amount, top_amount);
+                    }
+                    else if(strings[1].equals("get")) {
+                        p.sendMessage("1 Amount: " + topo[0].get_buyorder_amount()[0]);
+                        p.sendMessage("1 Price: " + topo[0].get_top_buyorder_prices()[0]);
+                        p.sendMessage("2 Amount: " + topo[1].get_buyorder_amount()[1]);
+                        p.sendMessage("2 Price: " + topo[1].get_top_buyorder_prices()[1]);
+                        p.sendMessage("3 Amount: " + topo[2].get_buyorder_amount()[2]);
+                        p.sendMessage("3 Price: " + topo[2].get_top_buyorder_prices()[2]);
+                    }
+                }
+
+
+                else if(strings[0].equals("test2") ) {
+                    //p.sendMessage("amount + price: " + Itemex.getPlugin().top[0].get_buyorder_amount() + " + " + Itemex.getPlugin().top[0].get_top_buyorder_prices() );
                 }
 
 
