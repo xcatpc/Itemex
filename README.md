@@ -1,10 +1,15 @@
 <img src="https://ome.sh/Itemex_logo.png">
 
-Tested MC Version: 1.19.3
+Tested MC Version: 1.19.4
 
-Requirements: Vault
+Requirements:
 
-SpigotMC: https://www.spigotmc.org/resources/itemex-players-can-exchange-all-items-with-other-players-free-market.108398/
+Vault: https://www.spigotmc.org/resources/vault.34315/
+
+TNE: https://www.spigotmc.org/resources/the-new-economy.7805/
+
+(Maybe also other economy plugins than TNE, please test and mail me)
+
 
 Github: https://github.com/xcatpc/Itemex
 
