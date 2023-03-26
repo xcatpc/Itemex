@@ -1,10 +1,12 @@
 package sh.ome.itemex.Listeners;
 
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
-import sh.ome.itemex.commands.sqliteDb;
+import sh.ome.itemex.functions.sqliteDb;
 
 public class PlayerJoin implements Listener {
 
@@ -12,16 +14,16 @@ public class PlayerJoin implements Listener {
     public void onPlayerJoin(PlayerJoinEvent e) {
         //System.out.println("# DEBUG - PLAYER JOINED THE SERVER");
         sqliteDb.Payout[] payouts;
-        payouts = new sqliteDb.Payout[1];
         payouts= sqliteDb.getPayout(e.getPlayer().getUniqueId().toString());
-
 
         for (int i = 0; i < payouts.length; i++) {
             if(payouts[i] == null) { //skip empty entries
                 break;
             }
             e.getPlayer().sendMessage("BUY ORDER" + ChatColor.GREEN+ " FULFILLED!" + ChatColor.WHITE + " You got [" + payouts[i].amount + "] "  + payouts[i].itemid );
-            e.getPlayer().sendMessage("You can" + ChatColor.GREEN+ " withdraw" + ChatColor.WHITE + " with the command: " + ChatColor.GREEN + "/ix withdraw " + payouts[i].itemid + " " + payouts[i].amount  );
+            TextComponent message = new TextComponent(ChatColor.BLUE + "-> (CLICK HERE) You can withdraw with: /ix withdraw " + payouts[i].itemid +" " + payouts[i].amount);
+            message.setClickEvent( new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ix withdraw " + payouts[i].itemid +" " + payouts[i].amount));
+            e.getPlayer().spigot().sendMessage(message);
         }
     }
 }

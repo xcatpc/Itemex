@@ -7,7 +7,8 @@ admin_function_percentage: 100.0
 admin_function_initial_buy_price: 100
 
 # If you want to charge a fee as server, you can simply edit the variable broker_fee. The vaule is in percentage. You can add for instance a value of 0.25 or any other.
-broker_fee: 0.0
+broker_fee_buyer: 0.0
+broker_fee_seller: 0.0
 
 # If you want to participate to share non-personalized data, please let this setting to true. It will help to improve the plugin
 bstats: true

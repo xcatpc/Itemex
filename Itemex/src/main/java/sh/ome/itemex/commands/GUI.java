@@ -3,7 +3,6 @@ package sh.ome.itemex.commands;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -13,31 +12,13 @@ import sh.ome.itemex.files.CategoryFile;
 import java.util.ArrayList;
 
 public class GUI {
-    public static void generateGUI(Player p, int count) {
-        String GUI_name = null;
-        switch (count){
-            case 0:
-                GUI_name = "ITEMEX - MARKET";
-                break;
-            case 1:
-                GUI_name = "ITEMEX - LIMIT";
-                break;
-            case 2:
-                GUI_name = "ITEMEX - ORDER BOOK";
-                break;
-            case 3:
-                GUI_name = "ITEMEX - FAST SELL";
-                break;
-            case 6:
-                GUI_name = "ITEMEX - VAULT";
-                break;
+    public static void generateGUI(Player p, String menu_type, int slot, int page) {
+        //p.sendMessage("AT GENERATEGUI: " + menu_type);
 
-            default:
-                GUI_name = "ITEMEX - MARKET";
-        }
-        
-        Inventory inv = Bukkit.createInventory(null, 6*9, ChatColor.BLACK +  GUI_name);
-        
+        // -- MENU START -------------------------------------------------------
+
+        // CREATE INVENTORY
+        Inventory inv = Bukkit.createInventory(null, 6*9, ChatColor.BLACK +  menu_type);
 
         // CLOSE WINDOW
         ItemStack close = new ItemStack(Material.BARRIER);
@@ -113,28 +94,49 @@ public class GUI {
         withdrawMeta.setLore(withdraw_lore);
         withdraw.setItemMeta(withdrawMeta);
 
+        // SCROLLING (pages)
+        // RIGHT
+        ItemStack right = new ItemStack(Material.SPECTRAL_ARROW);
+        ItemMeta rightMeta = right.getItemMeta();
+        rightMeta.setDisplayName(ChatColor.WHITE + "Right");
+        ArrayList<String> right_lore = new ArrayList<>();
+        right_lore.add(ChatColor.DARK_GRAY + "Click for scroll to next page");
+        //right_lore.add(ChatColor.DARK_GRAY + "Withdraw your items once -");
+        //right_lore.add(ChatColor.DARK_GRAY + "your buy order is fulfilled");
+        rightMeta.setLore(right_lore);
+        right.setItemMeta(rightMeta);
+        //LEFT
+        ItemStack left = new ItemStack(Material.CROSSBOW);
+        ItemMeta leftMeta = left.getItemMeta();
+        leftMeta.setDisplayName(ChatColor.WHITE + "Left");
+        ArrayList<String> left_lore = new ArrayList<>();
+        left_lore.add(ChatColor.DARK_GRAY + "Click for scroll to previous page");
+        //left_lore.add(ChatColor.DARK_GRAY + "Withdraw your items once -");
+        //left_lore.add(ChatColor.DARK_GRAY + "your buy order is fulfilled");
+        leftMeta.setLore(left_lore);
+        left.setItemMeta(leftMeta);
 
 
-        // CATEGORIES
+        // GET CATEGORIES FROM CONFIG
         String[] cat_names = new String[10];
-        int cat_name_count = 0;
+        int cat_name_gui_type = 0;
         for (String cat : CategoryFile.get().getStringList("categories.CATEGORY_NAMES")) {
-            cat_names[cat_name_count] = cat;
-            cat_name_count++;
+            cat_names[cat_name_gui_type] = cat;
+            cat_name_gui_type++;
         }
 
         ItemStack category[] = new ItemStack[15];
-        for(int cat_count = 0; cat_count <= 9; cat_count++) {
+        for(int cat_gui_type = 0; cat_gui_type <= 9; cat_gui_type++) {
             //split
-            String cat_name[] = cat_names[cat_count].split(":", 0);
-            category[cat_count] = new ItemStack(Material.getMaterial( cat_name[1]));
-            ItemMeta categoryMeta = category[cat_count].getItemMeta();
+            String cat_name[] = cat_names[cat_gui_type].split(":", 0);
+            category[cat_gui_type] = new ItemStack(Material.getMaterial( cat_name[1]));
+            ItemMeta categoryMeta = category[cat_gui_type].getItemMeta();
             categoryMeta.setDisplayName(ChatColor.DARK_AQUA + cat_name[0]);
             ArrayList<String> category_lore = new ArrayList<>();
             category_lore.add(ChatColor.WHITE + "Click to choose a category");
             category_lore.add(ChatColor.DARK_GRAY + "- you can buy and sell each item");
             categoryMeta.setLore(category_lore);
-            category[cat_count].setItemMeta(categoryMeta);
+            category[cat_gui_type].setItemMeta(categoryMeta);
         }
 
 
@@ -142,40 +144,33 @@ public class GUI {
         // PLACEHOLDER
         ItemStack placeholder = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
 
-
         // print placeholder:
-        for(int inv_count = 0; inv_count <= 6*9-1; inv_count++)
-            inv.setItem(inv_count, placeholder);
-
-        // print categories
-        if(count <=1) {
-            int begin_position = 20;
-            int cat_count = 0 + begin_position;
-            for(int inv_count = 0; inv_count <= 6*9-1; inv_count++) {
-                if(inv_count >= 20 && inv_count <=24) {
-                    inv.setItem(cat_count, category[cat_count-20]);
-                    cat_count++;
-                }
-                else if(inv_count >= 29 && inv_count <=33) {
-                    inv.setItem(cat_count+4, category[cat_count-20]);
-                    cat_count++;
-                }
-            }
-        }
+        for(int inv_gui_type = 0; inv_gui_type <= 6*9-1; inv_gui_type++)
+            inv.setItem(inv_gui_type, placeholder);
 
 
-        if(count == 0)
-            inv.setItem(9, new ItemStack(Material.GREEN_STAINED_GLASS_PANE));    //market activated
-        else if(count == 1)
-            inv.setItem(10, new ItemStack(Material.GREEN_STAINED_GLASS_PANE));   //market limit
-        else if(count == 2)
-            inv.setItem(11, new ItemStack(Material.GREEN_STAINED_GLASS_PANE));   //order book
-        else if(count == 3)
-            inv.setItem(12, new ItemStack(Material.GREEN_STAINED_GLASS_PANE));   //fast sell
-        else if(count == 6)
-            inv.setItem(15, new ItemStack(Material.GREEN_STAINED_GLASS_PANE));   //vault
+        // -- MENU END -------------------------------------------------------
 
-        p.sendMessage("COUTN: " + count);
+            if(menu_type.contains("ITEMEX - Market Orders")) {
+
+
+                    inv.setItem(9, new ItemStack(Material.GREEN_STAINED_GLASS_PANE));    // market activated
+                    int begin_position = 20;
+                    int cat_gui_type = 0 + begin_position;
+                    for (int inv_gui_type = 0; inv_gui_type <= 6 * 9 - 1; inv_gui_type++) {
+                        if (inv_gui_type >= 20 && inv_gui_type <= 24) {
+                            inv.setItem(cat_gui_type, category[cat_gui_type - 20]);
+                            cat_gui_type++;
+                        } else if (inv_gui_type >= 29 && inv_gui_type <= 33) {
+                            inv.setItem(cat_gui_type + 4, category[cat_gui_type - 20]);
+                            cat_gui_type++;
+                        }
+                    }
+
+
+
+            } // END Market Orders
+
 
         inv.setItem(0, marketorders);
         inv.setItem(1, limitorders);
@@ -185,7 +180,6 @@ public class GUI {
         inv.setItem(6, withdraw);
         inv.setItem(7, help);
         inv.setItem(8, close);
-
 
         p.openInventory(inv);
     }

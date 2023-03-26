@@ -7,20 +7,21 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.*;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.EnchantmentStorageMeta;
+import org.bukkit.inventory.meta.PotionMeta;
 import sh.ome.itemex.Itemex;
 import sh.ome.itemex.RAM.TopOrders;
+import sh.ome.itemex.functions.sqliteDb;
 
-import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static java.lang.Float.parseFloat;
 import static java.lang.Integer.parseInt;
-
-
 
 public class ItemexCommand implements CommandExecutor {
 
@@ -37,7 +38,7 @@ public class ItemexCommand implements CommandExecutor {
                 if(sender instanceof Player) {
                     reply_command = reply_command + print_help(true);
                     p = (Player) sender;
-                    generateGUI(p, 1);
+                    GUI.generateGUI(p, "ITEMEX - Market Orders", 0, 0);
                 }
                 else
                     reply_command = reply_command + print_help(false);
@@ -85,57 +86,50 @@ public class ItemexCommand implements CommandExecutor {
 
 
                 else if(strings[0].equals("buy") ) {
-                    //Order buyorder = new Order();
                     int item_counter=0;
 
                     if(strings.length == 1 || strings.length == 2) { // /ix buy given itemID or whatisinmyrighthand
                         reply_command = "\n\n\n";
                         // check if something is in right hand
-                        sqliteDb.OrderBuffer[] orders;
                         String itemid;
 
                         if(strings.length == 1)
-                           itemid = p.getInventory().getItemInHand().getType().toString().toUpperCase();
+                            itemid = p.getInventory().getItemInHand().getType().toString().toUpperCase();
                         else
                             itemid = strings[1].toUpperCase();
 
-                        orders = sqliteDb.getBestOrders( itemid );
+                        if(itemid == "AIR") {
+                            p.sendMessage("You can't buy nothing (AIR)");
+                            return false;
+                        }
 
                         // check if there is a sell order with enough amount (1)
-                        int last_sell_order=-1;
-                        for(int x=0; x<=7; x++) {
-                            String[] ordertype;
-                            //if(orders[0] == null)
-                                //reply_command = reply_command + "There are no buy or sell orders.\nYou can create one with: /ix buy <itemname> <amount> limit <price>";
-                            if(orders[x] == null) {
-                                break;
-                            }
-                            else {
-                                ordertype = orders[x].ordertype.split(":", 2);
-                            }
-
-                            if(ordertype[0].equals("sell")) {
-                                last_sell_order = x;
-                            }
-
-                        }
-                        if(last_sell_order == -1) { // no (last) sell orders
-                            TextComponent message = new TextComponent(ChatColor.BLUE + "-> (CLICK HERE) There are no sell orders to buy. \nYou can create a buy order with: /ix buy " + itemid + " 1 limit");
+                        if (Itemex.getPlugin().mtop.get(itemid).get_top_sellorder_prices()[0] == 0) {
+                            TextComponent message = new TextComponent(ChatColor.RED + "There are no sell orders to buy! \n" + ChatColor.BLUE + " -> (CLICK HERE) You can create a buy order with: /ix buy " + itemid + " 1 limit");
                             message.setClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix buy " + itemid +" 1 limit "));
                             p.spigot().sendMessage(message);
                         }
                         else {
                             //create buy order
-                            //reply_command = reply_command + create_buy_order(p, itemid, orders[last_sell_order].price, 1);    // replaced with create order
-                            reply_command = reply_command + create_order(p, itemid, 0, 1, "buy", "market");
+                            p.sendMessage("Best sellorderprice: " + Itemex.getPlugin().mtop.get(itemid).get_top_sellorder_prices()[0]);
+                            reply_command = reply_command + create_order(p, itemid, Itemex.getPlugin().mtop.get(itemid).get_top_sellorder_prices()[0], 1, "buy", "market");
                         }
 
                     } // end ix buy
 
-                    else if(strings.length == 5 || strings.length == 6) { // /ix buy <itemid> <amount> limit <price>
-                        float price = parseFloat(strings[4]);
+                    else if(strings.length >= 4 && strings.length <= 6) { // /ix buy <itemid> <amount> limit <price>
+                        float price;
                         int amount = 0;
                         boolean buy_order_ok = true;
+
+                        if(strings.length == 4) {
+                            price = Itemex.getPlugin().mtop.get( strings[1].toUpperCase() ).get_top_sellorder_prices()[0];
+                            if(price <= 0)
+                                buy_order_ok = false;
+                        }
+                        else {
+                            price = parseFloat(strings[4]);
+                        }
 
                         //proof amount
                         if(strings[2].equals("max"))
@@ -147,7 +141,7 @@ public class ItemexCommand implements CommandExecutor {
 
                         //proof market or limit
                         if(!strings[3].equals("limit") && !strings[3].equals("market")) {
-                            reply_command = reply_command + "Wrong market option: " + strings[3] + " only limit and market accepted!";
+                            reply_command = reply_command + "Wrong market option: (" + strings[3] + ") only limit and market accepted!";
                             buy_order_ok = false;
                         }
                         if(strings[3].equals("limit")) {
@@ -157,9 +151,13 @@ public class ItemexCommand implements CommandExecutor {
                             }
                         }
 
-                        if(buy_order_ok)
-                            reply_command = reply_command + create_order(p, strings[1], parseFloat(strings[4]), amount, "buy", strings[3]);
-
+                        if(buy_order_ok && price >= 0 && strings[3].equals("limit"))
+                            reply_command = reply_command + create_order(p, strings[1], price, amount, "buy", strings[3]);
+                        else{
+                            TextComponent message = new TextComponent(ChatColor.RED + "There are no sell orders to buy! \n" + ChatColor.BLUE + " -> (CLICK HERE) You can create a buy order with: /ix buy " + strings[1].toUpperCase() + " " + amount + " limit <price>");
+                            message.setClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix buy " + strings[1].toUpperCase() +" " + amount + " limit "));
+                            p.spigot().sendMessage(message);
+                        }
 
                     }
                     else {
@@ -171,13 +169,11 @@ public class ItemexCommand implements CommandExecutor {
 
 
 
-
                 else if(strings[0].equals("sell") ) {
                     Order sellorder = new Order();
                     boolean is_damaged_or_enchantment = true;
 
                     if(strings.length == 1 || strings.length == 2) { // /ix sell
-                        reply_command = "\n\n\n";
                         String itemid;
                         if(strings.length == 1) { // itemid is what player has in hand
                             itemid = p.getInventory().getItemInHand().getType().toString().toUpperCase();
@@ -209,41 +205,16 @@ public class ItemexCommand implements CommandExecutor {
 
 
                         if(!itemid.equals("AIR") && is_damaged_or_enchantment) {
-                            sqliteDb.OrderBuffer[] orders;
-                            orders = sqliteDb.getBestOrders( itemid );
                             // check if there is a buy order with enough amount (1)
-                            int first_buy_order=-1;
-                            for(int x=0; x<=7; x++) {
-                                String[] ordertype;
-                                if(orders[0] == null) {
-                                    TextComponent message = new TextComponent(ChatColor.BLUE + "-> (CLICK HERE) There are no buy orders to sell. \nYou can create a sell order with: /ix sell " + itemid + " 1 limit ");
-                                    message.setClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix sell " + itemid +" 1 limit "));
-                                    p.spigot().sendMessage(message);
-                                }
-
-                                if(orders[x] == null) {
-                                    break;
-                                }
-                                else {
-                                    ordertype = orders[x].ordertype.split(":", 2);
-                                }
-
-                                if(ordertype[0].equals("buy")) {
-                                    if( first_buy_order == -1)
-                                        first_buy_order = x;
-                                    reply_command = reply_command + ChatColor.GREEN + ordertype[0] + "order  " + ChatColor.WHITE + orders[x].itemid + "  " + orders[x].amount + "  $ " + orders[x].price + "\n";
-                                }
-                                else {
-                                    reply_command = reply_command + ChatColor.RED + ordertype[0] + "order  " + ChatColor.WHITE + orders[x].itemid + "  " + orders[x].amount + "  $ " + orders[x].price + "\n";
-                                }
-
+                            if (Itemex.getPlugin().mtop.get(itemid).get_top_buyorder_prices()[0] == 0) {
+                                TextComponent message = new TextComponent(ChatColor.RED + "There are no buy orders to sell! \n" + ChatColor.BLUE + " -> (CLICK HERE) You can create a sell order with: /ix sell " + itemid + " 1 limit ");
+                                message.setClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix sell " + itemid +" 1 limit "));
+                                p.spigot().sendMessage(message);
                             }
-                            if(first_buy_order == -1) { // no (first) sell orders
-                                //reply_command = reply_command + "\nThere are no buy orders to sell. You can create a sell order with: /ix sell <itemname> <amount> limit <price>";
-                            }
+
                             else {
                                // create_sell_order(p, itemid, 1, orders[first_buy_order].price); //replaced with create order
-                                reply_command = reply_command + create_order(p, itemid, 0,1, "sell", "market");
+                                reply_command = reply_command + create_order(p, itemid, Itemex.getPlugin().mtop.get(itemid).get_top_buyorder_prices()[3],1, "sell", "market");
                             }
                         }
                         else {
@@ -256,21 +227,19 @@ public class ItemexCommand implements CommandExecutor {
                         }
                     }
 
-                    else if(strings.length == 5 || strings.length == 6) { // /ix sell <itemid> <amount> limit <price>
-                        float price = parseFloat(strings[4]);
-                        int amount = 0;
+                    else if(strings.length >= 4 && strings.length <= 6) { // /ix sell <itemid> <amount> limit <price>
+                        float price;
                         boolean sell_order_ok = true;
-                        //System.out.println("ix sell limit: " + price);
 
-                        if( p.getInventory().getItemInMainHand().getDurability() != 0 ) {    // GET DAMAGE 0 = no damage
-                            reply_command = reply_command + "You can't sell used items";
-                            is_damaged_or_enchantment = false;
+                        if(strings.length == 4) {
+                            price = Itemex.getPlugin().mtop.get( strings[1].toUpperCase() ).get_top_sellorder_prices()[0];
+                            if(price <= 0)
+                                sell_order_ok = false;
+                        }
+                        else {
+                            price = parseFloat(strings[4]);
                         }
 
-                        else if( p.getInventory().getItemInMainHand().getEnchantments().size() != 0 ) {    // if there is an enchantment on the item
-                            is_damaged_or_enchantment = false;
-                            reply_command = reply_command + "You can't sell enchantment items (right now)";
-                        }
 
                         // proof price
                         if(!strings[3].equals("limit") && !strings[3].equals("market")) {
@@ -284,8 +253,6 @@ public class ItemexCommand implements CommandExecutor {
                             }
                         }
 
-
-
                         boolean item_found = false;
                         //reply_command = "/ix sell <itemname> <amount> limit <price> " + p.getName();
 
@@ -293,9 +260,7 @@ public class ItemexCommand implements CommandExecutor {
                         int item_counter=0;
                         for (ItemStack item : p.getInventory().getContents()) { //check inventory of player
                             if(item != null && strings[1].equalsIgnoreCase(item.getType().toString())) { //searching only for items with the given ID from command
-                                //reply_command = reply_command + " " + item.getAmount() + "x" + item.getType() + "\n";
                                 item_counter = item_counter + item.getAmount();
-                                item_found = true;
                             }
                         }
 
@@ -305,23 +270,41 @@ public class ItemexCommand implements CommandExecutor {
                         else
                             sellorder.amount = parseInt(strings[2]);
 
-                        if( strings.equals("market") )
-                            sellorder.amount = 0;
-                        else
-                            if(sellorder.amount <=0) {
-                                reply_command = reply_command + "Price is not allowed lower than 0 at limit! Price:" + price;
-                                sell_order_ok = false;
+                        // proof inventory amount >= given amount
+                        if( item_counter >= Integer.parseInt( strings[2] ))
+                            item_found = true;
+
+                        if(sellorder.amount <=0 && strings[3].equals("limit")) {
+                            reply_command = reply_command + "Price is not allowed lower than 0 at limit! Price:" + price;
+                            sell_order_ok = false;
+                        }
+                        else {
+                            if(!is_damaged_or_enchantment) {
+                                System.out.println("# DEBUG - Damaged or enchantment");
                             }
-                            else {
-                                if(!is_damaged_or_enchantment) {}
-                                else if(item_found) {
-                                    if(sell_order_ok)
-                                        reply_command = reply_command + create_order( p, strings[1], parseFloat(strings[4]), sellorder.amount, "sell", strings[3] );
+                            else if(item_found) {
+                                if(sell_order_ok && price >= 0 && strings[3].equals("limit"))
+                                    reply_command = reply_command + create_order( p, strings[1], price, sellorder.amount, "sell", strings[3] );
+                                else {
+                                    TextComponent message = new TextComponent(ChatColor.RED + "There are no buy orders to sell! \n" + ChatColor.BLUE + " -> (CLICK HERE) You can create a sell order with: /ix sell " + strings[1].toUpperCase() + " " + sellorder.amount + " limit <price>");
+                                    message.setClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix sell " + strings[1].toUpperCase() + " " + sellorder.amount + " limit "));
+                                    p.spigot().sendMessage(message);
                                 }
-                                else
-                                    reply_command = reply_command + "No given items found in your inventory. Please check the correct name with: /ix whatIsInMyRightHand";
                             }
+                            else
+                                reply_command = reply_command + ChatColor.RED + "No given items: " + ChatColor.GOLD + strings[1] + ChatColor.RED + " found in your inventory!\n" + ChatColor.WHITE +"Please check the correct name with: /ix whatIsInMyRightHand";
+                        }
                     } // end ix sell limit
+
+                    /*
+                    if(buy_order_ok && price >= 0 && strings[3].equals("limit"))
+                            reply_command = reply_command + create_order(p, strings[1], price, amount, "buy", strings[3]);
+                        else{
+                            TextComponent message = new TextComponent(ChatColor.RED + "There are no sell orders to buy! \n" + ChatColor.BLUE + " -> (CLICK HERE) You can create a buy order with: /ix buy " + strings[1].toUpperCase() + " 1 limit <price>");
+                            message.setClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix buy " + strings[1].toUpperCase() +" 1 limit "));
+                            p.spigot().sendMessage(message);
+                        }
+                     */
 
                     else {
                         reply_command = "argc count is: " + strings.length +"\n";
@@ -332,51 +315,88 @@ public class ItemexCommand implements CommandExecutor {
 
 
 
-                else if(strings[0].equals("price") ) {
-                    reply_command = "\n\n\n------------------------\n";
 
-                    // get entries from db
-                    sqliteDb.OrderBuffer[] orders = new sqliteDb.OrderBuffer[0];
+                else if(strings[0].equals("price") ) {
+                    reply_command = "\n\n\n-----------------------------\n";
+                    TopOrders topo = null;
+                    String itemid = null;
 
                     if(strings.length == 1) { // /ix price
-                        orders = sqliteDb.getBestOrders( p.getInventory().getItemInHand().getType().toString().toUpperCase() );
-                        reply_command = reply_command + "Prices of the ITEM: " + p.getInventory().getItemInHand().getType().toString() + "\n";
+                        itemid = p.getInventory().getItemInHand().getType().toString().toUpperCase();
+                        topo = Itemex.getPlugin().mtop.get( itemid );
                     }
                     else  if(strings.length == 2) { // /ix price <item id>
-                        orders = sqliteDb.getBestOrders( strings[1].toUpperCase() );
-                        reply_command = reply_command + "Prices of the ITEM: " + strings[1].toUpperCase() + "\n";
+                        itemid = strings[1].toUpperCase();
+                        topo = Itemex.getPlugin().mtop.get( itemid );
                     }
 
-                    reply_command = reply_command + "------------------------\n";
+                    reply_command = reply_command + "Prices of the ITEM: " + ChatColor.GOLD +  itemid + ChatColor.WHITE + "\n";
+                    reply_command = reply_command + "-----------------------------\n";
                     reply_command = reply_command + "ORDERTYPE - ITEMID - AMOUNT - PRICE\n";
 
 
-                    for(int x=0; x<=7; x++) {
-                        String[] ordertype;
-                        if(orders[x] == null)
-                            break;
+                    for(int x=3; x>=0; x--){
+                        if(topo.get_sellorder_amount()[x] == 0)
+                            reply_command = reply_command + ChatColor.DARK_RED + "sellorder  " + ChatColor.DARK_GRAY + itemid + "  " + topo.get_sellorder_amount()[x] +  "  $ " + topo.get_top_sellorder_prices()[x] + "\n";
                         else
-                            ordertype = orders[x].ordertype.split(":", 2);
-
-                        if(ordertype[0].equals("sell"))
-                            reply_command = reply_command + ChatColor.RED + ordertype[0] + "order  " + ChatColor.WHITE + orders[x].itemid + "  " + orders[x].amount + "  $ " + orders[x].price + "\n";
-                        else
-                            reply_command = reply_command + ChatColor.GREEN + ordertype[0] + "order  " + ChatColor.WHITE + orders[x].itemid + "  " + orders[x].amount + "  $ " + orders[x].price + "\n";
+                            reply_command = reply_command + ChatColor.RED + "sellorder  " + ChatColor.WHITE + itemid + "  " + topo.get_sellorder_amount()[x] +  "  $ " + topo.get_top_sellorder_prices()[x] + "\n";
                     }
-                    reply_command = reply_command + "-----------\n";
+                    for(int x=0; x<=3; x++){
+                        if(topo.get_buyorder_amount()[x] == 0)
+                            reply_command = reply_command + ChatColor.DARK_GREEN + "buyorder  " + ChatColor.DARK_GRAY + itemid + "  " + topo.get_buyorder_amount()[x] +  "  $ " + topo.get_top_buyorder_prices()[x] + "\n";
+                        else
+                            reply_command = reply_command + ChatColor.GREEN + "buyorder  " + ChatColor.WHITE + itemid + "  " + topo.get_buyorder_amount()[x] +  "  $ " + topo.get_top_buyorder_prices()[x] + "\n";
+                    }
+                    reply_command = reply_command + "-----------------------------\n";
 
                 } // end price
 
 
 
+
                 else if(strings[0].equals("whatIsInMyRightHand") ) {
-                    reply_command = "ITEMID: " + p.getInventory().getItemInHand().getType().toString();
+                    ItemStack item = p.getInventory().getItemInMainHand();
+                    reply_command = "ITEMID: " + item.getType() + "\n";
 
                     // GET DAMAGE 0 = no damage
-                    reply_command = reply_command + " \nDurability: " + p.getInventory().getItemInMainHand().getDurability() + "\n";
+                    if(item.getDurability() != 0)
+                        reply_command = reply_command + "Durability: " + item.getDurability() + "\n";
 
                     // CHECK if ITEM HAS ENCHANTMENTS
-                    reply_command = reply_command + "Number of Enchantments: " + p.getInventory().getItemInMainHand().getEnchantments().size();
+                    if (item.getItemMeta().hasEnchants()) {
+                        reply_command = reply_command + "Number of Enchantments: " + item.getEnchantments().size() + "\n";
+                        Map enc = item.getEnchantments();
+                        reply_command = reply_command + "Enchantments: " + item.getEnchantments() + " size: " + enc.size();
+                    }
+
+
+                    // CHECK POTION
+                    if (item.getType() == Material.POTION) {
+                        PotionMeta potionMeta = (PotionMeta) item.getItemMeta();
+                        reply_command = reply_command + "POTION: " + potionMeta.getBasePotionData().getType() + " ";
+                        // DURATION ?
+                        PotionMeta meta = (PotionMeta) item.getItemMeta();
+                        List po_effects = meta.getCustomEffects();
+                        //System.out.println("IS EMPTY: " + po_effects.isEmpty());
+                        //PotionEffect effect = meta.getCustomEffects()
+                        reply_command = reply_command + "\nisExtendedt: " + ((PotionMeta) item.getItemMeta()).getBasePotionData().isExtended() + "\n";
+                        reply_command = reply_command + "isUpgraded: " + ((PotionMeta) item.getItemMeta()).getBasePotionData().isUpgraded();
+                    }
+
+                    // ENCHANTED_BOOK
+                    if (item.getType() == Material.ENCHANTED_BOOK) {
+                        reply_command = reply_command + "IS ENCHANTED_BOOK\n";
+                        EnchantmentStorageMeta meta = (EnchantmentStorageMeta) item.getItemMeta();
+                        Map<Enchantment, Integer> enchantments = meta.getStoredEnchants();
+
+                        for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
+                            Enchantment enchantment = entry.getKey();
+                            int level = entry.getValue();
+                            // Do something with the enchantment and level
+                            reply_command = reply_command + enchantment.getName() + "; Level: " + level;
+                        }
+                    }
+
 
 
                 }
@@ -555,60 +575,24 @@ public class ItemexCommand implements CommandExecutor {
 
 
 
-
                 else if(strings[0].equals("gui") ) {
-                    generateGUI(p, 1);
-
-                }
-
-
-                else if(strings[0].equals("gui_new") ) {
-                    GUI.generateGUI(p, 0);
-
-                    /*
-                    for (String cat : CategoryFile.get().getStringList("categories.CATEGORY_NAMES")) {
-                        p.sendMessage(cat);
-                    }
-
-                     */
-
+                    GUI.generateGUI(p, "ITEMEX - Market Orders", 0, 0);
                 }
 
 
 
+                else if(strings[0].equals("extractitems") ) {
 
-
-                else if(strings[0].equals("toporders") ) {
-                    TopOrders topo[] = Itemex.getPlugin().topo;
-
-                    if(strings[1].equals("set")) {
-                        float[] top_price = new float[3];
-                        top_price[0] = 124;
-                        top_price[1] = 122;
-                        top_price[2] = 110;
-
-                        int[] top_amount = new int[3];
-                        top_amount[0] = 10;
-                        top_amount[1] = 150;
-                        top_amount[2] = 4;
-
-                        topo[0].updateOrders(top_price, top_price, top_amount, top_amount);
-                        topo[1].updateOrders(top_price, top_price, top_amount, top_amount);
-                        topo[2].updateOrders(top_price, top_price, top_amount, top_amount);
+                    int x=0;
+                    for (Material material : Material.values()) {
+                        System.out.println(":" + x + ":" +material.toString() + ":" + material.isBlock() + ":" + material.isItem() + ":" + material.isBurnable() + ":" + material.isFuel() + ":" + material.isInteractable() + ":" + material.isSolid() + ":" + material.isFlammable() + ":" + material.isOccluding() + ":" + material.isRecord());
+                        x++;
                     }
-                    else if(strings[1].equals("get")) {
-                        p.sendMessage("1 Amount: " + topo[0].get_buyorder_amount()[0]);
-                        p.sendMessage("1 Price: " + topo[0].get_top_buyorder_prices()[0]);
-                        p.sendMessage("2 Amount: " + topo[1].get_buyorder_amount()[1]);
-                        p.sendMessage("2 Price: " + topo[1].get_top_buyorder_prices()[1]);
-                        p.sendMessage("3 Amount: " + topo[2].get_buyorder_amount()[2]);
-                        p.sendMessage("3 Price: " + topo[2].get_top_buyorder_prices()[2]);
-                    }
-                }
-
-
-                else if(strings[0].equals("test2") ) {
                     //p.sendMessage("amount + price: " + Itemex.getPlugin().top[0].get_buyorder_amount() + " + " + Itemex.getPlugin().top[0].get_top_buyorder_prices() );
+                }
+
+                else if(strings[0].equals("test") ) {
+                    sqliteDb.loadBestOrdersToRam(strings[1].toUpperCase(), true);
                 }
 
 
@@ -655,7 +639,7 @@ public class ItemexCommand implements CommandExecutor {
 
 
 
-    static class Order
+    public static class Order
     {
         public String uuid;
         public String itemid;
@@ -665,6 +649,7 @@ public class ItemexCommand implements CommandExecutor {
     };
 
     public static String create_order(Player p, String itemid, float price, int amount, String buy_or_sell, String market_option) {
+        //System.out.println("# DEBUG AT: create_order: " + amount);
         String reply_command = "";
 
         Order order = new Order();
@@ -677,8 +662,6 @@ public class ItemexCommand implements CommandExecutor {
 
         sqliteDb db_order = new sqliteDb(order);
 
-        //System.out.println("AT create_order, buy_or_sell: " + buy_or_sell);
-
         if(buy_or_sell.equals("sell")) {
             if( db_order.createSellOrder() )
                 reply_command = ChatColor.RED + "SELLORDER " + ChatColor.WHITE + ChatColor.BOLD+  "[" + amount + "] " + itemid.toUpperCase() + ChatColor.WHITE + " created!";
@@ -688,164 +671,11 @@ public class ItemexCommand implements CommandExecutor {
         }
         else if(buy_or_sell.equals("buy")) {
             if( db_order.createBuyOrder() )
-                reply_command =  ChatColor.GREEN + "BUYORDER " + ChatColor.WHITE + "created! " + ChatColor.BOLD + "[1] " + itemid + ChatColor.WHITE ;
+                reply_command =  ChatColor.GREEN + "BUYORDER " + ChatColor.WHITE + "created! " + ChatColor.BOLD + "[" + amount + "] " + itemid + ChatColor.WHITE ;
             else
                 reply_command = "ERROR! Buyorder NOT created!";
         }
         return reply_command;
-    }
-
-
-
-    public void generateGUI(Player p, int count) {
-        Inventory inv = Bukkit.createInventory(null, 6*9, ChatColor.BLACK +  "ITEMEX");
-        String item_count = Integer.toString(count);
-
-        // BACK left
-        ItemStack back = new ItemStack(Material.OAK_DOOR);
-        ItemMeta backMeta = back.getItemMeta();
-        backMeta.setDisplayName("previous page");
-        ArrayList<String> back_lore = new ArrayList<>();
-        back_lore.add(ChatColor.GOLD + "1");
-        backMeta.setLore(back_lore);
-        back.setItemMeta(backMeta);
-
-        // NEXT right
-        ItemStack next = new ItemStack(Material.SPRUCE_DOOR);
-        ItemMeta nextMeta = next.getItemMeta();
-        nextMeta.setDisplayName("next page");
-        ArrayList<String> next_lore = new ArrayList<>();
-        next_lore.add(ChatColor.GOLD + "1");
-        nextMeta.setLore(next_lore);
-        next.setItemMeta(nextMeta);
-
-        // Plus 1 right
-        ItemStack plus = new ItemStack(Material.TORCH);
-        ItemMeta plusMeta = next.getItemMeta();
-        plusMeta.setDisplayName(ChatColor.WHITE + "add 1");
-        ArrayList<String> plus_lore = new ArrayList<>();
-        plus_lore.add(ChatColor.WHITE + "1");
-        plusMeta.setLore(plus_lore);
-        plus.setItemMeta(plusMeta);
-
-        // Plus 2 right
-        ItemStack plus2 = new ItemStack(Material.REDSTONE_TORCH);
-        ItemMeta plus2Meta = next.getItemMeta();
-        plus2Meta.setDisplayName(ChatColor.WHITE + "add 16");
-        ArrayList<String> plus2_lore = new ArrayList<>();
-        plus2_lore.add(ChatColor.WHITE + "1");
-        plus2Meta.setLore(plus2_lore);
-        plus2.setItemMeta(plus2Meta);
-
-        // Plus 3 right
-        ItemStack plus3 = new ItemStack(Material.SOUL_TORCH);
-        ItemMeta plus3Meta = next.getItemMeta();
-        plus3Meta.setDisplayName(ChatColor.WHITE + "add 64");
-        ArrayList<String> plus3_lore = new ArrayList<>();
-        plus3_lore.add(ChatColor.WHITE + "1");
-        plus3Meta.setLore(plus3_lore);
-        plus3.setItemMeta(plus3Meta);
-
-        // Minus 1 left
-        ItemStack minus = new ItemStack(Material.TORCH);
-        ItemMeta minusMeta = next.getItemMeta();
-        minusMeta.setDisplayName(ChatColor.WHITE + "sub 1");
-        ArrayList<String> minus_lore = new ArrayList<>();
-        minus_lore.add(ChatColor.WHITE + "1");
-        minusMeta.setLore(minus_lore);
-        minus.setItemMeta(minusMeta);
-
-        // Minus 2 left
-        ItemStack minus2 = new ItemStack(Material.REDSTONE_TORCH);
-        ItemMeta minus2Meta = next.getItemMeta();
-        minus2Meta.setDisplayName(ChatColor.WHITE + "sub 16");
-        ArrayList<String> minus2_lore = new ArrayList<>();
-        minus2_lore.add(ChatColor.WHITE + "1");
-        minus2Meta.setLore(minus2_lore);
-        minus2.setItemMeta(minus2Meta);
-
-        // Minus 3 left
-        ItemStack minus3 = new ItemStack(Material.SOUL_TORCH);
-        ItemMeta minus3Meta = next.getItemMeta();
-        minus3Meta.setDisplayName(ChatColor.WHITE + "sub 64");
-        ArrayList<String> minus3_lore = new ArrayList<>();
-        minus3_lore.add(ChatColor.WHITE + "1");
-        minus3Meta.setLore(minus3_lore);
-        minus3.setItemMeta(minus3Meta);
-
-        // Item Information
-        ItemStack item = new ItemStack(Material.PAPER);
-        ItemMeta itemMeta = item.getItemMeta();
-        itemMeta.setDisplayName(ChatColor.WHITE + "Shows amount:");
-        ArrayList<String> item_lore = new ArrayList<>();
-        item_lore.add(ChatColor.GREEN + item_count);
-        itemMeta.setLore(item_lore);
-        item.setItemMeta(itemMeta);
-
-        int x = 8;
-        for (Material material : Material.values()) {
-            //System.out.println(x + " " + material.isBlock());
-
-
-            ItemStack temp = new ItemStack(material);
-
-            if(temp.getItemMeta() != null) {
-                sqliteDb.OrderBuffer[] toporders = sqliteDb.getBestOrders( material.name() );
-                String s_toporder[] = new String[8];
-                for(int xx =0; xx<=7; xx++) {
-                    if(toporders[xx] != null) {
-                        String ordertype[] = toporders[xx].ordertype.split(":", 0);
-                        String format_price = String.format("%.02f", toporders[xx].price);
-                        if(ordertype[0].equals("sell"))
-                            s_toporder[xx] = ChatColor.RED + "[" +  toporders[xx].amount +"] $" + format_price;
-                        else
-                            s_toporder[xx] = ChatColor.GREEN + "[" +  toporders[xx].amount +"] $" + format_price;
-                    }
-
-                    else
-                        s_toporder[xx] = ChatColor.DARK_GRAY + "-";
-                }
-
-                ItemMeta tempMeta = temp.getItemMeta();
-                //tempMeta.setDisplayName(material.name());
-                ArrayList<String> temp_lore = new ArrayList<>();
-                temp_lore.add(ChatColor.DARK_GRAY + "[amount] <price>");
-                temp_lore.add(s_toporder[0]);
-                temp_lore.add(s_toporder[1]);
-                temp_lore.add(s_toporder[2]);
-                temp_lore.add(s_toporder[3]);
-
-                temp_lore.add(s_toporder[4]);
-                temp_lore.add(s_toporder[5]);
-                temp_lore.add(s_toporder[6]);
-                temp_lore.add(s_toporder[7]);
-
-                temp_lore.add(ChatColor.RED + "sellorders" +  ChatColor.WHITE + " | " + ChatColor.GREEN + "buyorders");
-                tempMeta.setLore(temp_lore);
-                temp.setItemMeta(tempMeta);
-
-                inv.setItem(x, temp);
-            }
-
-
-            x++;
-            if(x >= 54) { break; }
-        } // material values end
-
-        inv.setItem(0, back);
-        inv.setItem(8, next);
-
-        inv.setItem(5, plus);
-        inv.setItem(6, plus2);
-        inv.setItem(7, plus3);
-
-        inv.setItem(3, minus);
-        inv.setItem(2, minus2);
-        inv.setItem(1, minus3);
-
-        inv.setItem(4, item);
-
-        p.openInventory(inv);
     }
 
 
@@ -888,7 +718,7 @@ public class ItemexCommand implements CommandExecutor {
 
                 "\n" + green + "/ix withdraw list " + dark_gray+ "| list all your available payouts" +
                 "\n" + green + "/ix withdraw <itemname> <amount> " + dark_gray + "| withdraw " + dark_purple +
-                "\n.\nThis version is in alpha, if you have any problems or suggestions please write me to xcatpc@proton.me" + white;
+                "\n.\nThis version is in beta, if you have any problems or suggestions please write me to" + white +" xcatpc@proton.me " + dark_purple + "or join us on discord: " + white + "https://discord.gg/rKEwQjpmXj" + white;
         reply_command = reply_command + "\n";
         return reply_command;
     } // end print_help

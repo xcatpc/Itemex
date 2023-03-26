@@ -1,7 +1,5 @@
 package sh.ome.itemex.shedule;
 
-import sh.ome.itemex.Itemex;
-
 import java.io.BufferedInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;

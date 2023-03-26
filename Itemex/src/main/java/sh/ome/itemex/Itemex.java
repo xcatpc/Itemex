@@ -2,36 +2,35 @@
 
 
 /* BUGS AND IMPROVEMENTS:
--
-- create categories -> config file
+- GUI market: there are no orders (but there are)
+- "confirm" on market order like /ix buy GOLD_INGOT 10 market confirm
+- insertPayout - collect all payouts of a item in one entry
+- collect all orders with the same price at /price and GUI
+
+- /ix withdraw list must have a parameter of page. only 100 entries can be send to player. Alsa have an error!
 - handle exception if update server not available
 - new orders must be sort down (Because old orders should be fulfilled first if price is equal)
-- remove autocomplete price at market orders
-- /ix gui load very slow because of heavy db usage -> insert all best_prices into class or hover over
-- /ix gui best sell orders wrong if no at least 4 sell and 4 buy orders!
-- remove sub and add 16 and insert 1.
 - /ix quicksell (own gui for quickselling all items)
 - /ix gui orders (list all orders) or is inside the normal /ix gui which would be better
 - at ix sell: If I hold something in the hand it most be in the list on the top
-- "confirm" on market order could be a good thing. ie. have to hold the product/price for 10seconds or something
-- include the broker_fee (the half of it) into the buy price (sell order)
-- /ix withdraw list must have a parameter of page. only 100 entries can be send to player.
 - add default prices that reflects on the reserve currency (DIAMOND) (useful if no buy and sellorders are available or only a buy or sellorder) - need statistics
-- proof input of user like on /ix list everywhere. (On some commands its not checking if the values are valide)
-- GUI: on /ix gui add each 3 or 4 sell and buy orders by hoover over item and sum of all available items
-- GUI: filter out some blocks (like commandblock)
 - GUI: sort items by availibity
-- add potions and enchanted items
 
-SEPERATION OF:
-double buyer_total = sub_total + (sub_total/100*Itemex.broker_fee)/2;
-double seller_total = sub_total - (sub_total/100*Itemex.broker_fee)/2;
+- add potions and enchanted items
+- add enchantment items
 
  */
 
 /*
 changelog 0.18
--
+- NEW GUI
+- create a category.yml file which contains all categories and items from the creative menu (except potions and enchanted books at the moment)
+- new order fulfillment (much more efficient)
+- efficency updates -> Store TopOrders (4 sell and 4 buyorders) into ram of every item (takes at server start ~ 4 seconds = 1400 items); Minimize DB usage
+- New GUI which is much more userfriendly and more efficient too
+- add broker free for seller and buyer (config file: default value 0)
+- change /ix price to get data from RAM
+- remove autocomplete price at market orders
  */
 
 
@@ -41,24 +40,21 @@ import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.Listener;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import sh.ome.itemex.Listeners.PlayerJoin;
 import sh.ome.itemex.RAM.TopOrders;
 import sh.ome.itemex.events.ClickGUI;
 import sh.ome.itemex.files.CategoryFile;
-import sh.ome.itemex.shedule.FulfillOrder;
 import sh.ome.itemex.commands.ItemexCommand;
-import sh.ome.itemex.commands.commandAutoComplete;
-import sh.ome.itemex.commands.sqliteDb;
-import sh.ome.itemex.events.clickEventGUI;
+import sh.ome.itemex.functions.commandAutoComplete;
+import sh.ome.itemex.functions.sqliteDb;
 import sh.ome.itemex.shedule.Metrics;
 import sh.ome.itemex.shedule.UpdateItemex;
 
 import java.io.IOException;
-import java.sql.SQLException;
-import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class Itemex extends JavaPlugin implements Listener {
 
@@ -66,14 +62,17 @@ public final class Itemex extends JavaPlugin implements Listener {
 
     private static Itemex plugin;
     public static Economy econ = null;
-    public static String version = "0.17.4";
+    public static String version = "0.18";
 
     public static boolean admin_function;
     public static double admin_function_percentage;
-    public static double broker_fee;
+    public static double broker_fee_buyer;
+    public static double broker_fee_seller;
     public static boolean bstats;
 
-    public TopOrders topo[] = new TopOrders[1500]; // create 1500 objects for each item ( fill in onEnable() )
+    //public TopOrders top[] = new TopOrders[1500]; // create 1500 objects for each item ( fill in onEnable() )
+    public Map<String, TopOrders> mtop = new HashMap<>();
+
 
 
 
@@ -86,7 +85,8 @@ public final class Itemex extends JavaPlugin implements Listener {
         // Plugin startup logic
 
         // create all objects
-        Arrays.fill(topo, new TopOrders());
+        //Arrays.fill(top, new TopOrders());
+
 
         Metrics metrics = new Metrics(this, 17928);
         metrics.addCustomChart(new Metrics.SimplePie("chart_id", () -> "My value"));
@@ -120,8 +120,7 @@ public final class Itemex extends JavaPlugin implements Listener {
         getCommand("ix").setExecutor(new ItemexCommand());
         getCommand("ix").setTabCompleter(new commandAutoComplete());
         getServer().getPluginManager().registerEvents(new PlayerJoin(), this);
-        getServer().getPluginManager().registerEvents(new clickEventGUI(), this);       // old GUI
-        getServer().getPluginManager().registerEvents(new ClickGUI(), this);            // new GUI
+        getServer().getPluginManager().registerEvents(new ClickGUI(), this);
 
 
         if (!setupEconomy() ) {
@@ -137,7 +136,8 @@ public final class Itemex extends JavaPlugin implements Listener {
         saveConfig();
         this.admin_function = config.getBoolean("admin_function");
         this.admin_function_percentage = config.getDouble("admin_function_percentage");
-        this.broker_fee = config.getDouble("broker_fee");
+        this.broker_fee_buyer = config.getDouble("broker_fee_buyer");
+        this.broker_fee_seller = config.getDouble("broker_fee_seller");
         this.bstats = config.getBoolean("bstats");
 
         // generate categories.yml
@@ -149,6 +149,7 @@ public final class Itemex extends JavaPlugin implements Listener {
 
         // checks database
         sqliteDb.createDBifNotExists();
+
 
 
         // if admin function enabled -> create admin function for every item
@@ -164,8 +165,14 @@ public final class Itemex extends JavaPlugin implements Listener {
 
         plugin = this;  // make this private static Itemex accessable in other files
 
+        // load best orders from db into ram
+        getLogger().info("Loading all BestOrders into RAM...");
+        sqliteDb.loadAllBestOrdersToRam(false);
+        getLogger().info("DONE!");
 
 
+
+/*
         Plugin plugin = Bukkit.getServer().getPluginManager().getPlugin("Itemex");
         //Fulfill Order
         Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
@@ -175,7 +182,11 @@ public final class Itemex extends JavaPlugin implements Listener {
                 getLogger().info("Problem with Fulfill Order Scheduler");
                 throw new RuntimeException(e);
             }
-        }, 0, 1); //20 == 1 second 40
+        }, 0, 20); //20 == 1 second 40
+
+
+  */
+
 
 
         //Check update
@@ -189,7 +200,7 @@ public final class Itemex extends JavaPlugin implements Listener {
 
             getLogger().info("Problem with Update Itemex Scheduler");
 
-        }, 0, 1728000); //20 == 1 second 1,728,000 = 24h */
+        }, 0, 288000); //20 == 1 second 1,728,000 = 24h */ 4h
 
     }
 
