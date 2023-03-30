@@ -11,7 +11,7 @@
 
   <name>Itemex</name>
 
-  <description>Item Exchange System - Trade all Items on a free market in the terminal (Chestshops addeded into this system)</description><properties>
+  <description>Item Exchange System - Trade all Items on a free market</description><properties>
   <java.version>1.8</java.version>
   <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 </properties><url>ome.sh</url>

@@ -3,7 +3,7 @@ version: '0.18'
 main: sh.ome.itemex.Itemex
 api-version: 1.19
 authors: [ oMesh_ ]
-description: Item Exchange System - Trade all Items on a free market in the terminal
+description: Item Exchange System - Trade all Items on a free market
 website: ome.sh
 commands:
   ix:

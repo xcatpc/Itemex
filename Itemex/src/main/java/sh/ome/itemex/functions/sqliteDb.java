@@ -382,8 +382,8 @@ public class sqliteDb {
             TopOrders topo = new TopOrders(top_buy_price, top_sell_price, top_buy_amount, top_sell_amount);
             Itemex.getPlugin().mtop.put(item, topo);
             boolean match = topo.find_order_match();
-            //System.out.println("# DEBUG - is match:" + match);
             if(match && update) {
+                System.out.println("# DEBUG - at load best order to ram: item: " + item);
                 fulfillOrder(item);
             }
             //System.out.println("GET: " + Itemex.getPlugin().mtop.get(item).get_top_sellorder_prices()[0]);
@@ -499,13 +499,14 @@ public class sqliteDb {
 
     public static ArrayList<OrderBuffer> selectAll(String table, String itemid){
         ArrayList<OrderBuffer> buffer = new ArrayList<>();
+        System.out.println("# DEBUG - in selectALl");
 
         String sql = null;
         if(table.equals("SELLORDERS")) {
-            sql = "SELECT * FROM SELLORDERS ORDER by itemid ASC, price LIMIT 10";
+            sql = "SELECT * FROM SELLORDERS WHERE itemid = '" + itemid + "' ORDER by price ASC";
         }
         else if(table.equals("BUYORDERS")) {
-            sql = "SELECT * FROM BUYORDERS ORDER by itemid ASC, price DESC LIMIT 10";
+            sql = "SELECT * FROM BUYORDERS WHERE itemid = '" + itemid + "' ORDER by price DESC";
         }
 
         try (Connection conn = connect();
@@ -514,11 +515,13 @@ public class sqliteDb {
 
             // loop through the result set
             while (rs.next()) {
+                System.out.println("# DEBUG - id: " + rs.getInt("id") + " itemid: " + rs.getString("itemid") + " price: " + rs.getFloat("price"));
                 buffer.add(new OrderBuffer(rs.getInt("id"), rs.getString("player_uuid"), rs.getString("itemid"), rs.getString("ordertype"),rs.getInt("amount"), rs.getFloat("price"), rs.getLong("timestamp")));
             }
         } catch (SQLException e) {
             //System.out.println(e.getMessage());
         }
+        System.out.println("# DEBUG - end selectALl");
         return buffer;
     }
 
@@ -548,9 +551,7 @@ public class sqliteDb {
 
 
 
-
     public static boolean fulfillOrder(String itemid) { //ERROR INSIDE
-        System.out.println("at fulfillOrder..");
         ArrayList<OrderBuffer> sellorders = selectAll("SELLORDERS", itemid);
         ArrayList<OrderBuffer> buyorders = selectAll("BUYORDERS", itemid);
 
@@ -558,7 +559,8 @@ public class sqliteDb {
             //System.out.println("SELLORDER: " + se.ordertype + " [" + se.amount + "] $" + se.price);
 
             for (OrderBuffer be : buyorders) {
-                //System.out.println("BUYORDER: " + be.ordertype + " [" + be.amount + "] $" + be.price);
+                //System.out.println("BUYORDER: " + itemid + " " + be.ordertype + " [" + be.amount + "] $" + be.price);
+                //System.out.println("SELLORDER: " + itemid + " " + se.ordertype + " [" + se.amount + "] $" + se.price);
 
                 if (be.price >= se.price && be.amount !=0 && se.amount !=0) { // match found
                     System.out.println("MATCH AT: be: " + be.id +" ["+ be.amount +"] + se: "+ se.id + "["+ se.amount +"]");

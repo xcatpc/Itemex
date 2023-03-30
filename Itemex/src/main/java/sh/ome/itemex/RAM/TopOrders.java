@@ -38,6 +38,7 @@ public class TopOrders {
         //System.out.println("# DEBUG - BEST SELLER PRICE: " + this.top_sellorder_prices[0]);
 
         if(this.top_buyorder_prices[0] >= this.top_sellorder_prices[0]) {
+            //System.out.println("# DEBUG - Match inside TopOrders.java");
             return true;
         }
         else

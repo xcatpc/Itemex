@@ -526,7 +526,7 @@ public class ClickGUI implements Listener {
 
         // SCAN ITEM IN CREATIVE FOR EXTRACTION OF ITEMS WITH CATEGORIES
         else {
-            getLogger().info(":" + itemcounter + ":ITEM:" + p.getInventory().getItemInOffHand().getType());
+            //getLogger().info(":" + itemcounter + ":ITEM:" + p.getInventory().getItemInOffHand().getType());
             itemcounter++;
             if(itemcounter >= 9)
                 itemcounter=0;

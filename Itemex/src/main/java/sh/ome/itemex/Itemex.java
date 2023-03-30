@@ -2,7 +2,10 @@
 
 
 /* BUGS AND IMPROVEMENTS:
+- market orders only with the command: /ix sell gold_ingot 1 market  -> dont work: there are no sell orders to buy
+- max at /ix sell not anymore working thow an error
 - GUI market: there are no orders (but there are)
+
 - "confirm" on market order like /ix buy GOLD_INGOT 10 market confirm
 - insertPayout - collect all payouts of a item in one entry
 - collect all orders with the same price at /price and GUI
@@ -72,10 +75,6 @@ public final class Itemex extends JavaPlugin implements Listener {
 
     //public TopOrders top[] = new TopOrders[1500]; // create 1500 objects for each item ( fill in onEnable() )
     public Map<String, TopOrders> mtop = new HashMap<>();
-
-
-
-
 
 
 
