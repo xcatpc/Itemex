@@ -1,4 +1,5 @@
 sh\ome\itemex\shedule\Metrics$AdvancedPie.class
+sh\ome\itemex\RAM\CommandUsageCounts.class
 sh\ome\itemex\commands\ItemexCommand$Order.class
 sh\ome\itemex\shedule\Metrics$SingleLineChart.class
 sh\ome\itemex\shedule\Metrics$SimpleBarChart.class

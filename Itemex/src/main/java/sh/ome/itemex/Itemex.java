@@ -25,20 +25,16 @@
  */
 
 /*
-changelog 0.18
-- NEW GUI
-- create a category.yml file which contains all categories and items from the creative menu (except potions and enchanted books at the moment)
-- new order fulfillment (much more efficient)
-- efficency updates -> Store TopOrders (4 sell and 4 buyorders) into ram of every item (takes at server start ~ 4 seconds = 1400 items); Minimize DB usage
-- New GUI which is much more userfriendly and more efficient too
-- add broker free for seller and buyer (config file: default value 0)
-- change /ix price to get data from RAM
-- remove autocomplete price at market orders
+changelog 0.18.2
+- Bugfix at /price (if you had nothing in your hand)
+- Proof if you have enought money, before you place a buy order
+- remove some debugging messages
  */
 
 
 package sh.ome.itemex;
 
+import com.google.gson.Gson;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -56,6 +52,10 @@ import sh.ome.itemex.shedule.Metrics;
 import sh.ome.itemex.shedule.UpdateItemex;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -65,27 +65,26 @@ public final class Itemex extends JavaPlugin implements Listener {
 
     private static Itemex plugin;
     public static Economy econ = null;
-    public static String version = "0.18";
+    public static String version = "0.18.2";
 
     public static boolean admin_function;
     public static double admin_function_percentage;
     public static double broker_fee_buyer;
     public static double broker_fee_seller;
     public static boolean bstats;
+    public static String server_id;
+    public static boolean itemex_stats;
+    public static String server_url = "https://ome.sh";
 
-    //public TopOrders top[] = new TopOrders[1500]; // create 1500 objects for each item ( fill in onEnable() )
     public Map<String, TopOrders> mtop = new HashMap<>();
+
+    public static HashMap<String, Integer> commandUsageCounts = new HashMap<>();
 
 
 
 
     @Override
     public void onEnable() {
-        // Plugin startup logic
-
-        // create all objects
-        //Arrays.fill(top, new TopOrders());
-
 
         Metrics metrics = new Metrics(this, 17928);
         metrics.addCustomChart(new Metrics.SimplePie("chart_id", () -> "My value"));
@@ -132,12 +131,15 @@ public final class Itemex extends JavaPlugin implements Listener {
 
         // generate config file
         config.options().copyDefaults(true);
+        config.addDefault("id", getAlphaNumericString(15));
         saveConfig();
         this.admin_function = config.getBoolean("admin_function");
         this.admin_function_percentage = config.getDouble("admin_function_percentage");
         this.broker_fee_buyer = config.getDouble("broker_fee_buyer");
         this.broker_fee_seller = config.getDouble("broker_fee_seller");
         this.bstats = config.getBoolean("bstats");
+        this.server_id = config.getString("id");
+        this.itemex_stats = config.getBoolean("itemex_stats");
 
         // generate categories.yml
         CategoryFile.setup();
@@ -224,11 +226,93 @@ public final class Itemex extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
-        // Plugin shutdown logic
+        if(itemex_stats) {
+            checkAndSendUsageCounts();
+        }
         getLogger().info("ITEMEX - Free Market Item Exchange Plugin unloaded");
     }
 
     public static Itemex getPlugin() {
         return plugin;
     }
+
+
+
+
+    public void checkAndSendUsageCounts() {
+        int totalCommandsEntered = 0;
+
+        // Sum up the usage counts for each command
+        for (int count : Itemex.commandUsageCounts.values()) {
+            totalCommandsEntered += count;
+        }
+
+            // create a new thread to handle the HTTP request
+            Thread httpRequestThread = new Thread(() -> {
+                try {
+                    URL url = new URL(server_url +"/itemex");
+                    HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                    con.setRequestMethod("POST");
+                    con.setRequestProperty("Content-Type", "application/json");
+                    con.setDoOutput(true);
+
+                    // create map to hold counts and id
+                    Map<String, Object> data = new HashMap<>();
+                    data.put("com", Itemex.commandUsageCounts);
+                    data.put("id", Itemex.server_id);
+
+                    // convert map to JSON string and write to output stream
+                    String json = new Gson().toJson(data);
+                    try (OutputStream os = con.getOutputStream()) {
+                        os.write(json.getBytes(StandardCharsets.UTF_8));
+                    }
+
+                    // check response code and close connection
+                    int responseCode = con.getResponseCode();
+                    con.disconnect();
+
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+
+            // start the thread
+            httpRequestThread.start();
+
+
+    }
+
+
+
+
+
+    // function to generate a random string of length n
+    static String getAlphaNumericString(int n)
+    {
+
+        // choose a Character random from this String
+        String AlphaNumericString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                + "0123456789"
+                + "abcdefghijklmnopqrstuvxyz";
+
+        // create StringBuffer size of AlphaNumericString
+        StringBuilder sb = new StringBuilder(n);
+
+        for (int i = 0; i < n; i++) {
+
+            // generate a random number between
+            // 0 to AlphaNumericString variable length
+            int index
+                    = (int)(AlphaNumericString.length()
+                    * Math.random());
+
+            // add Character one by one in end of sb
+            sb.append(AlphaNumericString
+                    .charAt(index));
+        }
+
+        return sb.toString();
+    }
+
 }

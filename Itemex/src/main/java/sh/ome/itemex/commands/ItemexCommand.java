@@ -1,4 +1,5 @@
 package sh.ome.itemex.commands;
+import com.google.gson.Gson;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.milkbowl.vault.economy.Economy;
@@ -16,17 +17,43 @@ import sh.ome.itemex.Itemex;
 import sh.ome.itemex.RAM.TopOrders;
 import sh.ome.itemex.functions.sqliteDb;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import static java.lang.Float.parseFloat;
 import static java.lang.Integer.parseInt;
+import static sh.ome.itemex.Itemex.econ;
 
 public class ItemexCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String s, String[] strings) {
+
+        if (Itemex.itemex_stats) {
+            // CommandUsageCounts
+            String full_command = String.join(" ", strings);
+            if (!Itemex.commandUsageCounts.containsKey( full_command ))
+                Itemex.commandUsageCounts.put( full_command , 1);
+            else {
+                int count = Itemex.commandUsageCounts.get( full_command );
+                Itemex.commandUsageCounts.put( full_command , count + 1);
+            }
+
+            int totalCommandsEntered = 0;
+            for (int count : Itemex.commandUsageCounts.values())
+                totalCommandsEntered += count;
+            if (totalCommandsEntered > 20)
+                // clear the existing map object
+                Itemex.commandUsageCounts.clear();
+            // CommandUsageCounts END
+        }
 
 
 
@@ -156,7 +183,6 @@ public class ItemexCommand implements CommandExecutor {
                             }
                         }
 
-                        p.sendMessage("# DEBUG - order ok: " + buy_order_ok);
                         if(buy_order_ok && price >= 0 && strings[3].equals("limit")) {
                             reply_command = reply_command + create_order(p, strings[1], price, amount, "buy", strings[3]);
                         }
@@ -343,25 +369,32 @@ public class ItemexCommand implements CommandExecutor {
 
                     }
 
-                    topo = Itemex.getPlugin().mtop.get( itemid );
-                    reply_command = reply_command + "Prices of the ITEM: " + ChatColor.GOLD +  itemid + ChatColor.WHITE + "\n";
-                    reply_command = reply_command + "-----------------------------\n";
-                    reply_command = reply_command + "ORDERTYPE - ITEMID - AMOUNT - PRICE\n";
+                    if(itemid.equals("AIR")) {
+                        reply_command = "You only have AIR in your hand!";
+                    }
+                    else {
+                        topo = Itemex.getPlugin().mtop.get( itemid );
+                        reply_command = reply_command + "Prices of the ITEM: " + ChatColor.GOLD +  itemid + ChatColor.WHITE + "\n";
+                        reply_command = reply_command + "-----------------------------\n";
+                        reply_command = reply_command + "ORDERTYPE - ITEMID - AMOUNT - PRICE\n";
 
 
-                    for(int x=3; x>=0; x--){
-                        if(topo.get_sellorder_amount()[x] == 0)
-                            reply_command = reply_command + ChatColor.DARK_RED + "sellorder  " + ChatColor.DARK_GRAY + itemid + "  " + topo.get_sellorder_amount()[x] +  "  $ " + topo.get_top_sellorder_prices()[x] + "\n";
-                        else
-                            reply_command = reply_command + ChatColor.RED + "sellorder  " + ChatColor.WHITE + itemid + "  " + topo.get_sellorder_amount()[x] +  "  $ " + topo.get_top_sellorder_prices()[x] + "\n";
+                        for(int x=3; x>=0; x--){
+                            if(topo.get_sellorder_amount()[x] == 0)
+                                reply_command = reply_command + ChatColor.DARK_RED + "sellorder  " + ChatColor.DARK_GRAY + itemid + "  " + topo.get_sellorder_amount()[x] +  "  $ " + topo.get_top_sellorder_prices()[x] + "\n";
+                            else
+                                reply_command = reply_command + ChatColor.RED + "sellorder  " + ChatColor.WHITE + itemid + "  " + topo.get_sellorder_amount()[x] +  "  $ " + topo.get_top_sellorder_prices()[x] + "\n";
+                        }
+                        for(int x=0; x<=3; x++){
+                            if(topo.get_buyorder_amount()[x] == 0)
+                                reply_command = reply_command + ChatColor.DARK_GREEN + "buyorder  " + ChatColor.DARK_GRAY + itemid + "  " + topo.get_buyorder_amount()[x] +  "  $ " + topo.get_top_buyorder_prices()[x] + "\n";
+                            else
+                                reply_command = reply_command + ChatColor.GREEN + "buyorder  " + ChatColor.WHITE + itemid + "  " + topo.get_buyorder_amount()[x] +  "  $ " + topo.get_top_buyorder_prices()[x] + "\n";
+                        }
+                        reply_command = reply_command + "-----------------------------\n";
                     }
-                    for(int x=0; x<=3; x++){
-                        if(topo.get_buyorder_amount()[x] == 0)
-                            reply_command = reply_command + ChatColor.DARK_GREEN + "buyorder  " + ChatColor.DARK_GRAY + itemid + "  " + topo.get_buyorder_amount()[x] +  "  $ " + topo.get_top_buyorder_prices()[x] + "\n";
-                        else
-                            reply_command = reply_command + ChatColor.GREEN + "buyorder  " + ChatColor.WHITE + itemid + "  " + topo.get_buyorder_amount()[x] +  "  $ " + topo.get_top_buyorder_prices()[x] + "\n";
-                    }
-                    reply_command = reply_command + "-----------------------------\n";
+
+
 
                 } // end price
 
@@ -610,6 +643,14 @@ public class ItemexCommand implements CommandExecutor {
                     sqliteDb.loadBestOrdersToRam(strings[1].toUpperCase(), true);
                 }
 
+                else if(strings[0].equals("test2")) {
+                    for (Map.Entry<String, Integer> entry : Itemex.commandUsageCounts.entrySet()) {
+                        String commandName = entry.getKey();
+                        int usageCount = entry.getValue();
+                        System.out.println(commandName + ": " + usageCount);
+                    }
+                }
+
 
 
 
@@ -643,6 +684,7 @@ public class ItemexCommand implements CommandExecutor {
                 System.out.println(reply_command);
             }
         }
+        checkAndSendUsageCounts();
         return true;
     } //  end onCommand
 
@@ -685,10 +727,18 @@ public class ItemexCommand implements CommandExecutor {
             p.getInventory().removeItem(new ItemStack(Material.getMaterial(itemid.toUpperCase()), amount));
         }
         else if(buy_or_sell.equals("buy")) {
-            if( db_order.createBuyOrder() )
-                reply_command =  ChatColor.GREEN + "BUYORDER " + ChatColor.WHITE + "created! " + ChatColor.BOLD + "[" + amount + "] " + itemid + ChatColor.WHITE ;
-            else
-                reply_command = "ERROR! Buyorder NOT created!";
+            double buyer_balance = econ.getBalance(p);
+            if( (amount * price) < buyer_balance ) {
+                if( db_order.createBuyOrder() )
+                    reply_command =  ChatColor.GREEN + "BUYORDER " + ChatColor.WHITE + "created! " + ChatColor.BOLD + "[" + amount + "] " + itemid + ChatColor.WHITE ;
+                else
+                    reply_command = "ERROR! Buyorder NOT created!";
+            }
+            else {  //not enough money
+                reply_command = ChatColor.RED+ "NOT ENOUGH MONEY!" + ChatColor.WHITE + " You got need " + ChatColor.GREEN +"$" + (amount * price) + ChatColor.WHITE + " but you only have " + ChatColor.RED + " $"  + buyer_balance;
+            }
+
+
         }
         return reply_command;
     }
@@ -737,4 +787,58 @@ public class ItemexCommand implements CommandExecutor {
         reply_command = reply_command + "\n";
         return reply_command;
     } // end print_help
+
+
+
+
+
+
+    public void checkAndSendUsageCounts() {
+        int totalCommandsEntered = 0;
+
+        // Sum up the usage counts for each command
+        for (int count : Itemex.commandUsageCounts.values()) {
+            totalCommandsEntered += count;
+        }
+
+        if (totalCommandsEntered > 19) {
+            // create a new thread to handle the HTTP request
+            Thread httpRequestThread = new Thread(() -> {
+                try {
+                    URL url = new URL(Itemex.server_url + "/itemex");
+                    HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                    con.setRequestMethod("POST");
+                    con.setRequestProperty("Content-Type", "application/json");
+                    con.setDoOutput(true);
+
+                    // create map to hold counts and id
+                    Map<String, Object> data = new HashMap<>();
+                    data.put("com", Itemex.commandUsageCounts);
+                    data.put("id", Itemex.server_id);
+
+                    // convert map to JSON string and write to output stream
+                    String json = new Gson().toJson(data);
+                    try (OutputStream os = con.getOutputStream()) {
+                        os.write(json.getBytes(StandardCharsets.UTF_8));
+                    }
+
+                    // check response code and close connection
+                    int responseCode = con.getResponseCode();
+                    con.disconnect();
+
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+
+            // start the thread
+            httpRequestThread.start();
+
+        }
+    }
+
+
+
+
 }

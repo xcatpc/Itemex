@@ -104,6 +104,7 @@ public class sqliteDb {
 
 
     private boolean insertIntoDB(String table_name) {
+        //System.out.println("# - DEBUG: at insertIntoDB + tablename: " + table_name);
         Connection c = null;
         Statement stmt = null;
 
@@ -499,7 +500,6 @@ public class sqliteDb {
 
     public static ArrayList<OrderBuffer> selectAll(String table, String itemid){
         ArrayList<OrderBuffer> buffer = new ArrayList<>();
-        System.out.println("# DEBUG - in selectALl");
 
         String sql = null;
         if(table.equals("SELLORDERS")) {
@@ -515,13 +515,12 @@ public class sqliteDb {
 
             // loop through the result set
             while (rs.next()) {
-                System.out.println("# DEBUG - id: " + rs.getInt("id") + " itemid: " + rs.getString("itemid") + " price: " + rs.getFloat("price"));
+                //System.out.println("# DEBUG - id: " + rs.getInt("id") + " itemid: " + rs.getString("itemid") + " price: " + rs.getFloat("price"));
                 buffer.add(new OrderBuffer(rs.getInt("id"), rs.getString("player_uuid"), rs.getString("itemid"), rs.getString("ordertype"),rs.getInt("amount"), rs.getFloat("price"), rs.getLong("timestamp")));
             }
         } catch (SQLException e) {
             //System.out.println(e.getMessage());
         }
-        System.out.println("# DEBUG - end selectALl");
         return buffer;
     }
 
@@ -661,7 +660,7 @@ public class sqliteDb {
 
 
     public static boolean withdraw(String seller_uuid, String buyer_uuid, String itemid, int amount, double price) {
-        System.out.println("AT WITHDRAW");
+        System.out.println("# DEBUG: AT WITHDRAW");
         OfflinePlayer o_seller =  Bukkit.getOfflinePlayer(UUID.fromString(seller_uuid));
         OfflinePlayer o_buyer =  Bukkit.getOfflinePlayer(UUID.fromString(buyer_uuid));
         Player seller = Bukkit.getPlayer(UUID.fromString(seller_uuid));
@@ -673,6 +672,7 @@ public class sqliteDb {
         double buyer_balance = econ.getBalance(o_buyer);
 
         if( buyer_total < buyer_balance ) {                     // check if buyer have enough money
+            //System.out.println("# DEBUG: Player have enough money" );
             econ.withdrawPlayer(o_buyer, buyer_total);          // subtract money from buyer
             econ.depositPlayer(o_seller, seller_total);         // give money to seller
 
@@ -693,15 +693,15 @@ public class sqliteDb {
             }
 
             if(seller == null) {
-                //System.out.println("--DEBUG: SELLER IS OFFLINE!");
-                //sqliteDb.insertPayout(seller_uuid, itemid, amount); // Insert payout into db
+                System.out.println("--DEBUG: SELLER IS OFFLINE!");
+                sqliteDb.insertPayout(seller_uuid, itemid, amount); // Insert payout into db
             }
             else {
                 seller.sendMessage("SELL ORDER" + ChatColor.GREEN+ " FULFILLED!" + ChatColor.WHITE + " You sold [" + amount + "] "  + itemid + " for" + ChatColor.GREEN + " $"  + seller_total_string);
             }
 
             if(buyer == null) {
-                //System.out.println("--DEBUG: BUYER IS OFFLINE!");
+                System.out.println("--DEBUG: BUYER IS OFFLINE!");
                 insertPayout(buyer_uuid, itemid, amount); // Insert item payout into db
             }
             else {
@@ -714,6 +714,7 @@ public class sqliteDb {
             return true;
         } // end enough money
         else {
+            buyer.sendMessage(ChatColor.RED+ "NOT ENOUGH MONEY!" + ChatColor.WHITE + " You got need " + ChatColor.GREEN +"$" + buyer_total + ChatColor.WHITE + " but you only have " + ChatColor.RED + " $"  + buyer_balance);
             return false;
         }
     } // end withdraw
@@ -721,7 +722,7 @@ public class sqliteDb {
 
 
     public static boolean closeOrder(String table_name, int ID, String itemid) {
-        //System.out.println("AT closeOrder: " + table_name + " " + ID);
+        System.out.println("AT closeOrder: " + table_name + " " + ID);
         Connection c = null;
         Statement stmt = null;
 

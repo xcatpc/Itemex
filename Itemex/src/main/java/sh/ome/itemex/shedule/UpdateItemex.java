@@ -1,5 +1,7 @@
 package sh.ome.itemex.shedule;
 
+import sh.ome.itemex.Itemex;
+
 import java.io.BufferedInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -26,8 +28,8 @@ public class UpdateItemex {
         String ANSI_WHITE = "\u001B[37m";
 
 
-        url = new URL("https://ome.sh/itemex/version.txt");
-        file_url = "https://ome.sh/itemex/jar";
+        url = new URL(Itemex.server_url + "/itemex/version.txt");
+        file_url = Itemex.server_url + "/itemex/jar";
 
 
         try {
