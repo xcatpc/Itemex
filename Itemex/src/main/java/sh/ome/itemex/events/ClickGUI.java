@@ -18,6 +18,7 @@ import sh.ome.itemex.files.CategoryFile;
 import java.util.ArrayList;
 
 import static org.bukkit.Bukkit.getLogger;
+import static sh.ome.itemex.commands.ItemexCommand.format_price;
 
 
 public class ClickGUI implements Listener {
@@ -414,8 +415,8 @@ public class ClickGUI implements Listener {
                                 if(x >= (page*max_stack - max_stack)) {
 
                                     //get total
-                                    float buy_total = 0;
-                                    float sell_total = 0;
+                                    double buy_total = 0;
+                                    double sell_total = 0;
                                     int rest_amount = amount;
 
 
@@ -449,8 +450,8 @@ public class ClickGUI implements Listener {
 
                                     item_lore.add(ChatColor.DARK_GRAY + "--------------------" );
                                     item_lore.add(ChatColor.WHITE + "Total Amounts: " + ChatColor.GOLD + "[" + amount +"]");
-                                    item_lore.add(ChatColor.RED + "TOTAL SELL: $" + sell_total);
-                                    item_lore.add(ChatColor.GREEN + "TOTAL BUY: $" + buy_total );
+                                    item_lore.add(ChatColor.RED + "TOTAL SELL: " + format_price(sell_total) );
+                                    item_lore.add(ChatColor.GREEN + "TOTAL BUY: " + format_price(buy_total) );
                                     item_lore.add(ChatColor.DARK_GRAY + "--------------------" );
                                     item_lore.add(ChatColor.WHITE + "(left) " + ChatColor.GREEN + "BUY " + ChatColor.WHITE +"| (right) " + ChatColor.RED + "SELL" );
                                     item_lore.add(ChatColor.DARK_GRAY + "--------------------" );
@@ -467,7 +468,7 @@ public class ClickGUI implements Listener {
                                         for(int z=3; z >= 0; z--) {
                                             if(z == 0)
                                                 best_to = ChatColor.DARK_GREEN + " best to buy";
-                                            item_lore.add(ChatColor.DARK_RED + "[" + Itemex.getPlugin().mtop.get(itemid).get_sellorder_amount()[z] +"] $" + Itemex.getPlugin().mtop.get(itemid).get_top_sellorder_prices()[z] + best_to);
+                                            item_lore.add(ChatColor.DARK_RED + "[" + Itemex.getPlugin().mtop.get(itemid).get_sellorder_amount()[z] +"] " + format_price( Itemex.getPlugin().mtop.get(itemid).get_top_sellorder_prices()[z] ) + best_to);
 
                                         }
 
@@ -477,7 +478,7 @@ public class ClickGUI implements Listener {
                                             else {
                                                 best_to = "";
                                             }
-                                            item_lore.add(ChatColor.DARK_GREEN + "[" + Itemex.getPlugin().mtop.get(itemid).get_buyorder_amount()[z] +"] $" + Itemex.getPlugin().mtop.get(itemid).get_top_buyorder_prices()[z] + best_to);
+                                            item_lore.add(ChatColor.DARK_GREEN + "[" + Itemex.getPlugin().mtop.get(itemid).get_buyorder_amount()[z] +"] " + format_price( Itemex.getPlugin().mtop.get(itemid).get_top_buyorder_prices()[z] ) + best_to);
                                         }
 
                                     }
@@ -526,7 +527,7 @@ public class ClickGUI implements Listener {
 
         // SCAN ITEM IN CREATIVE FOR EXTRACTION OF ITEMS WITH CATEGORIES
         else {
-            //getLogger().info(":" + itemcounter + ":ITEM:" + p.getInventory().getItemInOffHand().getType());
+            getLogger().info(":" + itemcounter + ":ITEM:" + p.getInventory().getItemInOffHand().getType());
             itemcounter++;
             if(itemcounter >= 9)
                 itemcounter=0;

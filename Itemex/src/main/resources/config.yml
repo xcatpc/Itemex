@@ -3,6 +3,13 @@
 admin_function: true
 admin_function_percentage: 100.0
 
+# currency representation
+currencySymbol: "$"
+decimals: 2
+decimal_separator: '.'
+thousand_separator: ','
+unitLocation: "right"
+
 # If there is no buy limit or sell limit order at an item, Itemex use this value for initial admin-sellorder-price and adds admin_function_percentage (default 100) to the admin-buyorder-price.
 admin_function_initial_buy_price: 100
 

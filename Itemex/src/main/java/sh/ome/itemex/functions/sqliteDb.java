@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 import static sh.ome.itemex.Itemex.econ;
+import static sh.ome.itemex.commands.ItemexCommand.format_price;
 
 public class sqliteDb {
     private static int MAX_BUFFER = 10000000; // 10 MIO
@@ -23,7 +24,7 @@ public class sqliteDb {
     private String itemid;
     private String ordertype;
     private int    amount;
-    private float price;
+    private double price;
     private long timestamp;
 
 
@@ -230,9 +231,9 @@ public class sqliteDb {
 
 
     public static Payout[] getPayout(String player_uuid) {
-        System.out.println("UUID: " + player_uuid);
+        //System.out.println("# DEBUG - UUID: " + player_uuid);
         Payout[] buffer = new Payout[MAX_BUFFER];
-        System.out.println("UUID2: " + player_uuid);
+        //System.out.println("# DEBUG - UUID2: " + player_uuid);
 
         int row_counter = 0;
 
@@ -292,7 +293,7 @@ public class sqliteDb {
             ResultSet rs = stmt.executeQuery(sql);
 
             while (rs.next()) {
-                buffer[row_counter] = new OrderBuffer(rs.getInt("id"), rs.getString("player_uuid"), rs.getString("itemid"), rs.getString("ordertype"),rs.getInt("amount"), rs.getFloat("price"), rs.getLong("timestamp") );
+                buffer[row_counter] = new OrderBuffer(rs.getInt("id"), rs.getString("player_uuid"), rs.getString("itemid"), rs.getString("ordertype"),rs.getInt("amount"), rs.getDouble("price"), rs.getLong("timestamp") );
                 row_counter++;
             }
             stmt.close();
@@ -321,8 +322,8 @@ public class sqliteDb {
     }
 
     public static void loadBestOrdersToRam(String item, boolean update){
-        float[] top_buy_price = new float[4];
-        float[] top_sell_price = new float[4];
+        double[] top_buy_price = new double[4];
+        double[] top_sell_price = new double[4];
         int[] top_buy_amount = new int[4];
         int[] top_sell_amount = new int[4];
         int row_counter = 0;
@@ -341,7 +342,7 @@ public class sqliteDb {
             ResultSet rs    = stmt.executeQuery(sql);
 
             while (rs.next()) {
-                top_sell_price[row_counter] = rs.getFloat("price");
+                top_sell_price[row_counter] = rs.getDouble("price");
                 top_sell_amount[row_counter] = rs.getInt("amount");
                 //System.out.println("ROW_COUNTER= " + row_counter);
                 row_counter++;
@@ -367,7 +368,7 @@ public class sqliteDb {
             ResultSet rs    = stmt.executeQuery(sql);
 
             while (rs.next()) {
-                top_buy_price[row_counter] = rs.getFloat("price");
+                top_buy_price[row_counter] = rs.getDouble("price");
                 top_buy_amount[row_counter] = rs.getInt("amount");
                 //System.out.println("ROW_COUNTER BUY= " + row_counter);
                 row_counter++;
@@ -413,7 +414,7 @@ public class sqliteDb {
             ResultSet rs    = stmt.executeQuery(sql);
 
             while (rs.next()) {
-                buffer[row_counter] = new OrderBuffer(rs.getInt("id"), rs.getString("player_uuid"), rs.getString("itemid"), rs.getString("ordertype"),rs.getInt("amount"), rs.getFloat("price"), rs.getLong("timestamp") );
+                buffer[row_counter] = new OrderBuffer(rs.getInt("id"), rs.getString("player_uuid"), rs.getString("itemid"), rs.getString("ordertype"),rs.getInt("amount"), rs.getDouble("price"), rs.getLong("timestamp") );
                 row_counter++;
             }
             //copy sells into temp
@@ -444,7 +445,7 @@ public class sqliteDb {
             ResultSet rs    = stmt.executeQuery(sql);
 
             while (rs.next()) {
-                buffer[row_counter] = new OrderBuffer(rs.getInt("id"), rs.getString("player_uuid"), rs.getString("itemid"), rs.getString("ordertype"),rs.getInt("amount"), rs.getFloat("price"), rs.getLong("timestamp") );
+                buffer[row_counter] = new OrderBuffer(rs.getInt("id"), rs.getString("player_uuid"), rs.getString("itemid"), rs.getString("ordertype"),rs.getInt("amount"), rs.getDouble("price"), rs.getLong("timestamp") );
                 row_counter++;
             }
             stmt.close();
@@ -488,7 +489,7 @@ public class sqliteDb {
             // loop through the result set
             int row_counter = 0;
             while (rs.next()) {
-                buffer[row_counter] = new sqliteDb.OrderBuffer(rs.getInt("id"), rs.getString("player_uuid"), rs.getString("itemid"), rs.getString("ordertype"),rs.getInt("amount"), rs.getFloat("price"), rs.getLong("timestamp") );
+                buffer[row_counter] = new sqliteDb.OrderBuffer(rs.getInt("id"), rs.getString("player_uuid"), rs.getString("itemid"), rs.getString("ordertype"),rs.getInt("amount"), rs.getDouble("price"), rs.getLong("timestamp") );
                 row_counter++;
             }
         } catch (SQLException e) {
@@ -515,8 +516,8 @@ public class sqliteDb {
 
             // loop through the result set
             while (rs.next()) {
-                //System.out.println("# DEBUG - id: " + rs.getInt("id") + " itemid: " + rs.getString("itemid") + " price: " + rs.getFloat("price"));
-                buffer.add(new OrderBuffer(rs.getInt("id"), rs.getString("player_uuid"), rs.getString("itemid"), rs.getString("ordertype"),rs.getInt("amount"), rs.getFloat("price"), rs.getLong("timestamp")));
+                //System.out.println("# DEBUG - id: " + rs.getInt("id") + " itemid: " + rs.getString("itemid") + " price: " + rs.getDouble("price"));
+                buffer.add(new OrderBuffer(rs.getInt("id"), rs.getString("player_uuid"), rs.getString("itemid"), rs.getString("ordertype"),rs.getInt("amount"), rs.getDouble("price"), rs.getLong("timestamp")));
             }
         } catch (SQLException e) {
             //System.out.println(e.getMessage());
@@ -525,7 +526,7 @@ public class sqliteDb {
     }
 
 
-    public static boolean updateOrder(String table_name, int ID, int amount, float price, String ordertype, String itemid) {
+    public static boolean updateOrder(String table_name, int ID, int amount, double price, String ordertype, String itemid) {
         //System.out.println("AT updateORDER: " + table_name + " " +ID + " " + amount + " " + price + " " + ordertype);
         Connection c = null;
         Statement stmt = null;
@@ -697,7 +698,7 @@ public class sqliteDb {
                 sqliteDb.insertPayout(seller_uuid, itemid, amount); // Insert payout into db
             }
             else {
-                seller.sendMessage("SELL ORDER" + ChatColor.GREEN+ " FULFILLED!" + ChatColor.WHITE + " You sold [" + amount + "] "  + itemid + " for" + ChatColor.GREEN + " $"  + seller_total_string);
+                seller.sendMessage("SELL ORDER" + ChatColor.GREEN+ " FULFILLED!" + ChatColor.WHITE + " You sold [" + amount + "] "  + itemid + " for" + ChatColor.GREEN + " " + format_price( seller_total ) );
             }
 
             if(buyer == null) {
@@ -706,7 +707,7 @@ public class sqliteDb {
             }
             else {
                 insertPayout(buyer_uuid, itemid, amount); // Insert item payout into db
-                buyer.sendMessage("BUY ORDER" + ChatColor.GREEN+ " FULFILLED!" + ChatColor.WHITE + " You got [" + amount + "] "  + itemid + " for" + ChatColor.RED + " $"  + buyer_total_string);
+                buyer.sendMessage("BUY ORDER" + ChatColor.GREEN+ " FULFILLED!" + ChatColor.WHITE + " You got [" + amount + "] "  + itemid + " for" + ChatColor.RED + " " + format_price( buyer_total ) );
                 TextComponent message = new TextComponent(ChatColor.BLUE + "-> (CLICK HERE) You can withdraw with: /ix withdraw " + itemid +" " + amount);
                 message.setClickEvent( new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ix withdraw " + itemid +" " + amount));
                 buyer.spigot().sendMessage(message);
@@ -714,7 +715,7 @@ public class sqliteDb {
             return true;
         } // end enough money
         else {
-            buyer.sendMessage(ChatColor.RED+ "NOT ENOUGH MONEY!" + ChatColor.WHITE + " You got need " + ChatColor.GREEN +"$" + buyer_total + ChatColor.WHITE + " but you only have " + ChatColor.RED + " $"  + buyer_balance);
+            buyer.sendMessage(ChatColor.RED+ "NOT ENOUGH MONEY!" + ChatColor.WHITE + " You got need " + ChatColor.GREEN + format_price( buyer_total ) + ChatColor.WHITE + " but you only have " + ChatColor.RED + " " + format_price( buyer_balance ));
             return false;
         }
     } // end withdraw
@@ -722,7 +723,7 @@ public class sqliteDb {
 
 
     public static boolean closeOrder(String table_name, int ID, String itemid) {
-        System.out.println("AT closeOrder: " + table_name + " " + ID);
+        //System.out.println("# DEBUG - AT closeOrder: " + table_name + " " + ID);
         Connection c = null;
         Statement stmt = null;
 
@@ -826,10 +827,10 @@ public class sqliteDb {
         public String itemid;
         public String ordertype;
         public int amount;
-        public float price;
+        public double price;
         public long timestamp;
 
-        public OrderBuffer(int id, String uuid, String itemid, String ordertype, int amount, float price, long timestamp)
+        public OrderBuffer(int id, String uuid, String itemid, String ordertype, int amount, double price, long timestamp)
         {
             this.id = id;
             this.uuid = uuid;

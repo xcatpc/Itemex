@@ -71,7 +71,7 @@ public class CategoryFile {
 
 
         List<String> building_blocks = new ArrayList<String>();
-        building_blocks.add("BIRCH_DOOR");
+        building_blocks.add("SPRUCE_DOOR");
         building_blocks.add("OAK_LOG");
         building_blocks.add("OAK_WOOD");
         building_blocks.add("STRIPPED_OAK_LOG");
@@ -163,6 +163,33 @@ public class CategoryFile {
         building_blocks.add("MANGROVE_TRAPDOOR");
         building_blocks.add("MANGROVE_PRESSURE_PLATE");
         building_blocks.add("MANGROVE_BUTTON");
+        building_blocks.add("CHERRY_LOG");
+        building_blocks.add("CHERRY_WOOD");
+        building_blocks.add("STRIPPED_CHERRY_LOG");
+        building_blocks.add("STRIPPED_CHERRY_WOOD");
+        building_blocks.add("CHERRY_PLANKS");
+        building_blocks.add("CHERRY_STAIRS");
+        building_blocks.add("CHERRY_SLAB");
+        building_blocks.add("CHERRY_FENCE");
+        building_blocks.add("CHERRY_FENCE_GATE");
+        building_blocks.add("CHERRY_DOOR");
+        building_blocks.add("CHERRY_TRAPDOOR");
+        building_blocks.add("CHERRY_PRESSURE_PLATE");
+        building_blocks.add("CHERRY_BUTTON");
+        building_blocks.add("BAMBOO_BLOCK");
+        building_blocks.add("STRIPPED_BAMBOO_BLOCK");
+        building_blocks.add("BAMBOO_PLANKS");
+        building_blocks.add("BAMBOO_MOSAIC");
+        building_blocks.add("BAMBOO_STAIRS");
+        building_blocks.add("BAMBOO_MOSAIC_STAIRS");
+        building_blocks.add("BAMBOO_SLAB");
+        building_blocks.add("BAMBOO_MOSAIC_SLAB");
+        building_blocks.add("BAMBOO_FENCE");
+        building_blocks.add("BAMBOO_FENCE_GATE");
+        building_blocks.add("BAMBOO_DOOR");
+        building_blocks.add("BAMBOO_TRAPDOOR");
+        building_blocks.add("BAMBOO_PRESSURE_PLATE");
+        building_blocks.add("BAMBOO_BUTTON");
         building_blocks.add("CRIMSON_STEM");
         building_blocks.add("CRIMSON_HYPHAE");
         building_blocks.add("STRIPPED_CRIMSON_STEM");
@@ -242,10 +269,11 @@ public class CategoryFile {
         building_blocks.add("COBBLED_DEEPSLATE_WALL");
         building_blocks.add("CHISELED_DEEPSLATE");
         building_blocks.add("POLISHED_DEEPSLATE");
-        building_blocks.add("CRACKED_DEEPSLATE_BRICKS");
+        building_blocks.add("POLISHED_DEEPSLATE_STAIRS");
         building_blocks.add("POLISHED_DEEPSLATE_SLAB");
         building_blocks.add("POLISHED_DEEPSLATE_WALL");
         building_blocks.add("DEEPSLATE_BRICKS");
+        building_blocks.add("CRACKED_DEEPSLATE_BRICKS");
         building_blocks.add("DEEPSLATE_BRICK_STAIRS");
         building_blocks.add("DEEPSLATE_BRICK_SLAB");
         building_blocks.add("DEEPSLATE_BRICK_WALL");
@@ -359,6 +387,7 @@ public class CategoryFile {
         building_blocks.add("SMOOTH_QUARTZ");
         building_blocks.add("SMOOTH_QUARTZ_STAIRS");
         building_blocks.add("SMOOTH_QUARTZ_SLAB");
+        building_blocks.add("EXPOSED_CUT_COPPER_STAIRS");
         building_blocks.add("AMETHYST_BLOCK");
         building_blocks.add("COPPER_BLOCK");
         building_blocks.add("CUT_COPPER");
@@ -393,10 +422,11 @@ public class CategoryFile {
         building_blocks.add("WAXED_OXIDIZED_CUT_COPPER_STAIRS");
         building_blocks.add("WAXED_OXIDIZED_CUT_COPPER_SLAB");
 
+
         map_categories.put("BUILDING_BLOCKS", building_blocks);
 
         List<String> colored_blocks = new ArrayList<String>();
-        colored_blocks.add("BROWN_WOOL");
+        colored_blocks.add("WAXED_OXIDIZED_CUT_COPPER_STAIRS");
         colored_blocks.add("WHITE_WOOL");
         colored_blocks.add("LIGHT_GRAY_WOOL");
         colored_blocks.add("GRAY_WOOL");
@@ -594,10 +624,12 @@ public class CategoryFile {
         colored_blocks.add("BLUE_BANNER");
         colored_blocks.add("PURPLE_BANNER");
         colored_blocks.add("MAGENTA_BANNER");
+        colored_blocks.add("PINK_BANNER");
+
         map_categories.put("COLORED_BLOCKS", colored_blocks);
 
         List<String> natural_blocks = new ArrayList<String>();
-        natural_blocks.add("PINK_BANNER");
+        natural_blocks.add("MYCELIUM");
         natural_blocks.add("GRASS_BLOCK");
         natural_blocks.add("PODZOL");
         natural_blocks.add("MYCELIUM");
@@ -679,6 +711,9 @@ public class CategoryFile {
         natural_blocks.add("ACACIA_LOG");
         natural_blocks.add("DARK_OAK_LOG");
         natural_blocks.add("MANGROVE_LOG");
+        natural_blocks.add("MANGROVE_ROOTS");
+        natural_blocks.add("MUDDY_MANGROVE_ROOTS");
+        natural_blocks.add("CHERRY_LOG");
         natural_blocks.add("MUSHROOM_STEM");
         natural_blocks.add("CRIMSON_STEM");
         natural_blocks.add("WARPED_STEM");
@@ -689,8 +724,7 @@ public class CategoryFile {
         natural_blocks.add("ACACIA_LEAVES");
         natural_blocks.add("DARK_OAK_LEAVES");
         natural_blocks.add("MANGROVE_LEAVES");
-        natural_blocks.add("MANGROVE_ROOTS");
-        natural_blocks.add("MUDDY_MANGROVE_ROOTS");
+        natural_blocks.add("CHERRY_LEAVES");
         natural_blocks.add("AZALEA_LEAVES");
         natural_blocks.add("FLOWERING_AZALEA_LEAVES");
         natural_blocks.add("BROWN_MUSHROOM_BLOCK");
@@ -705,8 +739,8 @@ public class CategoryFile {
         natural_blocks.add("ACACIA_SAPLING");
         natural_blocks.add("DARK_OAK_SAPLING");
         natural_blocks.add("MANGROVE_PROPAGULE");
+        natural_blocks.add("CHERRY_SAPLING");
         natural_blocks.add("AZALEA");
-        natural_blocks.add("AZURE_BLUET");
         natural_blocks.add("FLOWERING_AZALEA");
         natural_blocks.add("BROWN_MUSHROOM");
         natural_blocks.add("RED_MUSHROOM");
@@ -719,6 +753,7 @@ public class CategoryFile {
         natural_blocks.add("POPPY");
         natural_blocks.add("BLUE_ORCHID");
         natural_blocks.add("ALLIUM");
+        natural_blocks.add("AZURE_BLUET");
         natural_blocks.add("RED_TULIP");
         natural_blocks.add("ORANGE_TULIP");
         natural_blocks.add("WHITE_TULIP");
@@ -726,11 +761,13 @@ public class CategoryFile {
         natural_blocks.add("OXEYE_DAISY");
         natural_blocks.add("CORNFLOWER");
         natural_blocks.add("LILY_OF_THE_VALLEY");
+        natural_blocks.add("TORCHFLOWER");
+        natural_blocks.add("WITHER_ROSE");
+        natural_blocks.add("PINK_PETALS");
         natural_blocks.add("SPORE_BLOSSOM");
         natural_blocks.add("BAMBOO");
         natural_blocks.add("SUGAR_CANE");
         natural_blocks.add("CACTUS");
-        natural_blocks.add("WITHER_ROSE");
         natural_blocks.add("CRIMSON_ROOTS");
         natural_blocks.add("WARPED_ROOTS");
         natural_blocks.add("NETHER_SPROUTS");
@@ -743,6 +780,7 @@ public class CategoryFile {
         natural_blocks.add("LILAC");
         natural_blocks.add("ROSE_BUSH");
         natural_blocks.add("PEONY");
+        natural_blocks.add("PITCHER_PLANT");
         natural_blocks.add("BIG_DRIPLEAF");
         natural_blocks.add("SMALL_DRIPLEAF");
         natural_blocks.add("CHORUS_PLANT");
@@ -751,11 +789,14 @@ public class CategoryFile {
         natural_blocks.add("HANGING_ROOTS");
         natural_blocks.add("FROGSPAWN");
         natural_blocks.add("TURTLE_EGG");
+        natural_blocks.add("SNIFFER_EGG");
         natural_blocks.add("WHEAT_SEEDS");
         natural_blocks.add("COCOA_BEANS");
         natural_blocks.add("PUMPKIN_SEEDS");
         natural_blocks.add("MELON_SEEDS");
         natural_blocks.add("BEETROOT_SEEDS");
+        natural_blocks.add("TORCHFLOWER_SEEDS");
+        natural_blocks.add("PITCHER_POD");
         natural_blocks.add("GLOW_BERRIES");
         natural_blocks.add("SWEET_BERRIES");
         natural_blocks.add("NETHER_WART");
@@ -779,11 +820,11 @@ public class CategoryFile {
         natural_blocks.add("BUBBLE_CORAL");
         natural_blocks.add("FIRE_CORAL");
         natural_blocks.add("HORN_CORAL");
+        natural_blocks.add("DEAD_TUBE_CORAL");
         natural_blocks.add("DEAD_BRAIN_CORAL");
         natural_blocks.add("DEAD_BUBBLE_CORAL");
         natural_blocks.add("DEAD_FIRE_CORAL");
         natural_blocks.add("DEAD_HORN_CORAL");
-        natural_blocks.add("DEAD_TUBE_CORAL");
         natural_blocks.add("TUBE_CORAL_FAN");
         natural_blocks.add("BRAIN_CORAL_FAN");
         natural_blocks.add("BUBBLE_CORAL_FAN");
@@ -815,6 +856,7 @@ public class CategoryFile {
         natural_blocks.add("SCULK_SENSOR");
         natural_blocks.add("COBWEB");
         natural_blocks.add("BEDROCK");
+
         map_categories.put("NATURAL_BLOCKS", natural_blocks);
 
         List<String> functional_blocks = new ArrayList<String>();
@@ -866,24 +908,67 @@ public class CategoryFile {
         functional_blocks.add("SCAFFOLDING");
         functional_blocks.add("BEE_NEST");
         functional_blocks.add("BEEHIVE");
+        functional_blocks.add("SUSPICIOUS_SAND");
+        functional_blocks.add("SUSPICIOUS_GRAVEL");
         functional_blocks.add("LIGHTNING_ROD");
         functional_blocks.add("FLOWER_POT");
+        functional_blocks.add("DECORATED_POT");
         functional_blocks.add("ARMOR_STAND");
         functional_blocks.add("ITEM_FRAME");
         functional_blocks.add("GLOW_ITEM_FRAME");
         functional_blocks.add("PAINTING");
+        functional_blocks.add("PAINTING");
+        functional_blocks.add("PAINTING");
+        functional_blocks.add("PAINTING");
+        functional_blocks.add("PAINTING");
+        functional_blocks.add("PAINTING");
+        functional_blocks.add("PAINTING");
+        functional_blocks.add("PAINTING");
+        functional_blocks.add("PAINTING");
+        functional_blocks.add("PAINTING");
+        functional_blocks.add("PAINTING");
+        functional_blocks.add("PAINTING");
+        functional_blocks.add("PAINTING");
+        functional_blocks.add("PAINTING");
+        functional_blocks.add("PAINTING");
+        functional_blocks.add("PAINTING");
+        functional_blocks.add("PAINTING");
+        functional_blocks.add("PAINTING");
+        functional_blocks.add("PAINTING");
+        functional_blocks.add("PAINTING");
+        functional_blocks.add("PAINTING");
+        functional_blocks.add("PAINTING");
+        functional_blocks.add("PAINTING");
+        functional_blocks.add("PAINTING");
+        functional_blocks.add("PAINTING");
+        functional_blocks.add("PAINTING");
+        functional_blocks.add("PAINTING");
         functional_blocks.add("BOOKSHELF");
+        functional_blocks.add("CHISELED_BOOKSHELF");
         functional_blocks.add("LECTERN");
         functional_blocks.add("TINTED_GLASS");
         functional_blocks.add("OAK_SIGN");
+        functional_blocks.add("OAK_HANGING_SIGN");
         functional_blocks.add("SPRUCE_SIGN");
+        functional_blocks.add("SPRUCE_HANGING_SIGN");
         functional_blocks.add("BIRCH_SIGN");
+        functional_blocks.add("BIRCH_HANGING_SIGN");
         functional_blocks.add("JUNGLE_SIGN");
+        functional_blocks.add("JUNGLE_HANGING_SIGN");
         functional_blocks.add("ACACIA_SIGN");
+        functional_blocks.add("ACACIA_HANGING_SIGN");
         functional_blocks.add("DARK_OAK_SIGN");
+        functional_blocks.add("DARK_OAK_HANGING_SIGN");
         functional_blocks.add("MANGROVE_SIGN");
+        functional_blocks.add("MANGROVE_HANGING_SIGN");
+        functional_blocks.add("CHERRY_SIGN");
+        functional_blocks.add("CHERRY_HANGING_SIGN");
+        functional_blocks.add("BAMBOO_SIGN");
+        functional_blocks.add("BAMBOO_HANGING_SIGN");
         functional_blocks.add("CRIMSON_SIGN");
+        functional_blocks.add("CRIMSON_HANGING_SIGN");
         functional_blocks.add("WARPED_SIGN");
+        functional_blocks.add("WARPED_HANGING_SIGN");
         functional_blocks.add("CHEST");
         functional_blocks.add("BARREL");
         functional_blocks.add("ENDER_CHEST");
@@ -954,11 +1039,13 @@ public class CategoryFile {
         functional_blocks.add("PURPLE_BANNER");
         functional_blocks.add("MAGENTA_BANNER");
         functional_blocks.add("PINK_BANNER");
+        functional_blocks.add("WHITE_BANNER");
         functional_blocks.add("SKELETON_SKULL");
         functional_blocks.add("WITHER_SKELETON_SKULL");
         functional_blocks.add("PLAYER_HEAD");
         functional_blocks.add("ZOMBIE_HEAD");
         functional_blocks.add("CREEPER_HEAD");
+        functional_blocks.add("PIGLIN_HEAD");
         functional_blocks.add("DRAGON_HEAD");
         functional_blocks.add("DRAGON_EGG");
         functional_blocks.add("END_PORTAL_FRAME");
@@ -969,10 +1056,11 @@ public class CategoryFile {
         functional_blocks.add("INFESTED_MOSSY_STONE_BRICKS");
         functional_blocks.add("INFESTED_CRACKED_STONE_BRICKS");
         functional_blocks.add("INFESTED_CHISELED_STONE_BRICKS");
+
         map_categories.put("FUNCTIONAL_BLOCKS", functional_blocks);
 
         List<String> redstone_blocks = new ArrayList<String>();
-        redstone_blocks.add("STICKY_PISTON");
+        redstone_blocks.add("REDSTONE_TORCH");
         redstone_blocks.add("REDSTONE");
         redstone_blocks.add("REDSTONE_TORCH");
         redstone_blocks.add("REDSTONE_BLOCK");
@@ -987,6 +1075,9 @@ public class CategoryFile {
         redstone_blocks.add("LIGHT_WEIGHTED_PRESSURE_PLATE");
         redstone_blocks.add("HEAVY_WEIGHTED_PRESSURE_PLATE");
         redstone_blocks.add("SCULK_SENSOR");
+        redstone_blocks.add("CALIBRATED_SCULK_SENSOR");
+        redstone_blocks.add("SCULK_SHRIEKER");
+        redstone_blocks.add("AMETHYST_BLOCK");
         redstone_blocks.add("WHITE_WOOL");
         redstone_blocks.add("TRIPWIRE_HOOK");
         redstone_blocks.add("STRING");
@@ -1002,8 +1093,10 @@ public class CategoryFile {
         redstone_blocks.add("HOPPER");
         redstone_blocks.add("CHEST");
         redstone_blocks.add("BARREL");
+        redstone_blocks.add("CHISELED_BOOKSHELF");
         redstone_blocks.add("FURNACE");
         redstone_blocks.add("TRAPPED_CHEST");
+        redstone_blocks.add("JUKEBOX");
         redstone_blocks.add("OBSERVER");
         redstone_blocks.add("NOTE_BLOCK");
         redstone_blocks.add("COMPOSTER");
@@ -1018,6 +1111,7 @@ public class CategoryFile {
         redstone_blocks.add("FURNACE_MINECART");
         redstone_blocks.add("TNT_MINECART");
         redstone_blocks.add("OAK_CHEST_BOAT");
+        redstone_blocks.add("BAMBOO_CHEST_RAFT");
         redstone_blocks.add("OAK_DOOR");
         redstone_blocks.add("IRON_DOOR");
         redstone_blocks.add("OAK_FENCE_GATE");
@@ -1030,10 +1124,11 @@ public class CategoryFile {
         redstone_blocks.add("ARMOR_STAND");
         redstone_blocks.add("REDSTONE_ORE");
 
+
         map_categories.put("REDSTONE_BLOCKS", redstone_blocks);
 
         List<String> tools_and_utilities = new ArrayList<String>();
-        tools_and_utilities.add("NETHERITE_SHOVEL");
+        tools_and_utilities.add("ARMOR_STAND");
         tools_and_utilities.add("WOODEN_SHOVEL");
         tools_and_utilities.add("WOODEN_PICKAXE");
         tools_and_utilities.add("WOODEN_AXE");
@@ -1060,10 +1155,10 @@ public class CategoryFile {
         tools_and_utilities.add("NETHERITE_HOE");
         tools_and_utilities.add("BUCKET");
         tools_and_utilities.add("WATER_BUCKET");
-        tools_and_utilities.add("PUFFERFISH_BUCKET");
-        tools_and_utilities.add("SALMON_BUCKET");
         tools_and_utilities.add("COD_BUCKET");
+        tools_and_utilities.add("SALMON_BUCKET");
         tools_and_utilities.add("TROPICAL_FISH_BUCKET");
+        tools_and_utilities.add("PUFFERFISH_BUCKET");
         tools_and_utilities.add("AXOLOTL_BUCKET");
         tools_and_utilities.add("TADPOLE_BUCKET");
         tools_and_utilities.add("LAVA_BUCKET");
@@ -1074,6 +1169,7 @@ public class CategoryFile {
         tools_and_utilities.add("FIRE_CHARGE");
         tools_and_utilities.add("BONE_MEAL");
         tools_and_utilities.add("SHEARS");
+        tools_and_utilities.add("BRUSH");
         tools_and_utilities.add("NAME_TAG");
         tools_and_utilities.add("LEAD");
         tools_and_utilities.add("COMPASS");
@@ -1085,6 +1181,8 @@ public class CategoryFile {
         tools_and_utilities.add("ENDER_PEARL");
         tools_and_utilities.add("ENDER_EYE");
         tools_and_utilities.add("ELYTRA");
+        tools_and_utilities.add("FIREWORK_ROCKET");
+        tools_and_utilities.add("FIREWORK_ROCKET");
         tools_and_utilities.add("FIREWORK_ROCKET");
         tools_and_utilities.add("SADDLE");
         tools_and_utilities.add("CARROT_ON_A_STICK");
@@ -1103,6 +1201,10 @@ public class CategoryFile {
         tools_and_utilities.add("DARK_OAK_CHEST_BOAT");
         tools_and_utilities.add("MANGROVE_BOAT");
         tools_and_utilities.add("MANGROVE_CHEST_BOAT");
+        tools_and_utilities.add("CHERRY_BOAT");
+        tools_and_utilities.add("CHERRY_CHEST_BOAT");
+        tools_and_utilities.add("BAMBOO_RAFT");
+        tools_and_utilities.add("BAMBOO_CHEST_RAFT");
         tools_and_utilities.add("RAIL");
         tools_and_utilities.add("POWERED_RAIL");
         tools_and_utilities.add("DETECTOR_RAIL");
@@ -1112,6 +1214,13 @@ public class CategoryFile {
         tools_and_utilities.add("CHEST_MINECART");
         tools_and_utilities.add("FURNACE_MINECART");
         tools_and_utilities.add("TNT_MINECART");
+        tools_and_utilities.add("GOAT_HORN");
+        tools_and_utilities.add("GOAT_HORN");
+        tools_and_utilities.add("GOAT_HORN");
+        tools_and_utilities.add("GOAT_HORN");
+        tools_and_utilities.add("GOAT_HORN");
+        tools_and_utilities.add("GOAT_HORN");
+        tools_and_utilities.add("GOAT_HORN");
         tools_and_utilities.add("GOAT_HORN");
         tools_and_utilities.add("MUSIC_DISC_13");
         tools_and_utilities.add("MUSIC_DISC_CAT");
@@ -1128,6 +1237,8 @@ public class CategoryFile {
         tools_and_utilities.add("MUSIC_DISC_OTHERSIDE");
         tools_and_utilities.add("MUSIC_DISC_5");
         tools_and_utilities.add("MUSIC_DISC_PIGSTEP");
+        tools_and_utilities.add("MUSIC_DISC_RELIC");
+
         map_categories.put("TOOLS_AND_UTILITIES", tools_and_utilities);
 
         List<String> combat = new ArrayList<String>();
@@ -1188,6 +1299,47 @@ public class CategoryFile {
         combat.add("ARROW");
         combat.add("SPECTRAL_ARROW");
         combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+        combat.add("TIPPED_ARROW");
+
         map_categories.put("COMBAT", combat);
 
         List<String> food_and_drinks = new ArrayList<String>();
@@ -1240,7 +1392,7 @@ public class CategoryFile {
         map_categories.put("FOOD_AND_DRINKS", food_and_drinks);
 
         List<String> ingredients = new ArrayList<String>();
-        ingredients.add("GLOW_INK_SAC");
+        ingredients.add("STRING");
         ingredients.add("COAL");
         ingredients.add("CHARCOAL");
         ingredients.add("RAW_IRON");
@@ -1335,18 +1487,73 @@ public class CategoryFile {
         ingredients.add("MOJANG_BANNER_PATTERN");
         ingredients.add("GLOBE_BANNER_PATTERN");
         ingredients.add("PIGLIN_BANNER_PATTERN");
+        ingredients.add("ANGLER_POTTERY_SHERD");
+        ingredients.add("ARCHER_POTTERY_SHERD");
+        ingredients.add("ARMS_UP_POTTERY_SHERD");
+        ingredients.add("BLADE_POTTERY_SHERD");
+        ingredients.add("BREWER_POTTERY_SHERD");
+        ingredients.add("BURN_POTTERY_SHERD");
+        ingredients.add("DANGER_POTTERY_SHERD");
+        ingredients.add("EXPLORER_POTTERY_SHERD");
+        ingredients.add("FRIEND_POTTERY_SHERD");
+        ingredients.add("HEART_POTTERY_SHERD");
+        ingredients.add("HEARTBREAK_POTTERY_SHERD");
+        ingredients.add("HOWL_POTTERY_SHERD");
+        ingredients.add("MINER_POTTERY_SHERD");
+        ingredients.add("MOURNER_POTTERY_SHERD");
+        ingredients.add("PLENTY_POTTERY_SHERD");
+        ingredients.add("PRIZE_POTTERY_SHERD");
+        ingredients.add("SHEAF_POTTERY_SHERD");
+        ingredients.add("SHELTER_POTTERY_SHERD");
+        ingredients.add("SKULL_POTTERY_SHERD");
+        ingredients.add("SNORT_POTTERY_SHERD");
+        ingredients.add("NETHERITE_UPGRADE_SMITHING_TEMPLATE");
+        ingredients.add("SENTRY_ARMOR_TRIM_SMITHING_TEMPLATE");
+        ingredients.add("VEX_ARMOR_TRIM_SMITHING_TEMPLATE");
+        ingredients.add("WILD_ARMOR_TRIM_SMITHING_TEMPLATE");
+        ingredients.add("COAST_ARMOR_TRIM_SMITHING_TEMPLATE");
+        ingredients.add("DUNE_ARMOR_TRIM_SMITHING_TEMPLATE");
+        ingredients.add("WAYFINDER_ARMOR_TRIM_SMITHING_TEMPLATE");
+        ingredients.add("RAISER_ARMOR_TRIM_SMITHING_TEMPLATE");
+        ingredients.add("SHAPER_ARMOR_TRIM_SMITHING_TEMPLATE");
+        ingredients.add("HOST_ARMOR_TRIM_SMITHING_TEMPLATE");
+        ingredients.add("WARD_ARMOR_TRIM_SMITHING_TEMPLATE");
+        ingredients.add("SILENCE_ARMOR_TRIM_SMITHING_TEMPLATE");
+        ingredients.add("TIDE_ARMOR_TRIM_SMITHING_TEMPLATE");
+        ingredients.add("SNOUT_ARMOR_TRIM_SMITHING_TEMPLATE");
+        ingredients.add("RIB_ARMOR_TRIM_SMITHING_TEMPLATE");
+        ingredients.add("EYE_ARMOR_TRIM_SMITHING_TEMPLATE");
+        ingredients.add("SPIRE_ARMOR_TRIM_SMITHING_TEMPLATE");
         ingredients.add("EXPERIENCE_BOTTLE");
         ingredients.add("ENCHANTED_BOOK");
+        ingredients.add("ENCHANTED_BOOK");
+        ingredients.add("ENCHANTED_BOOK");
+        ingredients.add("ENCHANTED_BOOK");
+        ingredients.add("ENCHANTED_BOOK");
+        ingredients.add("ENCHANTED_BOOK");
+        ingredients.add("ENCHANTED_BOOK");
+        ingredients.add("ENCHANTED_BOOK");
+        ingredients.add("ENCHANTED_BOOK");
+        ingredients.add("ENCHANTED_BOOK");
+        ingredients.add("ENCHANTED_BOOK");
+        ingredients.add("ENCHANTED_BOOK");
+        ingredients.add("ENCHANTED_BOOK");
+        ingredients.add("ENCHANTED_BOOK");
+        ingredients.add("ENCHANTED_BOOK");
+        ingredients.add("ENCHANTED_BOOK");
+
+
         map_categories.put("INGREDIENTS", ingredients);
 
         List<String> spawn_eggs = new ArrayList<String>();
-        spawn_eggs.add("DONKEY_SPAWN_EGG");
+        spawn_eggs.add("RAVAGER_SPAWN_EGG");
         spawn_eggs.add("SPAWNER");
         spawn_eggs.add("ALLAY_SPAWN_EGG");
         spawn_eggs.add("AXOLOTL_SPAWN_EGG");
         spawn_eggs.add("BAT_SPAWN_EGG");
         spawn_eggs.add("BEE_SPAWN_EGG");
         spawn_eggs.add("BLAZE_SPAWN_EGG");
+        spawn_eggs.add("CAMEL_SPAWN_EGG");
         spawn_eggs.add("CAT_SPAWN_EGG");
         spawn_eggs.add("CAVE_SPIDER_SPAWN_EGG");
         spawn_eggs.add("CHICKEN_SPAWN_EGG");
@@ -1393,6 +1600,7 @@ public class CategoryFile {
         spawn_eggs.add("SKELETON_SPAWN_EGG");
         spawn_eggs.add("SKELETON_HORSE_SPAWN_EGG");
         spawn_eggs.add("SLIME_SPAWN_EGG");
+        spawn_eggs.add("SNIFFER_SPAWN_EGG");
         spawn_eggs.add("SNOW_GOLEM_SPAWN_EGG");
         spawn_eggs.add("SPIDER_SPAWN_EGG");
         spawn_eggs.add("SQUID_SPAWN_EGG");
@@ -1415,6 +1623,7 @@ public class CategoryFile {
         spawn_eggs.add("ZOMBIE_HORSE_SPAWN_EGG");
         spawn_eggs.add("ZOMBIE_VILLAGER_SPAWN_EGG");
         spawn_eggs.add("ZOMBIFIED_PIGLIN_SPAWN_EGG");
+
         map_categories.put("SPAWN_EGGS", spawn_eggs);
 
         file_config.set("categories", map_categories);

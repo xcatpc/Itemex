@@ -25,4 +25,5 @@ sh\ome\itemex\commands\GUI.class
 sh\ome\itemex\functions\sqliteDb$Payout.class
 sh\ome\itemex\functions\sqliteDb.class
 sh\ome\itemex\functions\sqliteDb$OrderBuffer.class
+sh\ome\itemex\events\SignShop.class
 sh\ome\itemex\RAM\TopOrders.class

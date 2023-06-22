@@ -25,9 +25,17 @@
  */
 
 /*
-changelog 0.18.2
-- Bugfix at /price (if you had nothing in your hand)
-- Proof if you have enought money, before you place a buy order
+changelog 0.19.0
+- implemented signs (create a sign in the first line with [ix] then click with a item on it)
+- moved from float to doulbe at prices for better precision
+- added
+    currencySymbol
+    decimals
+    decimal_separator
+    thousand_separator
+    unitLocation
+    to config.yml for formatted price
+
 - remove some debugging messages
  */
 
@@ -44,6 +52,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import sh.ome.itemex.Listeners.PlayerJoin;
 import sh.ome.itemex.RAM.TopOrders;
 import sh.ome.itemex.events.ClickGUI;
+import sh.ome.itemex.events.SignShop;
 import sh.ome.itemex.files.CategoryFile;
 import sh.ome.itemex.commands.ItemexCommand;
 import sh.ome.itemex.functions.commandAutoComplete;
@@ -65,10 +74,17 @@ public final class Itemex extends JavaPlugin implements Listener {
 
     private static Itemex plugin;
     public static Economy econ = null;
-    public static String version = "0.18.2";
+    public static String version = "0.19.0";
 
     public static boolean admin_function;
     public static double admin_function_percentage;
+
+    public static String currencySymbol;
+    public static int decimals;
+    public static char decimal_separator;
+    public static char thousand_separator;
+    public static String unitLocation;
+
     public static double broker_fee_buyer;
     public static double broker_fee_seller;
     public static boolean bstats;
@@ -119,6 +135,7 @@ public final class Itemex extends JavaPlugin implements Listener {
         getCommand("ix").setTabCompleter(new commandAutoComplete());
         getServer().getPluginManager().registerEvents(new PlayerJoin(), this);
         getServer().getPluginManager().registerEvents(new ClickGUI(), this);
+        getServer().getPluginManager().registerEvents(new SignShop(), this);
 
 
         if (!setupEconomy() ) {
@@ -140,6 +157,13 @@ public final class Itemex extends JavaPlugin implements Listener {
         this.bstats = config.getBoolean("bstats");
         this.server_id = config.getString("id");
         this.itemex_stats = config.getBoolean("itemex_stats");
+
+        this.currencySymbol = config.getString("currencySymbol");
+        this.decimals = config.getInt("decimals");
+        this.decimal_separator = config.getString("decimal_separator").charAt(0);
+        this.thousand_separator = config.getString("thousand_separator").charAt(0);
+        this.unitLocation = config.getString("unitLocation");
+
 
         // generate categories.yml
         CategoryFile.setup();

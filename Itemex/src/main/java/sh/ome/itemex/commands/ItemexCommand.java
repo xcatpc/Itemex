@@ -22,6 +22,8 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -146,7 +148,7 @@ public class ItemexCommand implements CommandExecutor {
                     } // end ix buy
 
                     else if(strings.length >= 4 && strings.length <= 6) { // /ix buy <itemid> <amount> limit <price>
-                        float price;
+                        double price;
                         int amount = 0;
                         boolean buy_order_ok = true;
                         itemid = strings[1].toUpperCase();
@@ -270,7 +272,7 @@ public class ItemexCommand implements CommandExecutor {
                     }
 
                     else if(strings.length >= 4 && strings.length <= 6) { // /ix sell <itemid> <amount> limit <price>
-                        float price;
+                        double price;
                         boolean sell_order_ok = true;
                         itemid = strings[1].toUpperCase();
 
@@ -381,15 +383,15 @@ public class ItemexCommand implements CommandExecutor {
 
                         for(int x=3; x>=0; x--){
                             if(topo.get_sellorder_amount()[x] == 0)
-                                reply_command = reply_command + ChatColor.DARK_RED + "sellorder  " + ChatColor.DARK_GRAY + itemid + "  " + topo.get_sellorder_amount()[x] +  "  $ " + topo.get_top_sellorder_prices()[x] + "\n";
+                                reply_command = reply_command + ChatColor.DARK_RED + "sellorder  " + ChatColor.DARK_GRAY + itemid + "  [" + topo.get_sellorder_amount()[x] + "] " + format_price( topo.get_top_sellorder_prices()[x] ) + "\n";
                             else
-                                reply_command = reply_command + ChatColor.RED + "sellorder  " + ChatColor.WHITE + itemid + "  " + topo.get_sellorder_amount()[x] +  "  $ " + topo.get_top_sellorder_prices()[x] + "\n";
+                                reply_command = reply_command + ChatColor.RED + "sellorder  " + ChatColor.WHITE + itemid + "  [" + topo.get_sellorder_amount()[x] + "] " + format_price( topo.get_top_sellorder_prices()[x] ) + "\n";
                         }
                         for(int x=0; x<=3; x++){
                             if(topo.get_buyorder_amount()[x] == 0)
-                                reply_command = reply_command + ChatColor.DARK_GREEN + "buyorder  " + ChatColor.DARK_GRAY + itemid + "  " + topo.get_buyorder_amount()[x] +  "  $ " + topo.get_top_buyorder_prices()[x] + "\n";
+                                reply_command = reply_command + ChatColor.DARK_GREEN + "buyorder  " + ChatColor.DARK_GRAY + itemid + "  [" + topo.get_buyorder_amount()[x] + "] " + format_price( topo.get_top_buyorder_prices()[x] ) + "\n";
                             else
-                                reply_command = reply_command + ChatColor.GREEN + "buyorder  " + ChatColor.WHITE + itemid + "  " + topo.get_buyorder_amount()[x] +  "  $ " + topo.get_top_buyorder_prices()[x] + "\n";
+                                reply_command = reply_command + ChatColor.GREEN + "buyorder  " + ChatColor.WHITE + itemid + "  [" + topo.get_buyorder_amount()[x] + "] " + format_price( topo.get_top_buyorder_prices()[x] ) + "\n";
                         }
                         reply_command = reply_command + "-----------------------------\n";
                     }
@@ -626,6 +628,10 @@ public class ItemexCommand implements CommandExecutor {
                     GUI.generateGUI(p, "ITEMEX - Market Orders", 0, 0);
                 }
 
+                else if(strings[0].equals("showmyuuid") ) {
+                    p.sendMessage(p.getUniqueId().toString());
+                }
+
 
 
                 else if(strings[0].equals("extractitems") ) {
@@ -702,10 +708,10 @@ public class ItemexCommand implements CommandExecutor {
         public String itemid;
         public String ordertype;
         public int    amount;
-        public float price;
+        public double price;
     };
 
-    public static String create_order(Player p, String itemid, float price, int amount, String buy_or_sell, String market_option) {
+    public static String create_order(Player p, String itemid, double price, int amount, String buy_or_sell, String market_option) {
         //System.out.println("# DEBUG AT: create_order: " + amount);
         String reply_command = "";
 
@@ -735,7 +741,7 @@ public class ItemexCommand implements CommandExecutor {
                     reply_command = "ERROR! Buyorder NOT created!";
             }
             else {  //not enough money
-                reply_command = ChatColor.RED+ "NOT ENOUGH MONEY!" + ChatColor.WHITE + " You got need " + ChatColor.GREEN +"$" + (amount * price) + ChatColor.WHITE + " but you only have " + ChatColor.RED + " $"  + buyer_balance;
+                reply_command = ChatColor.RED+ "NOT ENOUGH MONEY!" + ChatColor.WHITE + " You got need " + ChatColor.GREEN + format_price( (amount * price) ) + ChatColor.WHITE + " but you only have " + ChatColor.RED + " " + format_price( buyer_balance );
             }
 
 
@@ -840,5 +846,29 @@ public class ItemexCommand implements CommandExecutor {
 
 
 
+
+    public static String format_price(double price) {
+
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols();
+        symbols.setGroupingSeparator(Itemex.thousand_separator); // Thousands separator
+        symbols.setDecimalSeparator(Itemex.decimal_separator); // Decimal separator
+
+        StringBuilder pattern = new StringBuilder("###,##0.");
+        for (int i = 0; i < Itemex.decimals; i++) {
+            pattern.append("0");
+        }
+
+        DecimalFormat df = new DecimalFormat(pattern.toString(), symbols);
+        String formattedValue = df.format(price);
+
+        switch(Itemex.unitLocation.toLowerCase()) {
+            case "right":
+                return formattedValue + " " + Itemex.currencySymbol; // Currency symbol at the end
+            case "left":
+                return Itemex.currencySymbol + " " + formattedValue; // Currency symbol at the beginning
+            default:
+                return formattedValue; // No currency symbol if unitLocation is not "right" or "left"
+        }
+    }
 
 }
