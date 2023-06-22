@@ -1,4 +1,4 @@
-<img src="https://ome.sh/Itemex_logo.png">
+<img src="[https://ome.sh/Itemex_logo.png](https://ipfs.ome.sh/ipfs/QmPw8fp7VYfC1dx3RMpg6Be97wtmj8ZhsYtVHaeKiZF4hK/)">
 
 Tested MC Version: 1.19.4
 
