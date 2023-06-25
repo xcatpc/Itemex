@@ -17,7 +17,7 @@ Discord: https://discord.gg/wTyjfjCmEU
 
 STATUS: BETA - tested serveral hours with multiple players
 
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/0se7owqRkic/0.jpg)](https://www.youtube.com/watch?v=0se7owqRkic)
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/0se7owqRkic/0.jpg)]([https://www.youtube.com/watch?v=0se7owqRkic](https://youtu.be/C5-e7snYyns))
 
 
 Don't be confused about the double notification in this video. This is because I bought and sold to myself.
