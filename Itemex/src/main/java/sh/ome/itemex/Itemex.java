@@ -2,9 +2,6 @@
 
 
 /* BUGS AND IMPROVEMENTS:
-- market orders only with the command: /ix sell gold_ingot 1 market  -> dont work: there are no sell orders to buy
-- max at /ix sell not anymore working thow an error
-- GUI market: there are no orders (but there are)
 
 - "confirm" on market order like /ix buy GOLD_INGOT 10 market confirm
 - insertPayout - collect all payouts of a item in one entry
@@ -25,19 +22,16 @@
  */
 
 /*
-changelog 0.19.0
-- implemented signs (create a sign in the first line with [ix] then click with a item on it)
-- moved from float to doulbe at prices for better precision
-- added
-    currencySymbol
-    decimals
-    decimal_separator
-    thousand_separator
-    unitLocation
-    to config.yml for formatted price
-
-- remove some debugging messages
+changelog 0.19.5
+- full implementation of order-preview for MARKET ORDERS  LINE: 157 and 217 in ItemexCommand.java
+- implementation of market execution only with the -confirm argument
  */
+
+/*
+
+ */
+
+
 
 
 package sh.ome.itemex;
@@ -51,6 +45,7 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import sh.ome.itemex.Listeners.PlayerJoin;
 import sh.ome.itemex.RAM.TopOrders;
+import sh.ome.itemex.events.ChestShop;
 import sh.ome.itemex.events.ClickGUI;
 import sh.ome.itemex.events.SignShop;
 import sh.ome.itemex.files.CategoryFile;
@@ -74,7 +69,7 @@ public final class Itemex extends JavaPlugin implements Listener {
 
     private static Itemex plugin;
     public static Economy econ = null;
-    public static String version = "0.19.0";
+    public static String version = "0.19.4";
 
     public static boolean admin_function;
     public static double admin_function_percentage;
@@ -136,6 +131,7 @@ public final class Itemex extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(new PlayerJoin(), this);
         getServer().getPluginManager().registerEvents(new ClickGUI(), this);
         getServer().getPluginManager().registerEvents(new SignShop(), this);
+        getServer().getPluginManager().registerEvents(new ChestShop(), this);
 
 
         if (!setupEconomy() ) {
@@ -193,8 +189,6 @@ public final class Itemex extends JavaPlugin implements Listener {
         // load best orders from db into ram
         getLogger().info("Loading all BestOrders into RAM...");
         sqliteDb.loadAllBestOrdersToRam(false);
-        getLogger().info("DONE!");
-
 
 
 /*

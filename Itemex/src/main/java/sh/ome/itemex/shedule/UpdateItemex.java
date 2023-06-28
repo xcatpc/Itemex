@@ -39,8 +39,16 @@ public class UpdateItemex {
             getLogger().info("Exception: " + e);
         }
 
+        // if version on server is newer
+        int i_server_version = Integer.parseInt(server_version.replace(".", ""));
+        int i_plugin_version = Integer.parseInt(version.replace(".", ""));
 
-        if(!server_version.equalsIgnoreCase(version)) {
+        if(i_server_version < i_plugin_version) {
+            getLogger().info("\u001B[35mDEVELOPER VERSION: server_version:" + i_server_version + " < plugin_version:" + i_plugin_version + "\u001B[37m");
+        }
+
+        //if(!server_version.equalsIgnoreCase(version)) {
+        else if(i_server_version > i_plugin_version) {
 
             try (BufferedInputStream in = new BufferedInputStream(new URL(file_url).openStream());
                  FileOutputStream fileOutputStream = new FileOutputStream("./plugins/itemex-" + server_version + ".jar")) {

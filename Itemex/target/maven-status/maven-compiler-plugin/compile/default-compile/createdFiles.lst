@@ -12,10 +12,12 @@ sh\ome\itemex\shedule\Metrics$JsonObjectBuilder$JsonObject.class
 sh\ome\itemex\shedule\Metrics$CustomChart.class
 sh\ome\itemex\shedule\Metrics.class
 sh\ome\itemex\commands\ItemexCommand.class
+sh\ome\itemex\events\ChestShop.class
 sh\ome\itemex\Itemex.class
 sh\ome\itemex\shedule\Metrics$JsonObjectBuilder.class
 sh\ome\itemex\shedule\Metrics$SimplePie.class
 sh\ome\itemex\shedule\UpdateItemex.class
+sh\ome\itemex\events\SignShop$1.class
 sh\ome\itemex\files\CategoryFile.class
 sh\ome\itemex\shedule\Metrics$MultiLineChart.class
 sh\ome\itemex\shedule\Metrics$AdvancedBarChart.class

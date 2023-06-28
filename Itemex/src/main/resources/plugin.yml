@@ -9,3 +9,38 @@ commands:
   ix:
     description: Itemex commands overviews
     usage: /<command> <price/buy/sell> <market/limit/stoplimit> <itemname> <amount>
+permissions:
+  itemex.command.ix:
+    description: global command, opens the GUI
+    default: true
+  itemex.command.ix.help:
+    description: prints out the help message
+    default: true
+  itemex.command.ix.price:
+    description: prints the current buy and sell orders
+    default: true
+  itemex.command.ix.buy:
+    description: creates buy order
+    default: true
+  itemex.command.ix.sell:
+    description: creates sell order
+    default: true
+  itemex.command.ix.withdraw:
+    description: list or withdraw all your available payouts
+    default: true
+  itemex.command.ix.order.list:
+    description: list all own buy- and sellorders
+    default: true
+  itemex.command.ix.order.close:
+    description: close your specific order
+    default: true
+  itemex.command.ix.gui:
+    description: Graphical User Interface
+    default: true
+  itemex.command.ix.whatIsInMyRightHand:
+    description: prints out the item name
+    default: true
+  itemex.command.price:
+    description: Prints the current buy and sell orders
+    default: true
+

@@ -60,8 +60,10 @@ public class commandAutoComplete implements TabCompleter {
                 List<String> options = Arrays.asList("0_set price","10", "20", "30", "500", "5000", "1000000");
                 if( args[3].equals("limit") )
                     return options;
-                else
-                    return Arrays.asList("");
+                else {
+                    List<String> options2 = Arrays.asList("preview","confirm");
+                    return options2;
+                }
             }
             else if(args.length == 6)
                 return Arrays.asList("");
