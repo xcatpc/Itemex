@@ -19,23 +19,25 @@ STATUS: BETA - tested serveral hours with multiple players
 
 https://youtu.be/C5-e7snYyns
 
-Don't be confused about the double notification in this video. This is because I bought and sold to myself.
+ITEMEX: Realistic Economic Simulation and Dynamic Marketplace for Minecraft​
 
-Short Description:
-With this plugin, players can sell or buy any item on a free market, by create a sell- or buyorder. The price of each item will be determined by supply and demand. I developed this plugin for myself, but If someone will find it usefull, I will keep developing and updating.
+Dynamic Marketplace: ITEMEX is an innovative Minecraft server plugin that creates a dynamic and realistic marketplace within the game. It allows players to buy and sell any in-game items in a free market, enriching the gameplay.
 
-Description:
-The Minecraft Server Plugin ITEMEX is a powerful tool that enables players to engage in a vibrant and dynamic marketplace within their Minecraft game. With this plugin, players have the ability to buy and sell any in-game item on a free market, using either sell orders or buy orders to facilitate their transactions.
+Supply and Demand: At the heart of ITEMEX, the principles of supply and demand determine the price of each item. This promotes strategic thinking and market research, while encouraging players to efficiently manage and allocate resources.
 
-Using the ITEMEX plugin, players can create sell orders that specify the quantity of the item they want to sell, as well as the price they are willing to sell it for. Similarly, players can create buy orders that indicate the quantity of the item they want to buy, as well as the maximum price they are willing to pay for it.
+Flexible Trading Orders: With the ability to create sell or buy orders and choose between market orders for quick transactions and limit orders for targeted trading, ITEMEX provides a flexible trading platform for all players.
 
-One of the most interesting features of ITEMEX is that the price of each item is determined by the laws of supply and demand. This means that the more demand there is for a particular item, the higher its price will become, while an oversupply of the same item can result in a lower price.
+Player Retention and Appeal to New Players: ITEMEX enhances player retention through a deeper economic simulation and makes the server more appealing to new players with its sophisticated and engaging trading system.
 
-To help players navigate this dynamic marketplace, ITEMEX provides two different order types: market orders and limit orders. A market order will buy or sell the item at the current market price. This is ideal for players who want to make a quick transaction and don't want to wait for a specific price.
+Trading Profits and Losses: Through strategic trading and market research, players can make profits with ITEMEX. But as in real life, they can also incur losses, making the game even more realistic and challenging.
 
-On the other hand, a limit order will only buy or sell the item at a specified price. This type of order is more secure, but it requires another player to buy or sell at that price.
+Optimized Server Economy: For server administrators, ITEMEX offers the ability to understand and analyze the economy of their server. This can contribute to optimizing the player experience and improving the overall economy of the server.
 
-Using ITEMEX, players can create a truly immersive and realistic trading experience, all within the Minecraft game environment. Best of all, this plugin eliminates the need for any other marketplace plugins, making it a convenient and streamlined tool for players to use.
+Resource Allocation and Signaling: ITEMEX creates incentives for efficient resource allocation and signals which items are in high demand through price fluctuations. This promotes strategic planning and resource management.
+
+Free Market with Autonomy: Despite the possibility of intervention, the core principle of ITEMEX remains a free market. This respects the autonomy of players and ensures a realistic trading experience.
+
+With ITEMEX, players and server administrators can reach a new level of economic simulation in Minecraft, elevating the gaming experience to a whole new level.
 
 Usage: (autocompletion in console)
 /ix help
