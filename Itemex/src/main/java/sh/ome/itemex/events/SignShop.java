@@ -69,18 +69,22 @@ public class SignShop implements Listener {
                         // Auf das Schild klicken führt den Befehl aus
                         if(e.getAction().equals(Action.RIGHT_CLICK_BLOCK)) {
                             e.setCancelled(true);
-                            //e.getPlayer().sendMessage("RIGHT CLICK");
-                            e.getPlayer().performCommand("ix sell " + shopType + " 1 market");
+                            if (e.getPlayer().isSneaking()) {
+                                e.getPlayer().performCommand("ix sell " + shopType + " 1 market");
+                            }
+                            else
+                                e.getPlayer().performCommand("ix sell " + shopType + " 1 market confirm");
+
                         }
                         else if (e.getAction().equals(Action.LEFT_CLICK_BLOCK)) {
-                            //e.getPlayer().sendMessage("LEFT CLICK");
-                            e.getPlayer().performCommand("ix buy " + shopType + " 1 market");
                             if (e.getPlayer().isSneaking()) {
-                                e.getPlayer().sendMessage("LEFT + SHIFT");
-                                e.getClickedBlock().breakNaturally(); // Zerstöre das Schild
-                            } else {
-                                e.setCancelled(true); // Blockiere normalen Linksklick
-                                e.getPlayer().sendMessage("LEFT");
+                                e.getPlayer().performCommand("ix buy " + shopType + " 1 market");
+                                //e.getPlayer().sendMessage("LEFT + SHIFT");
+                                //e.getClickedBlock().breakNaturally(); // Zerstöre das Schild
+                            }
+                            else {
+                                e.getPlayer().performCommand("ix buy " + shopType + " 1 market confirm");
+                                //e.getPlayer().sendMessage("LEFT");
                             }
                         }
                     } else {

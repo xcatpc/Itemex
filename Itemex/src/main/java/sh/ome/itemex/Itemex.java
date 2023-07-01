@@ -3,7 +3,6 @@
 
 /* BUGS AND IMPROVEMENTS:
 
-- "confirm" on market order like /ix buy GOLD_INGOT 10 market confirm
 - insertPayout - collect all payouts of a item in one entry
 - collect all orders with the same price at /price and GUI
 
@@ -14,7 +13,7 @@
 - /ix gui orders (list all orders) or is inside the normal /ix gui which would be better
 - at ix sell: If I hold something in the hand it most be in the list on the top
 - add default prices that reflects on the reserve currency (DIAMOND) (useful if no buy and sellorders are available or only a buy or sellorder) - need statistics
-- GUI: sort items by availibity
+- GUI: sort items by availability
 
 - add potions and enchanted items
 - add enchantment items
@@ -23,14 +22,10 @@
 
 /*
 changelog 0.19.5
-- full implementation of order-preview for MARKET ORDERS  LINE: 157 and 217 in ItemexCommand.java
-- implementation of market execution only with the -confirm argument
+- Market sign shop
+- Limit chest shop
+- full implementation of order preview for MARKET ORDERS (confirm|preview)
  */
-
-/*
-
- */
-
 
 
 
@@ -69,7 +64,7 @@ public final class Itemex extends JavaPlugin implements Listener {
 
     private static Itemex plugin;
     public static Economy econ = null;
-    public static String version = "0.19.4";
+    public static String version = "0.19.5";
 
     public static boolean admin_function;
     public static double admin_function_percentage;

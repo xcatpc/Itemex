@@ -107,38 +107,6 @@ public class sqliteDb {
 
 
 
-
-/*
-    private boolean insertIntoDB(String table_name) {
-        //System.out.println("# - DEBUG: at insertIntoDB + tablename: " + table_name);
-        Connection c = null;
-        Statement stmt = null;
-        String status = null;
-
-        try {
-            Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
-            stmt = c.createStatement();
-
-            String sql = "INSERT INTO " + table_name + " (player_uuid, itemid, ordertype, amount, price, timestamp) " +
-                    "VALUES ('" + this.uuid + "', '" + this.itemid + "', '" + this.ordertype + "', '" + this.amount + "','" + this.price + "',  '" + this.timestamp + "' );";
-
-            stmt.executeUpdate(sql);
-            stmt.close();
-
-        } catch ( Exception e ) {
-            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-            System.exit(0);
-            return false;
-        }
-        loadBestOrdersToRam(this.itemid, true);
-
-        return true;
-    } // end insertIntoDB
-
- */
-
-
     private int insertIntoDB(String table_name) {
         Connection c = null;
         Statement stmt = null;
@@ -158,7 +126,7 @@ public class sqliteDb {
             ResultSet generatedKeys = stmt.getGeneratedKeys();
             if (generatedKeys.next()) {
                 insertedId = generatedKeys.getInt(1);
-                System.out.println("# DEBUG: Inserted ID: " + insertedId);
+                //System.out.println("# DEBUG: Inserted ID: " + insertedId);
             }
 
             stmt.close();
@@ -359,6 +327,39 @@ public class sqliteDb {
 
         } catch ( Exception e ) {
             System.err.println( "at getOrdersOfPlayer: " + e);
+            System.exit(0);
+        }
+        return buffer;
+    }
+
+
+    public static OrderBuffer getOrder(String ID, boolean buy_or_sell){
+        OrderBuffer buffer = null;
+        Connection c = null;
+        Statement stmt = null;
+        String sql;
+        int row_counter = 0;
+
+        //proof if buy or sell
+        if(buy_or_sell) // is buy
+            sql = "SELECT * FROM BUYORDERS WHERE id = '" + ID + "'";
+        else
+            sql = "SELECT * FROM SELLORDERS WHERE id = '" + ID + "'";
+
+        try {
+            Class.forName("org.sqlite.JDBC");
+            c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+            stmt = c.createStatement();
+
+            stmt.executeUpdate(sql);
+            ResultSet rs = stmt.executeQuery(sql);
+            buffer = new OrderBuffer(rs.getInt("id"), rs.getString("player_uuid"), rs.getString("itemid"), rs.getString("ordertype"),rs.getInt("amount"), rs.getDouble("price"), rs.getLong("timestamp") );
+
+
+            stmt.close();
+
+        } catch ( Exception e ) {
+            System.err.println( "at getOrder: " + e);
             System.exit(0);
         }
         return buffer;
@@ -592,6 +593,7 @@ public class sqliteDb {
         //System.out.println("AT updateORDER: " + table_name + " " +ID + " " + amount + " " + price + " " + ordertype);
         Connection c = null;
         Statement stmt = null;
+        int update_status = 0;
 
         try {
             Class.forName("org.sqlite.JDBC");
@@ -599,7 +601,7 @@ public class sqliteDb {
             stmt = c.createStatement();
             String sql = "UPDATE " + table_name + " SET ordertype = '" + ordertype + "',  amount = " + amount +  ", price = " + price + " WHERE id = " + ID;
 
-            stmt.executeUpdate(sql);
+            update_status = stmt.executeUpdate(sql);
             stmt.close();
 
         } catch ( Exception e ) {
@@ -608,7 +610,10 @@ public class sqliteDb {
             return false;
         }
         loadBestOrdersToRam(itemid, false);
-        return true;
+        if(update_status == 1)
+            return true;
+        else
+            return false;
     } // end insertIntoDB
 
 
@@ -616,6 +621,8 @@ public class sqliteDb {
     public static boolean fulfillOrder(String itemid) { //ERROR INSIDE
         ArrayList<OrderBuffer> sellorders = selectAll("SELLORDERS", itemid);
         ArrayList<OrderBuffer> buyorders = selectAll("BUYORDERS", itemid);
+        boolean normal_buyorder = true;
+        boolean normal_sellorder = true;
 
         for (OrderBuffer se : sellorders) {
             //System.out.println("SELLORDER: " + se.ordertype + " [" + se.amount + "] $" + se.price);
@@ -625,8 +632,8 @@ public class sqliteDb {
                 //System.out.println("SELLORDER: " + itemid + " " + se.ordertype + " [" + se.amount + "] $" + se.price);
 
                 // if orders are limit or market
-                String[] buy_limit_or_market = be.ordertype.split(":", 2);
-                String[] sell_limit_or_market = se.ordertype.split(":", 2);
+                String[] buy_limit_or_market = be.ordertype.split(":");
+                String[] sell_limit_or_market = se.ordertype.split(":");
 
                 // if order == market -> adjust price to best market orders
                 if(sell_limit_or_market[1].equals("market")) {
@@ -639,12 +646,24 @@ public class sqliteDb {
                     // WHAT IF NOT se.price available or is 0 -> Remove order!
                 }
 
+                if( buy_limit_or_market.length > 2)
+                    if(buy_limit_or_market[2].equals("chest")) {
+                        normal_buyorder = false;
+                    }
+
+                if( sell_limit_or_market.length > 2)
+                    if(sell_limit_or_market[2].equals("chest")) {
+                        normal_sellorder = false;
+                    }
+
+
                 if (be.price >= se.price && be.amount !=0 && se.amount !=0) { // match found
                     //System.out.println("MATCH AT: be: " + be.id +" ["+ be.amount +"] + se: "+ se.id + "["+ se.amount +"]");
 
                     // ADMIN ORDER if admin order enabled AND (sell-order OR buy-order is an admin order)
                     // same as limit, but each single amount fullfilled price in- or decreases to spread. Default amount of spread =
                     if( Itemex.admin_function && (sell_limit_or_market[1].equals("admin") || buy_limit_or_market[1].equals("admin")) ) { // sell and buy order cannot be the same time!
+                        System.out.println("# DEBUG: at fulfill order (admin)");
                         if(sell_limit_or_market[1].equals("admin")) {   // if sell order is admin
                             System.out.println("Sellorder = admin" + se.id + " " + se.amount + " " + se.price);
                         }
@@ -658,53 +677,75 @@ public class sqliteDb {
                     // LIMIT ORDER OR MARKET ORDER (Marketorder adjusted aboth)
                     else if(se.price <= be.price && se.amount != 0 && be.amount !=0)  { // if sell amount < buy amount than close sell order + update buy order
 
+
+
                         if(se.amount < be.amount) {
-                            if(withdraw(se.uuid, be.uuid, se.itemid, se.amount, se.price) ){ //if buyer have enough money than true
+                            System.out.println("# DEBUG: at fulfill order (if sell amount < buy amount than close sell order + update buy order)");
+                            if(withdraw(se.uuid, be.uuid, se.itemid, se.amount, se.price, normal_buyorder, be.ordertype) ){ //if buyer have enough money than true
                                 be.amount = be.amount - se.amount;
                                 if(be.ordertype.equals("buy:market"))
-                                    updateOrder("BUYORDERS", be.id, be.amount, Itemex.getPlugin().mtop.get(itemid).get_top_sellorder_prices()[0], be.ordertype, itemid);
-                                else
-                                    updateOrder("BUYORDERS", be.id, be.amount, be.price, be.ordertype, itemid);
+                                    be.price = Itemex.getPlugin().mtop.get(itemid).get_top_sellorder_prices()[0];
+                                updateOrder("BUYORDERS", be.id, be.amount, be.price, be.ordertype, itemid);
                                 se.amount = 0; //close sell order
-                                closeOrder("SELLORDERS", se.id, itemid);
+                                if(normal_sellorder)
+                                    closeOrder("SELLORDERS", se.id, itemid, se.ordertype);
+                                else
+                                    updateOrder("SELLORDERS", se.id, 0, se.price, se.ordertype, itemid);
+
                             }
                             else { // remove order if buyer don't have enough money
                                 be.amount = 0; //close buy order
-                                closeOrder("BUYORDERS", be.id, itemid);
+                                if(normal_buyorder)
+                                    closeOrder("BUYORDERS", be.id, itemid, be.ordertype);
+                                else
+                                    updateOrder("BUYORDERS", be.id, 0, be.price, be.ordertype, itemid);
                             }
                         }
 
 
                         else if(se.amount > be.amount) { // if sell amount > buy amount than update sell order + close buy order
-                            if(withdraw(se.uuid, be.uuid, se.itemid, be.amount, se.price) ){ //if buyer have enough money than true
+                            System.out.println("# DEBUG: at fulfill order (if sell amount > buy amount than update sell order + close buy order)");
+                            if(withdraw(se.uuid, be.uuid, se.itemid, be.amount, se.price, normal_buyorder, be.ordertype) ){ //if buyer have enough money than true
                                 se.amount = se.amount - be.amount;
                                 if(be.ordertype.equals("sell:market"))
-                                    updateOrder("SELLORDERS", se.id, se.amount, Itemex.getPlugin().mtop.get(itemid).get_top_buyorder_prices()[3], se.ordertype, itemid);
-                                else
-                                    updateOrder("SELLORDERS", se.id, se.amount, se.price, se.ordertype, itemid);
+                                    se.price = Itemex.getPlugin().mtop.get(itemid).get_top_buyorder_prices()[3];
+                                updateOrder("SELLORDERS", se.id, se.amount, se.price, se.ordertype, itemid);
                                 be.amount = 0; //close buy order
-                                closeOrder("BUYORDERS", be.id, itemid);
+                                if(normal_buyorder)
+                                    closeOrder("BUYORDERS", be.id, itemid, be.ordertype);
+                                else
+                                    updateOrder("BUYORDERS", be.id, 0, be.price, be.ordertype, itemid);
                             }
                             else { // remove order if buyer don't have enough money
                                 be.amount = 0; //close buy order
-                                closeOrder("BUYORDERS", be.id, itemid);
+                                if(normal_buyorder)
+                                    closeOrder("BUYORDERS", be.id, itemid, be.ordertype);
+                                else
+                                    updateOrder("BUYORDERS", be.id, 0, be.price, be.ordertype, itemid);
                             }
                         }
 
                         // if sell amount == buy amount than close buy and sell order
-                        else if(se.amount == be.amount) {   //System.out.println("Sell amount == buyorder amount 3");
-                            if(withdraw(se.uuid, be.uuid, se.itemid, be.amount, se.price) ){ //if buyer have enough money than true
+                        else if(se.amount == be.amount) {
+                            System.out.println("# DEBUG: at fulfill order (if sell amount == buy amount than close buy and sell order)");
+                            if(withdraw(se.uuid, be.uuid, se.itemid, be.amount, se.price, normal_buyorder, be.ordertype) ){ //if buyer have enough money than true
                                 be.amount = 0;
-                                //System.out.println("== close buyorder with ID: " + be.id + " with amount: " + be.amount);
-                                closeOrder("BUYORDERS", be.id, itemid);
-                                se.amount = 0; //close sell order
-                                //System.out.println("== close sellorder with ID: " + se.id + " with amount: " + se.amount);
-                                closeOrder("SELLORDERS", se.id, itemid);
+                                if(normal_buyorder)
+                                    closeOrder("BUYORDERS", be.id, itemid, be.ordertype);
+                                else
+                                    updateOrder("BUYORDERS", be.id, 0, be.price, be.ordertype, itemid);
+                                if(normal_sellorder)
+                                    closeOrder("SELLORDERS", se.id, itemid, se.ordertype);
+                                else
+                                    updateOrder("SELLORDERS", se.id, 0, se.price, se.ordertype, itemid);
+
                             }
                             else { // remove order if buyer don't have enough money
                                 be.amount = 0; //close buy order
-                                //System.out.println("== not enough money: close buyorder with ID: " + be.id + " with amount: " + be.amount);
-                                closeOrder("BUYORDERS", be.id, itemid);
+                                if(normal_buyorder)
+                                    closeOrder("BUYORDERS", be.id, itemid, be.ordertype);
+                                else
+                                    updateOrder("BUYORDERS", be.id, 0, be.price, be.ordertype, itemid);
                             }
                         }
                     }
@@ -722,8 +763,8 @@ public class sqliteDb {
     
 
 
-    public static boolean withdraw(String seller_uuid, String buyer_uuid, String itemid, int amount, double price) {
-        //System.out.println("#DEBUG: AT WITHDRAW");
+    public static boolean withdraw(String seller_uuid, String buyer_uuid, String itemid, int amount, double price, boolean normal_buyorder, String be_ordertype) {
+        System.out.println("#DEBUG: AT WITHDRAW");
         OfflinePlayer o_seller =  Bukkit.getOfflinePlayer(UUID.fromString(seller_uuid));
         OfflinePlayer o_buyer =  Bukkit.getOfflinePlayer(UUID.fromString(buyer_uuid));
         Player seller = Bukkit.getPlayer(UUID.fromString(seller_uuid));
@@ -735,45 +776,59 @@ public class sqliteDb {
         double buyer_balance = econ.getBalance(o_buyer);
 
         if( buyer_total < buyer_balance ) {                     // check if buyer have enough money
-            //System.out.println("# DEBUG: Player have enough money" );
+            System.out.println("# DEBUG: Player have enough money" );
             econ.withdrawPlayer(o_buyer, buyer_total);          // subtract money from buyer
             econ.depositPlayer(o_seller, seller_total);         // give money to seller
 
-            String seller_total_string = String.format("%.02f", seller_total);
-            String buyer_total_string = String.format("%.02f", buyer_total);
+            //if ordertype contains "chest" ignore insertFullfilledOrders
 
             sqliteDb.insertFullfilledOrders(seller_uuid, buyer_uuid, itemid, amount, price); // Insert Fullfilled order into db
 
             if(seller_uuid.equals(buyer_uuid)) {   // REFUND IF PLAYER CLOSES ORDER
+                System.out.println("# DEBUG: Own order");
                 if(seller != null) {
                     seller.sendMessage("SELLORDER CLOSED SUCESSFULLY");
-                    TextComponent message = new TextComponent("\n.\n.\n.\n.\n.\n.\n.\n" + ChatColor.BLUE + ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + "CLICK HERE" + ChatColor.BLUE + ") You can withdraw with: /ix withdraw " + itemid +" " + amount);
+                    TextComponent message = new TextComponent("\n.\n" + ChatColor.BLUE + ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + "CLICK HERE" + ChatColor.BLUE + ") You can withdraw with: /ix withdraw " + itemid +" " + amount);
                     message.setClickEvent( new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ix withdraw " + itemid +" " + amount));
                     buyer.spigot().sendMessage(message);
                 }
                 insertPayout(seller_uuid, itemid, amount); // Insert item payout into db
                 return true;
             }
+            if(normal_buyorder) { // send the item to payouts
+                System.out.println("# DEBUG: withdraw the buy to user -> not insert to ChestShop order");
+                if(buyer == null) {
+                    System.out.println("--DEBUG: BUYER IS OFFLINE!");
+                    insertPayout(buyer_uuid, itemid, amount); // Insert item payout into db
+                }
+                else {
+                    insertPayout(buyer_uuid, itemid, amount); // Insert item payout into db
+                    buyer.sendMessage("BUY ORDER" + ChatColor.GREEN+ " FULFILLED!" + ChatColor.WHITE + " You got [" + amount + "] "  + itemid + " for" + ChatColor.RED + " " + format_price( buyer_total ) );
+                    TextComponent message = new TextComponent("\n.\n" + ChatColor.BLUE + ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + "CLICK HERE" + ChatColor.BLUE + ") You can withdraw with: /ix withdraw " + itemid +" " + amount);
+                    message.setClickEvent( new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ix withdraw " + itemid +" " + amount));
+                    buyer.spigot().sendMessage(message);
+                }
+            }
+            else {  // send the item to chest shop order
+                System.out.println("# DEBUG: Not withdraw the buy to user -> insert to ChestShop order");
+                System.out.println(be_ordertype);
+                String[] parts = be_ordertype.split(":");
+                OrderBuffer temp = getOrder(parts[3], false);
+                updateOrder("SELLORDERS", Integer.parseInt(parts[3]),temp.amount + amount, temp.price, temp.ordertype, temp.itemid);
+
+                if(buyer != null)
+                    buyer.sendMessage(ChatColor.GREEN + "Your ChestShop bought: " + ChatColor.WHITE + amount + " [" + itemid + "] for " + format_price(price));
+            }
 
             if(seller == null) {
                 System.out.println("--DEBUG: SELLER IS OFFLINE!");
-                sqliteDb.insertPayout(seller_uuid, itemid, amount); // Insert payout into db
+                //sqliteDb.insertPayout(seller_uuid, itemid, amount); // Insert payout into db
             }
             else {
                 seller.sendMessage("SELL ORDER" + ChatColor.GREEN+ " FULFILLED!" + ChatColor.WHITE + " You sold [" + amount + "] "  + itemid + " for" + ChatColor.GREEN + " " + format_price( seller_total ) );
             }
 
-            if(buyer == null) {
-                System.out.println("--DEBUG: BUYER IS OFFLINE!");
-                insertPayout(buyer_uuid, itemid, amount); // Insert item payout into db
-            }
-            else {
-                insertPayout(buyer_uuid, itemid, amount); // Insert item payout into db
-                buyer.sendMessage("BUY ORDER" + ChatColor.GREEN+ " FULFILLED!" + ChatColor.WHITE + " You got [" + amount + "] "  + itemid + " for" + ChatColor.RED + " " + format_price( buyer_total ) );
-                TextComponent message = new TextComponent("\n.\n.\n.\n.\n.\n.\n.\n" + ChatColor.BLUE + ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + "CLICK HERE" + ChatColor.BLUE + ") You can withdraw with: /ix withdraw " + itemid +" " + amount);
-                message.setClickEvent( new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ix withdraw " + itemid +" " + amount));
-                buyer.spigot().sendMessage(message);
-            }
+
             return true;
         } // end enough money
         else {
@@ -784,24 +839,27 @@ public class sqliteDb {
 
 
 
-    public static boolean closeOrder(String table_name, int ID, String itemid) {
+    public static boolean closeOrder(String table_name, int ID, String itemid, String ordertype) {
         //System.out.println("# DEBUG - AT closeOrder: " + table_name + " " + ID);
         Connection c = null;
         Statement stmt = null;
+        
+        if(ordertype.contains("chest")) {}
+        else {
+            try {
+                Class.forName("org.sqlite.JDBC");
+                c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+                stmt = c.createStatement();
+                String sql = "DELETE FROM " + table_name + " WHERE id = " + ID;
 
-        try {
-            Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
-            stmt = c.createStatement();
-            String sql = "DELETE FROM " + table_name + " WHERE id = " + ID;
+                stmt.executeUpdate(sql);
+                stmt.close();
 
-            stmt.executeUpdate(sql);
-            stmt.close();
-
-        } catch ( Exception e ) {
-            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-            System.exit(0);
-            return false;
+            } catch ( Exception e ) {
+                System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+                System.exit(0);
+                return false;
+            }
         }
         loadBestOrdersToRam(itemid, false);
         return true;
@@ -817,6 +875,7 @@ public class sqliteDb {
         String refund_item_id = "";
         double refund_price = 0;
         String itemid = "";
+        String se_ordertype = null, be_ordertype;
 
         // get the refund_amount of order
         if(table_name.equals("SELLORDERS")) {
@@ -834,6 +893,7 @@ public class sqliteDb {
                     refund_item_id = rs.getString("itemid");
                     refund_price = rs.getDouble("price");
                     itemid = rs.getString("itemid");
+                    se_ordertype = rs.getString("itemid");
                 }
                 System.out.println("REFUND AMOUNT: " + refund_amount);
                 stmt.close();
@@ -866,7 +926,7 @@ public class sqliteDb {
             // refund
             if(table_name.equals("SELLORDERS")) {
                 if(refund_amount != 0) {
-                    if (withdraw(player_uuid , player_uuid, refund_item_id, refund_amount, refund_price) ) {
+                    if (withdraw(player_uuid , player_uuid, refund_item_id, refund_amount, refund_price, true, "") ) {
                         return true;
                     }
                     else return false;
