@@ -12,12 +12,10 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import sh.ome.itemex.Itemex;
-import sh.ome.itemex.commands.ItemexCommand;
 import sh.ome.itemex.files.CategoryFile;
 
 import java.util.ArrayList;
 
-import static org.bukkit.Bukkit.getLogger;
 import static sh.ome.itemex.commands.ItemexCommand.format_price;
 
 
@@ -131,7 +129,7 @@ public class ClickGUI implements Listener {
 
                             if( e.getClick().isRightClick()) {  // SELL
                                 if(menu_type.contains( "Limit" )) {
-                                    TextComponent message = new TextComponent(ChatColor.BLUE + "-> (CLICK HERE) to execute your SELL order " + itemid + " "+ amount + " limit <set your price>");
+                                    TextComponent message = new TextComponent(ChatColor.MAGIC + "X" + ChatColor.BLUE + Itemex.language.getString("cs_click_execute_sell") + itemid + " "+ amount + " limit <" + Itemex.language.getString("cs_set_price") + ")>");
                                     message.setClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix sell " + itemid +" "+ amount +" limit "));
                                     p.spigot().sendMessage(message);
                                     e.getView().close();
@@ -139,15 +137,15 @@ public class ClickGUI implements Listener {
                                 }
                                 else if(menu_type.contains( "Market" )) {
                                     if (Itemex.getPlugin().mtop.get(itemid).get_top_buyorder_prices()[0] == 0) {
-                                        p.sendMessage(ChatColor.RED + "There are no Orders to sell, but you can create one by:");
-                                        TextComponent message = new TextComponent(ChatColor.BLUE + "-> (CLICK HERE) to execute your SELL order " + itemid + " "+ amount + " limit <set your price>");
+                                        p.sendMessage(ChatColor.RED + Itemex.language.getString("cs_no_sell"));
+                                        TextComponent message = new TextComponent(ChatColor.MAGIC + "X" + ChatColor.BLUE + Itemex.language.getString("cs_click_execute_sell") + itemid + " "+ amount + " limit <" + Itemex.language.getString("cs_set_price") + ")>");
                                         message.setClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix sell " + itemid +" "+ amount +" limit "));
                                         p.spigot().sendMessage(message);
                                         e.getView().close();
                                         return;
                                     }
                                     else {
-                                        TextComponent message = new TextComponent(ChatColor.BLUE + "-> (CLICK HERE) to execute your SELL order " + itemid + " "+ amount + " market");
+                                        TextComponent message = new TextComponent(ChatColor.MAGIC + "X" + ChatColor.BLUE + Itemex.language.getString("cs_click_execute_sell") + itemid + " "+ amount + " market");
                                         message.setClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix sell " + itemid +" "+ amount +" market "));
                                         p.spigot().sendMessage(message);
                                         e.getView().close();
@@ -159,7 +157,7 @@ public class ClickGUI implements Listener {
 
                             else if( e.getClick().isLeftClick()) {  // BUY
                                 if(menu_type.contains( "Limit" )) {
-                                    TextComponent message = new TextComponent(ChatColor.BLUE + "-> (CLICK HERE) to execute your BUY order " + itemid + " "+ amount + " limit <set your price>");
+                                    TextComponent message = new TextComponent(ChatColor.MAGIC + "X" + ChatColor.BLUE + Itemex.language.getString("cs_click_execute_buy") + itemid + " "+ amount + " limit <" + Itemex.language.getString("cs_set_price") + ")>");
                                     message.setClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix buy " + itemid +" "+ amount +" limit "));
                                     p.spigot().sendMessage(message);
                                     e.getView().close();
@@ -167,15 +165,15 @@ public class ClickGUI implements Listener {
                                 }
                                 else if(menu_type.contains( "Market" )) {
                                     if (Itemex.getPlugin().mtop.get(itemid).get_top_sellorder_prices()[0] == 0) {
-                                        p.sendMessage(ChatColor.RED + "There are no orders to buy, but you can create one by:");
-                                        TextComponent message = new TextComponent(ChatColor.BLUE + "-> (CLICK HERE) to execute your BUY order " + itemid + " "+ amount + " limit <set your price>");
+                                        p.sendMessage(ChatColor.RED + Itemex.language.getString("cs_no_buy"));
+                                        TextComponent message = new TextComponent(ChatColor.MAGIC + "X" + ChatColor.BLUE + Itemex.language.getString("cs_click_execute_buy") + itemid + " "+ amount + " limit <" + Itemex.language.getString("cs_set_price") + ")>");
                                         message.setClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix buy " + itemid +" "+ amount +" limit "));
                                         p.spigot().sendMessage(message);
                                         e.getView().close();
                                         return;
                                     }
                                     else {
-                                        TextComponent message = new TextComponent(ChatColor.BLUE + "-> (CLICK HERE) to execute your BUY order " + itemid + " "+ amount + " market ");
+                                        TextComponent message = new TextComponent(ChatColor.MAGIC + "X" + ChatColor.BLUE + Itemex.language.getString("cs_click_execute_buy") + itemid + " "+ amount + " market ");
                                         message.setClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix buy " + itemid +" "+ amount +" market "));
                                         p.spigot().sendMessage(message);
                                         e.getView().close();
@@ -194,7 +192,7 @@ public class ClickGUI implements Listener {
 
 
                 // -- MENU START -------------------------------------------------------
-                if( (e.getSlot() == 7 || e.getSlot() == 8) && !menu_type.contains("Orders:") ) {} // menu_type.contains("Orders:") for update add 64
+                if( (e.getSlot() == 7 || e.getSlot() == 8) && !menu_type.contains( Itemex.language.getString("cs_orders")) ) {} // menu_type.contains("Orders:") for update add 64
                 else {
 
                     // CREATE INVENTORY
@@ -204,74 +202,74 @@ public class ClickGUI implements Listener {
                     // CLOSE WINDOW
                     ItemStack close = new ItemStack(Material.BARRIER);
                     ItemMeta closeMeta = close.getItemMeta();
-                    closeMeta.setDisplayName(ChatColor.RED + "Close");
+                    closeMeta.setDisplayName(ChatColor.RED + Itemex.language.getString("cs_close"));
                     ArrayList<String> close_lore = new ArrayList<>();
-                    close_lore.add(ChatColor.WHITE + "Click to close the window");
+                    close_lore.add(ChatColor.WHITE + Itemex.language.getString("cs_close_m"));
                     closeMeta.setLore(close_lore);
                     close.setItemMeta(closeMeta);
 
                     // HELP
                     ItemStack help = new ItemStack(Material.LIGHT);
                     ItemMeta helpMeta = help.getItemMeta();
-                    helpMeta.setDisplayName(ChatColor.GRAY + "Help");
+                    helpMeta.setDisplayName(ChatColor.GRAY + Itemex.language.getString("cs_help"));
                     ArrayList<String> help_lore = new ArrayList<>();
-                    help_lore.add(ChatColor.WHITE + "Choose a category below");
-                    help_lore.add(ChatColor.DARK_GRAY + "- click = Video Tutorial Link");
+                    help_lore.add(ChatColor.WHITE + Itemex.language.getString("cs_help_m1"));
+                    help_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_help_m2"));
                     helpMeta.setLore(help_lore);
                     help.setItemMeta(helpMeta);
 
                     // Market orders
                     ItemStack marketorders = new ItemStack(Material.COMPASS);
                     ItemMeta marketordersMeta = marketorders.getItemMeta();
-                    marketordersMeta.setDisplayName(ChatColor.GOLD + "Market Orders");
+                    marketordersMeta.setDisplayName(ChatColor.GOLD + Itemex.language.getString("cs_mo"));
                     ArrayList<String> marketorders_lore = new ArrayList<>();
-                    marketorders_lore.add(ChatColor.WHITE + "Click to get to Market orders");
-                    marketorders_lore.add(ChatColor.DARK_GRAY + "You can sell or buy to market prices. (fast)");
-                    marketorders_lore.add(ChatColor.DARK_GRAY + "- Immediate order fulfillment, regardless of price");
+                    marketorders_lore.add(ChatColor.WHITE + Itemex.language.getString("cs_mo_m1"));
+                    marketorders_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_mo_m2"));
+                    marketorders_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_mo_m3"));
                     marketordersMeta.setLore(marketorders_lore);
                     marketorders.setItemMeta(marketordersMeta);
 
                     // Limit orders
                     ItemStack limitorders = new ItemStack(Material.RECOVERY_COMPASS);
                     ItemMeta limitordersMeta = limitorders.getItemMeta();
-                    limitordersMeta.setDisplayName(ChatColor.DARK_GREEN + "Limit Orders");
+                    limitordersMeta.setDisplayName(ChatColor.DARK_GREEN + Itemex.language.getString("cs_lo"));
                     ArrayList<String> limitorders_lore = new ArrayList<>();
-                    limitorders_lore.add(ChatColor.WHITE + "Click to get to Limit Orders");
-                    limitorders_lore.add(ChatColor.DARK_GRAY + "You can sell or buy to fixed prices. (secure)");
-                    limitorders_lore.add(ChatColor.DARK_GRAY + "- Order fulfilled at your price, or stays in book");
+                    limitorders_lore.add(ChatColor.WHITE + Itemex.language.getString("cs_lo_m1"));
+                    limitorders_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_lo_m2"));
+                    limitorders_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_lo_m3"));
                     limitordersMeta.setLore(limitorders_lore);
                     limitorders.setItemMeta(limitordersMeta);
 
                     // Orderbook
                     ItemStack orderbook = new ItemStack(Material.CHEST);
                     ItemMeta orderbookMeta = orderbook.getItemMeta();
-                    orderbookMeta.setDisplayName(ChatColor.DARK_PURPLE + "Order Book");
+                    orderbookMeta.setDisplayName(ChatColor.DARK_PURPLE + Itemex.language.getString("cs_ob"));
                     ArrayList<String> orderbook_lore = new ArrayList<>();
-                    orderbook_lore.add(ChatColor.WHITE + "Click to get to all your Orders");
-                    orderbook_lore.add(ChatColor.DARK_GRAY + "You will see all your buy- and sellorders");
-                    orderbook_lore.add(ChatColor.DARK_GRAY + "- You can edit or remove it");
+                    orderbook_lore.add(ChatColor.WHITE + Itemex.language.getString("cs_ob_m1"));
+                    orderbook_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_ob_m2"));
+                    orderbook_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_ob_m3"));
                     orderbookMeta.setLore(orderbook_lore);
                     orderbook.setItemMeta(orderbookMeta);
 
                     // Fastsell
                     ItemStack fastsell = new ItemStack(Material.CHEST_MINECART);
                     ItemMeta fastsellMeta = fastsell.getItemMeta();
-                    fastsellMeta.setDisplayName(ChatColor.DARK_RED + "Fast Sell");
+                    fastsellMeta.setDisplayName(ChatColor.DARK_RED + Itemex.language.getString("cs_fs"));
                     ArrayList<String> fastsell_lore = new ArrayList<>();
-                    fastsell_lore.add(ChatColor.WHITE + "Click to sell quick");
-                    fastsell_lore.add(ChatColor.DARK_GRAY + "Simply drop your items into");
-                    fastsell_lore.add(ChatColor.DARK_GRAY + "- And sell automatically");
+                    fastsell_lore.add(ChatColor.WHITE + Itemex.language.getString("cs_fs_m1"));
+                    fastsell_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_fs_m2"));
+                    fastsell_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_fs_m3"));
                     fastsellMeta.setLore(fastsell_lore);
                     fastsell.setItemMeta(fastsellMeta);
 
                     // WITHDRAW (VAULT)
                     ItemStack withdraw = new ItemStack(Material.ENDER_CHEST);
                     ItemMeta withdrawMeta = withdraw.getItemMeta();
-                    withdrawMeta.setDisplayName(ChatColor.DARK_AQUA + "Vault");
+                    withdrawMeta.setDisplayName(ChatColor.DARK_AQUA + Itemex.language.getString("cs_va"));
                     ArrayList<String> withdraw_lore = new ArrayList<>();
-                    withdraw_lore.add(ChatColor.WHITE + "Click for withdraw your items");
-                    withdraw_lore.add(ChatColor.DARK_GRAY + "Withdraw your items once -");
-                    withdraw_lore.add(ChatColor.DARK_GRAY + "your buy order is fulfilled");
+                    withdraw_lore.add(ChatColor.WHITE + Itemex.language.getString("cs_va_m1"));
+                    withdraw_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_va_m2"));
+                    withdraw_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_va_m3"));
                     withdrawMeta.setLore(withdraw_lore);
                     withdraw.setItemMeta(withdrawMeta);
 
@@ -279,9 +277,9 @@ public class ClickGUI implements Listener {
                     // RIGHT
                     ItemStack right = new ItemStack(Material.SPECTRAL_ARROW);
                     ItemMeta rightMeta = right.getItemMeta();
-                    rightMeta.setDisplayName(ChatColor.WHITE + "Right");
+                    rightMeta.setDisplayName(ChatColor.WHITE + Itemex.language.getString("cs_click"));
                     ArrayList<String> right_lore = new ArrayList<>();
-                    right_lore.add(ChatColor.DARK_GRAY + "Click for scroll to next page");
+                    right_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_click_r_m1"));
                     //right_lore.add(ChatColor.DARK_GRAY + "Withdraw your items once -");
                     //right_lore.add(ChatColor.DARK_GRAY + "your buy order is fulfilled");
                     rightMeta.setLore(right_lore);
@@ -289,9 +287,9 @@ public class ClickGUI implements Listener {
                     //LEFT
                     ItemStack left = new ItemStack(Material.CROSSBOW);
                     ItemMeta leftMeta = left.getItemMeta();
-                    leftMeta.setDisplayName(ChatColor.WHITE + "Left");
+                    leftMeta.setDisplayName(ChatColor.WHITE + Itemex.language.getString("cs_click_l"));
                     ArrayList<String> left_lore = new ArrayList<>();
-                    left_lore.add(ChatColor.DARK_GRAY + "Click for scroll to previous page");
+                    left_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_click_l_m1"));
                     //left_lore.add(ChatColor.DARK_GRAY + "Withdraw your items once -");
                     //left_lore.add(ChatColor.DARK_GRAY + "your buy order is fulfilled");
                     leftMeta.setLore(left_lore);
@@ -301,20 +299,20 @@ public class ClickGUI implements Listener {
                     // Plus 1 right
                     ItemStack plus1 = new ItemStack(Material.PAPER, 1);
                     ItemMeta plus1Meta = plus1.getItemMeta();
-                    plus1Meta.setDisplayName(ChatColor.DARK_GREEN + "add 1");
+                    plus1Meta.setDisplayName(ChatColor.DARK_GREEN + Itemex.language.getString("cs_ad_1"));
                     ArrayList<String> plus1_lore = new ArrayList<>();
                     plus1_lore.add(ChatColor.GOLD + "[" + amount +"]");
-                    plus1_lore.add(ChatColor.DARK_GRAY + "adds 1 pcs to item amount");
+                    plus1_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_ad_1_m"));
                     plus1Meta.setLore(plus1_lore);
                     plus1.setItemMeta(plus1Meta);
 
                     // Plus 64 right
                     ItemStack plus64 = new ItemStack(Material.PAPER, 64);
                     ItemMeta plus64Meta = plus64.getItemMeta();
-                    plus64Meta.setDisplayName(ChatColor.DARK_GREEN + "add 64");
+                    plus64Meta.setDisplayName(ChatColor.DARK_GREEN + Itemex.language.getString("cs_ad_64"));
                     ArrayList<String> plus64_lore = new ArrayList<>();
                     plus64_lore.add(ChatColor.GOLD + "[" + amount +"]");
-                    plus64_lore.add(ChatColor.DARK_GRAY + "adds 64 pcs to item amount");
+                    plus64_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_ad_64_m"));
                     plus64Meta.setLore(plus64_lore);
                     plus64.setItemMeta(plus64Meta);
 
@@ -322,20 +320,20 @@ public class ClickGUI implements Listener {
                     // Minus 1 left
                     ItemStack minus1 = new ItemStack(Material.PAPER, 1);
                     ItemMeta minus1Meta = minus1.getItemMeta();
-                    minus1Meta.setDisplayName(ChatColor.DARK_RED + "sub 1");
+                    minus1Meta.setDisplayName(ChatColor.DARK_RED + Itemex.language.getString("cs_sub_1"));
                     ArrayList<String> minus1_lore = new ArrayList<>();
                     minus1_lore.add(ChatColor.GOLD + "[" + amount +"]");
-                    minus1_lore.add(ChatColor.DARK_GRAY + "subs 1 pcs from item amount");
+                    minus1_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_sub_1_m"));
                     minus1Meta.setLore(minus1_lore);
                     minus1.setItemMeta(minus1Meta);
 
                     // Minus 64 left
                     ItemStack minus64 = new ItemStack(Material.PAPER, 64);
                     ItemMeta minus64Meta = minus64.getItemMeta();
-                    minus64Meta.setDisplayName(ChatColor.DARK_RED + "sub 64");
+                    minus64Meta.setDisplayName(ChatColor.DARK_RED + Itemex.language.getString("cs_sub_64"));
                     ArrayList<String> minus64_lore = new ArrayList<>();
                     minus64_lore.add(ChatColor.GOLD + "[" + amount +"]");
-                    minus64_lore.add(ChatColor.DARK_GRAY + "subs 64 pcs from item amount");
+                    minus64_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_sub_64_m"));
                     minus64Meta.setLore(minus64_lore);
                     minus64.setItemMeta(minus64Meta);
 
@@ -355,8 +353,8 @@ public class ClickGUI implements Listener {
                         ItemMeta categoryMeta = category[cat_gui_type].getItemMeta();
                         categoryMeta.setDisplayName(ChatColor.DARK_AQUA + cat_name[0]);
                         ArrayList<String> category_lore = new ArrayList<>();
-                        category_lore.add(ChatColor.WHITE + "Click to choose a category");
-                        category_lore.add(ChatColor.DARK_GRAY + "- you can buy and sell each item");
+                        category_lore.add(ChatColor.WHITE + Itemex.language.getString("cs_click_cat"));
+                        category_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_ycbasei"));
                         categoryMeta.setLore(category_lore);
                         category[cat_gui_type].setItemMeta(categoryMeta);
                     }
@@ -449,13 +447,13 @@ public class ClickGUI implements Listener {
                                     ArrayList<String> item_lore = new ArrayList<>();
 
                                     item_lore.add(ChatColor.DARK_GRAY + "--------------------" );
-                                    item_lore.add(ChatColor.WHITE + "Total Amounts: " + ChatColor.GOLD + "[" + amount +"]");
-                                    item_lore.add(ChatColor.RED + "TOTAL SELL: " + format_price(sell_total) );
-                                    item_lore.add(ChatColor.GREEN + "TOTAL BUY: " + format_price(buy_total) );
+                                    item_lore.add(ChatColor.WHITE + Itemex.language.getString("cs_total_amount") + ChatColor.GOLD + "[" + amount +"]");
+                                    item_lore.add(ChatColor.RED + Itemex.language.getString("cs_total_sell") + format_price(sell_total) );
+                                    item_lore.add(ChatColor.GREEN +  Itemex.language.getString("cs_total_buy") + format_price(buy_total) );
                                     item_lore.add(ChatColor.DARK_GRAY + "--------------------" );
-                                    item_lore.add(ChatColor.WHITE + "(left) " + ChatColor.GREEN + "BUY " + ChatColor.WHITE +"| (right) " + ChatColor.RED + "SELL" );
+                                    item_lore.add(ChatColor.WHITE +  Itemex.language.getString("cs_left") + ChatColor.GREEN +  Itemex.language.getString("cs_buy") + ChatColor.WHITE + Itemex.language.getString("cs_right") + ChatColor.RED +  Itemex.language.getString("cs_sell") );
                                     item_lore.add(ChatColor.DARK_GRAY + "--------------------" );
-                                    item_lore.add(ChatColor.DARK_GRAY + "- Top Orders -");
+                                    item_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_top_orders"));
 
                                     if(Itemex.getPlugin().mtop.get(itemid) == null) {
                                         for(int z=0; z <= 3; z++)
@@ -467,14 +465,14 @@ public class ClickGUI implements Listener {
                                         String best_to = "";
                                         for(int z=3; z >= 0; z--) {
                                             if(z == 0)
-                                                best_to = ChatColor.DARK_GREEN + " best to buy";
+                                                best_to = ChatColor.DARK_GREEN + Itemex.language.getString("cs_best_to_buy");
                                             item_lore.add(ChatColor.DARK_RED + "[" + Itemex.getPlugin().mtop.get(itemid).get_sellorder_amount()[z] +"] " + format_price( Itemex.getPlugin().mtop.get(itemid).get_top_sellorder_prices()[z] ) + best_to);
 
                                         }
 
                                         for(int z=0; z <= 3; z++) {
                                             if(z == 0)
-                                                best_to = ChatColor.DARK_RED + " best to sell";
+                                                best_to = ChatColor.DARK_RED + Itemex.language.getString("cs_best_to_sell");
                                             else {
                                                 best_to = "";
                                             }
@@ -514,7 +512,7 @@ public class ClickGUI implements Listener {
 
                     } // end ITEMEX - Market Orders
                     else
-                        p.sendMessage("NOT IMPLEMENTED: " + menu_type);
+                        p.sendMessage(Itemex.language.getString("cs_not_implemented") + menu_type);
 
 
 

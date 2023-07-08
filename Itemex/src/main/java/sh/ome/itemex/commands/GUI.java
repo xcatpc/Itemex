@@ -7,6 +7,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import sh.ome.itemex.Itemex;
 import sh.ome.itemex.files.CategoryFile;
 
 import java.util.ArrayList;
@@ -23,74 +24,74 @@ public class GUI {
         // CLOSE WINDOW
         ItemStack close = new ItemStack(Material.BARRIER);
         ItemMeta closeMeta = close.getItemMeta();
-        closeMeta.setDisplayName(ChatColor.RED + "Close");
+        closeMeta.setDisplayName(ChatColor.RED + Itemex.language.getString("cs_close"));
         ArrayList<String> close_lore = new ArrayList<>();
-        close_lore.add(ChatColor.WHITE + "Click to close the window");
+        close_lore.add(ChatColor.WHITE + Itemex.language.getString("cs_close_m"));
         closeMeta.setLore(close_lore);
         close.setItemMeta(closeMeta);
 
         // HELP
         ItemStack help = new ItemStack(Material.LIGHT);
         ItemMeta helpMeta = help.getItemMeta();
-        helpMeta.setDisplayName(ChatColor.GRAY + "Help");
+        helpMeta.setDisplayName(ChatColor.GRAY + Itemex.language.getString("cs_help"));
         ArrayList<String> help_lore = new ArrayList<>();
-        help_lore.add(ChatColor.WHITE + "Choose a category below");
-        help_lore.add(ChatColor.DARK_GRAY + "- click = Video Tutorial Link");
+        help_lore.add(ChatColor.WHITE + Itemex.language.getString("cs_help_m1"));
+        help_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_help_m2"));
         helpMeta.setLore(help_lore);
         help.setItemMeta(helpMeta);
 
         // Market orders
         ItemStack marketorders = new ItemStack(Material.COMPASS);
         ItemMeta marketordersMeta = marketorders.getItemMeta();
-        marketordersMeta.setDisplayName(ChatColor.GOLD + "Market Orders");
+        marketordersMeta.setDisplayName(ChatColor.GOLD + Itemex.language.getString("cs_mo"));
         ArrayList<String> marketorders_lore = new ArrayList<>();
-        marketorders_lore.add(ChatColor.WHITE + "Click to get to Market orders");
-        marketorders_lore.add(ChatColor.DARK_GRAY + "You can sell or buy to market prices. (fast)");
-        marketorders_lore.add(ChatColor.DARK_GRAY + "- Immediate order fulfillment, regardless of price");
+        marketorders_lore.add(ChatColor.WHITE + Itemex.language.getString("cs_mo_m1"));
+        marketorders_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_mo_m2"));
+        marketorders_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_mo_m3"));
         marketordersMeta.setLore(marketorders_lore);
         marketorders.setItemMeta(marketordersMeta);
 
         // Limit orders
         ItemStack limitorders = new ItemStack(Material.RECOVERY_COMPASS);
         ItemMeta limitordersMeta = limitorders.getItemMeta();
-        limitordersMeta.setDisplayName(ChatColor.DARK_GREEN + "Limit Orders");
+        limitordersMeta.setDisplayName(ChatColor.DARK_GREEN + Itemex.language.getString("cs_lo"));
         ArrayList<String> limitorders_lore = new ArrayList<>();
-        limitorders_lore.add(ChatColor.WHITE + "Click to get to Limit Orders");
-        limitorders_lore.add(ChatColor.DARK_GRAY + "You can sell or buy to fixed prices. (secure)");
-        limitorders_lore.add(ChatColor.DARK_GRAY + "- Order fulfilled at your price, or stays in book");
+        limitorders_lore.add(ChatColor.WHITE + Itemex.language.getString("cs_lo_m1"));
+        limitorders_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_lo_m2"));
+        limitorders_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_lo_m3"));
         limitordersMeta.setLore(limitorders_lore);
         limitorders.setItemMeta(limitordersMeta);
 
         // Orderbook
         ItemStack orderbook = new ItemStack(Material.CHEST);
         ItemMeta orderbookMeta = orderbook.getItemMeta();
-        orderbookMeta.setDisplayName(ChatColor.DARK_PURPLE + "Order Book");
+        orderbookMeta.setDisplayName(ChatColor.DARK_PURPLE + Itemex.language.getString("cs_ob"));
         ArrayList<String> orderbook_lore = new ArrayList<>();
-        orderbook_lore.add(ChatColor.WHITE + "Click to get to all your Orders");
-        orderbook_lore.add(ChatColor.DARK_GRAY + "You will see all your buy- and sellorders");
-        orderbook_lore.add(ChatColor.DARK_GRAY + "- You can edit or remove it");
+        orderbook_lore.add(ChatColor.WHITE + Itemex.language.getString("cs_ob_m1"));
+        orderbook_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_ob_m2"));
+        orderbook_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_ob_m3"));
         orderbookMeta.setLore(orderbook_lore);
         orderbook.setItemMeta(orderbookMeta);
 
         // Fastsell
         ItemStack fastsell = new ItemStack(Material.CHEST_MINECART);
         ItemMeta fastsellMeta = fastsell.getItemMeta();
-        fastsellMeta.setDisplayName(ChatColor.DARK_RED + "Fast Sell");
+        fastsellMeta.setDisplayName(ChatColor.DARK_RED + Itemex.language.getString("cs_fs"));
         ArrayList<String> fastsell_lore = new ArrayList<>();
-        fastsell_lore.add(ChatColor.WHITE + "Click to sell quick");
-        fastsell_lore.add(ChatColor.DARK_GRAY + "Simply drop your items into");
-        fastsell_lore.add(ChatColor.DARK_GRAY + "- And sell automatically");
+        fastsell_lore.add(ChatColor.WHITE + Itemex.language.getString("cs_fs_m1"));
+        fastsell_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_fs_m2"));
+        fastsell_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_fs_m3"));
         fastsellMeta.setLore(fastsell_lore);
         fastsell.setItemMeta(fastsellMeta);
 
         // WITHDRAW (VAULT)
         ItemStack withdraw = new ItemStack(Material.ENDER_CHEST);
         ItemMeta withdrawMeta = withdraw.getItemMeta();
-        withdrawMeta.setDisplayName(ChatColor.DARK_AQUA + "Vault");
+        withdrawMeta.setDisplayName(ChatColor.DARK_AQUA + Itemex.language.getString("cs_va"));
         ArrayList<String> withdraw_lore = new ArrayList<>();
-        withdraw_lore.add(ChatColor.WHITE + "Click for withdraw your items");
-        withdraw_lore.add(ChatColor.DARK_GRAY + "Withdraw your items once -");
-        withdraw_lore.add(ChatColor.DARK_GRAY + "your buy order is fulfilled");
+        withdraw_lore.add(ChatColor.WHITE + Itemex.language.getString("cs_va_m1"));
+        withdraw_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_va_m2"));
+        withdraw_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_va_m3"));
         withdrawMeta.setLore(withdraw_lore);
         withdraw.setItemMeta(withdrawMeta);
 
@@ -98,9 +99,9 @@ public class GUI {
         // RIGHT
         ItemStack right = new ItemStack(Material.SPECTRAL_ARROW);
         ItemMeta rightMeta = right.getItemMeta();
-        rightMeta.setDisplayName(ChatColor.WHITE + "Right");
+        rightMeta.setDisplayName(ChatColor.WHITE + Itemex.language.getString("cs_click_r"));
         ArrayList<String> right_lore = new ArrayList<>();
-        right_lore.add(ChatColor.DARK_GRAY + "Click for scroll to next page");
+        right_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_click_r_m"));
         //right_lore.add(ChatColor.DARK_GRAY + "Withdraw your items once -");
         //right_lore.add(ChatColor.DARK_GRAY + "your buy order is fulfilled");
         rightMeta.setLore(right_lore);
@@ -108,9 +109,9 @@ public class GUI {
         //LEFT
         ItemStack left = new ItemStack(Material.CROSSBOW);
         ItemMeta leftMeta = left.getItemMeta();
-        leftMeta.setDisplayName(ChatColor.WHITE + "Left");
+        leftMeta.setDisplayName(ChatColor.WHITE + Itemex.language.getString("cs_click_l"));
         ArrayList<String> left_lore = new ArrayList<>();
-        left_lore.add(ChatColor.DARK_GRAY + "Click for scroll to previous page");
+        left_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_click_l_m"));
         //left_lore.add(ChatColor.DARK_GRAY + "Withdraw your items once -");
         //left_lore.add(ChatColor.DARK_GRAY + "your buy order is fulfilled");
         leftMeta.setLore(left_lore);
@@ -133,8 +134,8 @@ public class GUI {
             ItemMeta categoryMeta = category[cat_gui_type].getItemMeta();
             categoryMeta.setDisplayName(ChatColor.DARK_AQUA + cat_name[0]);
             ArrayList<String> category_lore = new ArrayList<>();
-            category_lore.add(ChatColor.WHITE + "Click to choose a category");
-            category_lore.add(ChatColor.DARK_GRAY + "- you can buy and sell each item");
+            category_lore.add(ChatColor.WHITE + Itemex.language.getString("cs_click_cat"));
+            category_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_ycbasei"));
             categoryMeta.setLore(category_lore);
             category[cat_gui_type].setItemMeta(categoryMeta);
         }

@@ -13,6 +13,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import sh.ome.itemex.Itemex;
 import sh.ome.itemex.commands.ItemexCommand;
 import sh.ome.itemex.functions.sqliteDb;
 
@@ -23,74 +24,102 @@ import static sh.ome.itemex.functions.sqliteDb.updateOrder;
 
 public class ChestShop implements Listener {
 
+
+
     String UUID_owner = "";
 
 
     @EventHandler
     public void onSignChange(SignChangeEvent e) {
+        //System.out.println("# DEBUG: onSignChange");
+
         if (e.getLine(0).contains("[ixc]")) {
-            // Überprüfen, ob das Schild korrekt eingerichtet ist
             if (e.getLine(1).contains("S:") && e.getLine(2).contains("B:")) {
                 e.setLine(0, ChatColor.GREEN + "[ixc]");
                 e.setLine(1, ChatColor.RED + "BUY: " + ChatColor.WHITE + e.getLine(1));
                 e.setLine(2, ChatColor.GREEN + "SELL: " + ChatColor.WHITE + e.getLine(2));
             } else {
-                e.getPlayer().sendMessage(ChatColor.RED + "You can't open a limit order ChestShop because you have to follow the instructions:\nLINE 1: [ixc]\nLINE 2: S:<sellprice>\nLINE 3: B:<buyprice>");
+                e.getPlayer().sendMessage(ChatColor.RED + Itemex.language.getString("chestshop_instruction"));
                 e.getBlock().breakNaturally();
             }
         }
-    }
+    } // ok
 
     @EventHandler
     public void onInventoryOpen(InventoryOpenEvent event) {
+        //System.out.println("# DEBUG: onInventoryOpen");
         Inventory inv = event.getInventory();
         if (inv.getHolder() instanceof Chest) {
             Player player = (Player) event.getPlayer();
             Chest chest = (Chest) inv.getHolder();
             Block attachedBlock = getSignBlockAttachedToChest(chest.getBlock());
+
             if (attachedBlock != null && attachedBlock.getState() instanceof Sign) {
                 Sign sign = (Sign) attachedBlock.getState();
-                String itemid = sign.getLine(0).substring(10);
-                if( sign.getLine(3).contains("ID:") ) { // edit limit order
-                    String[] parts = sign.getLine(3).split(":");
+                if(sign.getLine(0).contains("[ixc]") && sign.getLine(0).contains(ChatColor.GOLD.toString())) {      // if [ixc] and an item already registered
+                    String itemid = sign.getLine(0).substring(10);
+                    if( sign.getLine(3).contains("ID:") ) { // edit limit order
+                        String[] parts = sign.getLine(3).split(":");
 
-                    // Remove all main items ingots from the chest
-                    ItemStack[] contents = inv.getContents();
-                    for (ItemStack item : contents) {
-                        if (item != null && item.getType() == Material.getMaterial(itemid)) {
-                            inv.removeItem(item);
+                        // Remove all main items ingots from the chest
+                        ItemStack[] contents = inv.getContents();
+                        for (ItemStack item : contents) {
+                            if (item != null && item.getType() == Material.getMaterial(itemid)) {
+                                inv.removeItem(item);
+                            }
                         }
-                    }
 
-                    // load sell chest orders from db
-                    sqliteDb.OrderBuffer buffer = sqliteDb.getOrder(parts[3], false);
-                    System.out.println("# DEBUG: ShopCest owner: " + buffer.uuid);
-                    UUID_owner = buffer.uuid;
-                    if(player.getUniqueId().toString().equals(buffer.uuid)) {
-                        // insert sell amount
-                        ItemStack goldBarren = new ItemStack(Material.getMaterial(itemid), buffer.amount);
-                        inv.addItem(goldBarren);
-                    }
-                    else {
-                        System.out.println("# DEBUG: ShopCest owner: " + buffer.uuid + " and not you: " + player.getUniqueId());
+                        // load sell chest orders from db
+                        sqliteDb.OrderBuffer buffer = sqliteDb.getOrder(parts[3], false);
+                        //System.out.println("# DEBUG: ShopCest owner: " + buffer.uuid);
+                        UUID_owner = buffer.uuid;
+                        if(player.getUniqueId().toString().equals(buffer.uuid)) {
+                            // insert sell amount
+                            ItemStack goldBarren = new ItemStack(Material.getMaterial(itemid), buffer.amount);
+                            inv.addItem(goldBarren);
+                        }
+                        else {
+                            //System.out.println("# DEBUG: ShopCest owner: " + buffer.uuid + " and not you: " + player.getUniqueId());
+                        }
                     }
                 }
             }
         }
     }
 
+
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent e) {
+        //System.out.println("# DEBUG: onInventoryClose");
         Player player = (Player) e.getPlayer();
         Inventory inventory = e.getInventory();
         InventoryHolder holder = inventory.getHolder();
         if (holder instanceof Chest) {
             Chest chest = (Chest) holder;
-            Block attachedBlock = chest.getBlock();
-            if(player.getUniqueId().toString().equals( UUID_owner ))
-                updateSignIfAttachedChest(attachedBlock, (Player) e.getPlayer());
+            Block chestBlock = chest.getBlock();
+            Sign sign = null;
+
+            // Check the blocks around the chest for a sign
+            for(BlockFace face : new BlockFace[] {BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST, BlockFace.UP}) {
+                Block relative = chestBlock.getRelative(face);
+                if(relative.getState() instanceof Sign) {
+                    sign = (Sign) relative.getState();
+                    break;
+                }
+            }
+
+            // If a sign was found
+            if(sign != null) {
+                if(sign.getLine(0).contains("[ixc]") && sign.getLine(0).contains(ChatColor.GOLD.toString())) {  // if chest already registred
+                    if(player.getUniqueId().toString().equals( UUID_owner ))    // updateSign only if the player is the owner; UUID_owner will be set onInventoryOpen
+                        updateSignIfAttachedChest(chestBlock, player);
+                }
+                else
+                    updateSignIfAttachedChest(chestBlock, player);
+            }
         }
-    }
+    } // ok
+
 
 
 
@@ -98,6 +127,7 @@ public class ChestShop implements Listener {
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent e) {
+        //System.out.println("# DEBUG: onPlayerInteract");
         UUID playerId = e.getPlayer().getUniqueId();
         long time = System.currentTimeMillis();
 
@@ -105,13 +135,13 @@ public class ChestShop implements Listener {
             return;
         }
 
-        // Setze den Cooldown für diesen Spieler
-        cooldowns.put(playerId, time + 100); // 1 Sekunde Cooldown
-
+        cooldowns.put(playerId, time + 50); // milli seconds
         if (e.getClickedBlock() == null) return;
         if (e.getClickedBlock().getState() instanceof Sign) {
+            //System.out.println("instanceof sign");
             Sign sign = (Sign) e.getClickedBlock().getState();
             if (sign.getLine(0).contains(ChatColor.GREEN + "[ixc]")) {
+                //System.out.println(sign.getLine(0));
                 String itemid = sign.getLine(0).substring(10); // reads the itemid from sign
                 if (e.getAction().toString().contains("RIGHT")) {
                     if (e.getPlayer().isSneaking()) {
@@ -133,6 +163,7 @@ public class ChestShop implements Listener {
 
 
 private void updateSignIfAttachedChest(Block block, Player p) {
+    //System.out.println("# DEBUG: updateSignIfAttachedChest");
         BlockState state = block.getState();
         String itemname = null;
         int totalAmount = 0;
@@ -171,10 +202,10 @@ private void updateSignIfAttachedChest(Block block, Player p) {
                         itemname = sign.getLine(0).substring(10);
 
                     //create or update order
-                    //System.out.println("# DEBUG: " + itemname + " amount in chest: " + totalAmount);
+                    //.println("# DEBUG: " + itemname + " amount in chest: " + totalAmount);
                     //System.out.println("# DEBUG: freespace slots: " + freeSpace);
-                    p.sendMessage("Amount in chest: " + totalAmount);
-                    p.sendMessage("Free slots: " + freeSpace);
+                    p.sendMessage(itemname + Itemex.language.getString("chestshop_amount_in_chest") + totalAmount);
+                    p.sendMessage(Itemex.language.getString("chestshop_free_slots") + freeSpace);
                     Material item_material = Material.getMaterial(itemname.toUpperCase());
                     int stackSize = item_material.getMaxStackSize();
                     String[] buy_line = sign.getLine(1).split(":");
@@ -188,12 +219,12 @@ private void updateSignIfAttachedChest(Block block, Player p) {
                         //System.out.println("# DEBUG: SELLORDER ID: " + parts[3]);
 
                         if(!updateOrder("SELLORDERS", Integer.parseInt(parts[3]), totalAmount, Double.parseDouble( buy_line[2]), "sell:limit:chest:" + buyorder_id, itemname)) {
-                            System.out.println("ERROR - updating sellorder: " + buyorder_id + " at ChestShop!");
+                            //System.out.println("ERROR - updating sellorder: " + buyorder_id + " at ChestShop!");
                             block.breakNaturally();
                         }
 
                         if(!updateOrder("BUYORDERS", Integer.parseInt(buyorder_id), freeSpace * stackSize, Double.parseDouble( sell_line[2]), "buy:limit:chest:" + parts[3], itemname)) {
-                            System.out.println("ERROR - updating buyorder: " + parts[3] + " at ChestShop!");
+                            //System.out.println("ERROR - updating buyorder: " + parts[3] + " at ChestShop!");
                             block.breakNaturally();
                         }
 
@@ -232,7 +263,7 @@ private void updateSignIfAttachedChest(Block block, Player p) {
                             id_line = id_line + "B:" + -1;
 
 
-                        System.out.println("# DEBUG: sell_line[1]: " + sell_line[2]);
+                        //System.out.println("# DEBUG: sell_line[1]: " + sell_line[2]);
                         if(!sell_line[2].equals("0")) {
                             //create sell order: amount == full inventory items
                             ItemexCommand.Order order = new ItemexCommand.Order();
@@ -281,6 +312,7 @@ private void updateSignIfAttachedChest(Block block, Player p) {
 
 
     private Block getSignBlockAttachedToChest(Block chestBlock) {
+        //System.out.println("# DEBUG: getSignBlockAttachedToChest");
         for (BlockFace face : BlockFace.values()) {
             Block attachedBlock = chestBlock.getRelative(face);
             BlockState state = attachedBlock.getState();
@@ -290,4 +322,6 @@ private void updateSignIfAttachedChest(Block block, Player p) {
         }
         return null;
     }
+
+
 }

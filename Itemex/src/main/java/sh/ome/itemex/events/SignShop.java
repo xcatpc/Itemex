@@ -25,8 +25,8 @@ public class SignShop implements Listener {
     public void onSignChange(SignChangeEvent e) {
         if(e.getLine(0).equalsIgnoreCase("[ix]")) {
             e.setLine(0, ChatColor.GREEN + "[ix]");
-            e.setLine(2, ChatColor.WHITE + "<click>");
-            e.setLine(3, ChatColor.WHITE + "<to enable>");
+            e.setLine(2, ChatColor.WHITE + "<" + Itemex.language.getString("sign_click_m") + ">");
+            e.setLine(3, ChatColor.WHITE + "<" + Itemex.language.getString("sign_enable") + ">");
             e.getBlock().setMetadata(METADATA_KEY, new FixedMetadataValue(Itemex.getPlugin(), "null"));
             e.getBlock().setMetadata(PRICE_KEY, new FixedMetadataValue(Itemex.getPlugin(), false));
         }
@@ -45,7 +45,7 @@ public class SignShop implements Listener {
                         String shopType = firstLineParts[1].substring(2); // Entferne die Farbcodes
                         sign.getBlock().setMetadata(METADATA_KEY, new FixedMetadataValue(Itemex.getPlugin(), shopType));
                         sign.getBlock().setMetadata(PRICE_KEY, new FixedMetadataValue(Itemex.getPlugin(), false)); // Standardmäßig ist der Preis nicht aktiv
-                        e.getPlayer().sendMessage("sign reloaded!");
+                        e.getPlayer().sendMessage(Itemex.language.getString("sign_reloaded"));
                         return;
                     }
                 }
@@ -58,9 +58,9 @@ public class SignShop implements Listener {
                         sign.getBlock().setMetadata(METADATA_KEY, new FixedMetadataValue(Itemex.getPlugin(), heldItem.getType().toString()));
                         sign.setLine(0, ChatColor.GREEN + "[ix] " + ChatColor.GOLD + heldItem.getType().toString()); // Itemname auf das Schild setzen
                         sign.setLine(2, ChatColor.WHITE + heldItem.getType().toString()); // Itemname auf das Schild setzen
-                        sign.setLine(3, ChatColor.WHITE + "<click>"); // Reset line 4
+                        sign.setLine(3, ChatColor.WHITE + "<" + Itemex.language.getString("sign_click_m") + ">"); // Reset line 4
                         sign.update(); // Änderungen am Schild speichern
-                        e.getPlayer().sendMessage(heldItem.getType() + " market-sign created successfully!");
+                        e.getPlayer().sendMessage(heldItem.getType() + Itemex.language.getString("sign_created_success"));
                     }
                 } else {
                     //e.getPlayer().sendMessage("ISSET: " + shopType);
@@ -80,7 +80,7 @@ public class SignShop implements Listener {
                             if (e.getPlayer().isSneaking()) {
                                 e.getPlayer().performCommand("ix buy " + shopType + " 1 market");
                                 //e.getPlayer().sendMessage("LEFT + SHIFT");
-                                //e.getClickedBlock().breakNaturally(); // Zerstöre das Schild
+                                //e.getClickedBlock().breakNaturally(); // destroys the sign
                             }
                             else {
                                 e.getPlayer().performCommand("ix buy " + shopType + " 1 market confirm");
@@ -106,8 +106,8 @@ public class SignShop implements Listener {
                                     countdown--;
                                 } else {
                                     sign.setLine(1, ChatColor.WHITE + " ");
-                                    sign.setLine(2, ChatColor.WHITE + "<click>");
-                                    sign.setLine(3, ChatColor.WHITE + "to enable");
+                                    sign.setLine(2, ChatColor.WHITE + "<" + Itemex.language.getString("sign_enable") +">");
+                                    sign.setLine(3, ChatColor.WHITE + Itemex.language.getString("sign_enable"));
                                     sign.update();
                                     sign.getBlock().setMetadata(PRICE_KEY, new FixedMetadataValue(Itemex.getPlugin(), false));
                                     sign.update();

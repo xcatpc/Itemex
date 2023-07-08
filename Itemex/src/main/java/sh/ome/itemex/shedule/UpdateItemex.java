@@ -47,7 +47,6 @@ public class UpdateItemex {
             getLogger().info("\u001B[35mDEVELOPER VERSION: server_version:" + i_server_version + " < plugin_version:" + i_plugin_version + "\u001B[37m");
         }
 
-        //if(!server_version.equalsIgnoreCase(version)) {
         else if(i_server_version > i_plugin_version) {
 
             try (BufferedInputStream in = new BufferedInputStream(new URL(file_url).openStream());

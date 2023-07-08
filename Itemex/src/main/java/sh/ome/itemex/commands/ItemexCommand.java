@@ -9,6 +9,7 @@ import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.*;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
@@ -81,7 +82,7 @@ public class ItemexCommand implements CommandExecutor {
                 if(sender instanceof Player) {
                     p = (Player) sender;
                     if (!p.hasPermission("itemex.command.ix")) {
-                        p.sendMessage(ChatColor.RED + "You don't have the permission to execute this command!");
+                        p.sendMessage(ChatColor.RED + Itemex.language.getString("message_no_permission"));
                         return true;
                     }
                 }
@@ -92,7 +93,6 @@ public class ItemexCommand implements CommandExecutor {
                     //OfflinePlayer op = Bukkit.getOfflinePlayer(UUID.fromString( strings[strings.length-1] ));
                     //System.out.println("Name: " + op.getName());
                     System.out.println("Return (break);");
-
                     return true;
                 }
                 else if( sender instanceof BlockCommandSender) {
@@ -126,7 +126,7 @@ public class ItemexCommand implements CommandExecutor {
                     String itemid;
 
                     if (!p.hasPermission("itemex.command.ix.buy")) {
-                        p.sendMessage(ChatColor.RED + "You don't have the permission to execute this command!");
+                        p.sendMessage(ChatColor.RED + Itemex.language.getString("message_no_permission"));
                         return true;
                     }
 
@@ -141,22 +141,19 @@ public class ItemexCommand implements CommandExecutor {
                             itemid = strings[1].toUpperCase();
 
                         if(itemid == "AIR") {
-                            p.sendMessage("You can't buy nothing (AIR)");
+                            p.sendMessage( Itemex.language.getString("message_cant_buy_nothing"));
                             return false;
                         }
 
                         // check if there is a sell order with enough amount (1)
                         if (Itemex.getPlugin().mtop.get(itemid).get_top_sellorder_prices()[0] == 0) {
-                            TextComponent message = new TextComponent(ChatColor.RED + "There are no sell orders to buy! " + ChatColor.WHITE + itemid + "\n.\n" + ChatColor.BLUE + " -> (CLICK HERE) You can create a " + ChatColor.GREEN + "buy order" + ChatColor.BLUE + " with: /ix buy " + itemid + " 1 limit");
+                            TextComponent message = new TextComponent(ChatColor.RED + Itemex.language.getString("buy_no_sellorders_to_buy") + ChatColor.WHITE + itemid + "\n.\n" + ChatColor.BLUE + Itemex.language.getString("buy_click_here_create") + ChatColor.GREEN + Itemex.language.getString("buy_order") + ChatColor.BLUE + Itemex.language.getString("with") + ": /ix buy " + itemid + " 1 limit");
                             message.setClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix buy " + itemid +" 1 limit "));
                             p.spigot().sendMessage(message);
                         }
                         else {
                             //create buy order
-                            p.sendMessage("Best sellorderprice: " + Itemex.getPlugin().mtop.get(itemid).get_top_sellorder_prices()[0]);
-                            // ##########################################################################################################################################################
-                            // add here full implementation of a order preview
-
+                            p.sendMessage(Itemex.language.getString("buy_best_sellorder_price") + Itemex.getPlugin().mtop.get(itemid).get_top_sellorder_prices()[0]);
                             reply_command = reply_command + create_order(p, itemid, Itemex.getPlugin().mtop.get(itemid).get_top_sellorder_prices()[0], 1, "buy", "market");
                         }
 
@@ -184,18 +181,18 @@ public class ItemexCommand implements CommandExecutor {
                             amount = parseInt(strings[2]);
                         if(amount <= 0) {
                             buy_order_ok = false;
-                            reply_command = reply_command + "Price can't be 0";
+                            reply_command = reply_command + Itemex.language.getString("buy_price_cant_be_0");
                         }
 
 
                         //proof market or limit
                         if(!strings[3].equals("limit") && !strings[3].equals("market")) {
-                            reply_command = reply_command + "Wrong market option: (" + strings[3] + ") only limit and market accepted!";
+                            reply_command = reply_command + Itemex.language.getString("buy_wrong_market_option") + "(" + strings[3] + ")" + Itemex.language.get("buy_only_market_or_limit_accepted");
                             buy_order_ok = false;
                         }
                         if(strings[3].equals("limit")) {
                             if(price <= 0) {
-                                reply_command = reply_command + "Price is not allowed lower than 0 at limit! Price:" + price;
+                                reply_command = reply_command + Itemex.language.get("buy_price_not_allowed_lower_than_0") + price;
                                 buy_order_ok = false;
                             }
                         }
@@ -207,45 +204,42 @@ public class ItemexCommand implements CommandExecutor {
                         else if(strings[3].equals("market")) {
                             //System.out.println("# DEBUG - MARKET");
                             if (Itemex.getPlugin().mtop.get(itemid).get_top_sellorder_prices()[0] == 0) {
-                                TextComponent message = new TextComponent(ChatColor.RED + "There are no sell orders to buy! " + ChatColor.WHITE + itemid + "\n.\n" + ChatColor.BLUE + ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + "CLICK HERE" + ChatColor.BLUE + ") You can create a " + ChatColor.GREEN + "buy order" + ChatColor.BLUE + " with: /ix buy " + itemid + " " + amount + " limit");
+                                TextComponent message = new TextComponent(ChatColor.RED + Itemex.language.getString("buy_no_sellorders_to_buy") + ChatColor.WHITE + itemid + "\n.\n" + ChatColor.BLUE + ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + Itemex.language.getString("click_here") + ChatColor.BLUE + ") " + Itemex.language.getString("buy_you_can_create") + ChatColor.GREEN + Itemex.language.getString("buy_order") + ChatColor.BLUE + Itemex.language.getString("with") + ": /ix buy " + itemid + " " + amount + " limit");
                                 message.setClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix buy " + itemid +" " + amount + " limit "));
                                 p.spigot().sendMessage(message);
                             }
                             else {
                                 //create buy order
-                                p.sendMessage("Best sellorderprice: " + Itemex.getPlugin().mtop.get(itemid).get_top_sellorder_prices()[0]);
+                                p.sendMessage(Itemex.language.getString("buy_best_sellorder_price") + Itemex.getPlugin().mtop.get(itemid).get_top_sellorder_prices()[0]);
                                 if( strings.length >= 5 && strings[4].equals("confirm") ) {
                                     reply_command = reply_command + create_order(p, itemid, Itemex.getPlugin().mtop.get(itemid).get_top_sellorder_prices()[0], amount, "buy", "market");
                                 }
                                 else {
-                                    // ##########################################################################################################################################################
-                                    // add here full implementation of a order preview
                                     TopOrders topo = Itemex.getPlugin().mtop.get(itemid);
                                     for(int x=3; x>=0; x--){
                                         if(topo.get_sellorder_amount()[x] == 0)
-                                            reply_command = reply_command + ChatColor.DARK_RED + "sellorder  " + ChatColor.DARK_GRAY + itemid + "  [" + topo.get_sellorder_amount()[x] + "] " + format_price( topo.get_top_sellorder_prices()[x] ) + "\n";
+                                            reply_command = reply_command + ChatColor.DARK_RED + Itemex.language.getString("sellorder") + " " + ChatColor.DARK_GRAY + itemid + "  [" + topo.get_sellorder_amount()[x] + "] " + format_price( topo.get_top_sellorder_prices()[x] ) + "\n";
                                         else
-                                            reply_command = reply_command + ChatColor.RED + "sellorder  " + ChatColor.WHITE + itemid + "  [" + topo.get_sellorder_amount()[x] + "] " + format_price( topo.get_top_sellorder_prices()[x] ) + "\n";
+                                            reply_command = reply_command + ChatColor.RED + Itemex.language.getString("sellorder") + " " +ChatColor.WHITE + itemid + "  [" + topo.get_sellorder_amount()[x] + "] " + format_price( topo.get_top_sellorder_prices()[x] ) + "\n";
                                     }
 
                                     reply_command = reply_command + "-----------------------------\n";
                                     p.sendMessage(reply_command);
                                     reply_command = "";
-                                    TextComponent message = new TextComponent(ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + "CLICK HERE" + ChatColor.BLUE + ") to confirm order at prices above!");
+                                    TextComponent message = new TextComponent(ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + Itemex.language.getString("click_here") + ChatColor.BLUE + ") " + Itemex.language.getString("confirm_order_price"));
                                     message.setClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix buy " + itemid +" " + amount + " market confirm "));
                                     p.spigot().sendMessage(message);
                                 }
                             }
                         }
                         else {
-                            System.out.println("exception");
-                            System.out.println(buy_order_ok);
+                            //System.out.println(buy_order_ok);
                         }
 
                     }
                     else {
-                        reply_command = "argc count is: " + strings.length +"\n";
-                        reply_command = reply_command + "Wrong command: use: /ix buy *<itemname> *<limit> *<price> *<amount> | * == optional";
+                        //reply_command = "argc count is: " + strings.length +"\n";
+                        reply_command = reply_command + Itemex.language.getString("wrong_command") + " /ix buy *<itemname> *<limit> *<price> *<amount> | * == optional";
                     }
                 } // end buy
 
@@ -255,7 +249,7 @@ public class ItemexCommand implements CommandExecutor {
                 else if(strings[0].equals("sell") ) {
 
                     if (!p.hasPermission("itemex.command.ix.sell")) {
-                        p.sendMessage(ChatColor.RED + "You don't have the permission to execute this command!");
+                        p.sendMessage(ChatColor.RED + Itemex.language.getString("message_no_permission"));
                         return true;
                     }
 
@@ -297,7 +291,7 @@ public class ItemexCommand implements CommandExecutor {
                         if(!itemid.equals("AIR") && is_damaged_or_enchantment) {
                             // check if there is a buy order with enough amount (1)
                             if (Itemex.getPlugin().mtop.get(itemid).get_top_buyorder_prices()[0] == 0) {
-                                TextComponent message = new TextComponent(ChatColor.RED + "There are no buy orders to sell! " + ChatColor.WHITE + itemid + "\n.\n" + ChatColor.BLUE + ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + "CLICK HERE" + ChatColor.BLUE + ") You can create a " + ChatColor.GREEN + "sell order" + ChatColor.BLUE + " with: /ix sell " + itemid + " 1 limit ");
+                                TextComponent message = new TextComponent(ChatColor.RED + Itemex.language.getString("sell_no_buyorders_to_sell") + ChatColor.WHITE + itemid + "\n.\n" + ChatColor.BLUE + ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + Itemex.language.getString("click_here") + ChatColor.BLUE + ") " + Itemex.language.getString("buy_you_can_create") + ChatColor.GREEN + Itemex.language.getString("sell_order") + ChatColor.BLUE + Itemex.language.getString("with") + ": /ix sell " + itemid + " 1 limit ");
                                 message.setClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix sell " + itemid +" 1 limit "));
                                 p.spigot().sendMessage(message);
                             }
@@ -309,11 +303,11 @@ public class ItemexCommand implements CommandExecutor {
                         }
                         else {
                             if(is_damaged_or_enchantment)
-                                reply_command = "You can't sell used items or with enchantment! (at the moment)";
+                                reply_command = Itemex.language.getString("cant_sell_enchantments");
                             else if(strings.length == 1)
-                                reply_command = "You have nothing in your right hand!";
+                                reply_command = Itemex.language.getString("noting_in_right_hand");
                             else
-                                reply_command = "You don't have this item in your inventory!";
+                                reply_command = Itemex.language.getString("item_not_in_inventory");
                         }
                     }
 
@@ -334,12 +328,12 @@ public class ItemexCommand implements CommandExecutor {
 
                         // proof price
                         if(!strings[3].equals("limit") && !strings[3].equals("market")) {
-                            reply_command = reply_command + "Wrong market option: " + strings[3] + " only limit and market accepted!";
+                            reply_command = reply_command + Itemex.language.getString("buy_wrong_market_option") + strings[3] + Itemex.language.getString("buy_only_market_or_limit_accepted");
                             sell_order_ok = false;
                         }
                         if(strings[3].equals("limit")) {
                             if(price <= 0) {
-                                reply_command = reply_command + "Price is not allowed lower than 0 at limit! Price:" + price;
+                                reply_command = reply_command + Itemex.language.getString("buy_price_not_allowed_lower_than_0") + price;
                                 sell_order_ok = false;
                             }
                         }
@@ -366,26 +360,26 @@ public class ItemexCommand implements CommandExecutor {
                             item_found = true;
 
                         if(sellorder.amount <=0 && strings[3].equals("limit")) {
-                            reply_command = reply_command + "Price is not allowed lower than 0 at limit! Price:" + price;
+                            reply_command = reply_command + Itemex.language.getString("buy_price_not_allowed_lower_than_0") + price;
                             sell_order_ok = false;
                         }
                         else {
                             if(!is_damaged_or_enchantment) {
-                                System.out.println("# DEBUG - Damaged or enchantment");
+                                //System.out.println("# DEBUG - Damaged or enchantment");
                             }
                             else if(item_found) {
                                 if(sell_order_ok && price >= 0 && strings[3].equals("limit"))
                                     reply_command = reply_command + create_order( p, itemid, price, sellorder.amount, "sell", strings[3] );
                                 else {
-                                    System.out.println("# DEBUG SELL market order");
+                                    //System.out.println("# DEBUG SELL market order");
                                     if (Itemex.getPlugin().mtop.get(itemid).get_top_buyorder_prices()[0] == 0) {
-                                        TextComponent message = new TextComponent(ChatColor.RED + "There are no buy orders to sell! " + ChatColor.WHITE + itemid + "\n.\n" + ChatColor.BLUE + ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + "CLICK HERE" + ChatColor.BLUE + ") You can create a " + ChatColor.RED + "sell order" + ChatColor.BLUE + " with: /ix sell " + itemid + " 1 limit ");
+                                        TextComponent message = new TextComponent(ChatColor.RED + Itemex.language.getString("sell_no_buyorders_to_sell") + ChatColor.WHITE + itemid + "\n.\n" + ChatColor.BLUE + ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + Itemex.language.getString("click_here") + ChatColor.BLUE + ") " + Itemex.language.getString("buy_you_can_create") + ChatColor.RED + Itemex.language.getString("sell_order") + ChatColor.BLUE + Itemex.language.getString("with") + ": /ix sell " + itemid + " 1 limit ");
                                         message.setClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix sell " + itemid + " " + sellorder.amount + " limit "));
                                         p.spigot().sendMessage(message);
                                     }
                                     else {
                                         //create buy order
-                                        p.sendMessage("Best sellorderprice: " + Itemex.getPlugin().mtop.get(itemid).get_top_sellorder_prices()[0]);
+                                        p.sendMessage(Itemex.language.getString("buy_best_sellorder_price") + Itemex.getPlugin().mtop.get(itemid).get_top_sellorder_prices()[0]);
                                         if( strings.length >= 5 && strings[4].equals("confirm") ) {
                                             reply_command = reply_command + create_order(p, itemid, Itemex.getPlugin().mtop.get(itemid).get_top_buyorder_prices()[3],sellorder.amount, "sell", "market");
                                         }
@@ -396,15 +390,15 @@ public class ItemexCommand implements CommandExecutor {
 
                                             for(int x=0; x<=3; x++){
                                                 if(topo.get_buyorder_amount()[x] == 0)
-                                                    reply_command = reply_command + ChatColor.DARK_GREEN + "buyorder  " + ChatColor.DARK_GRAY + itemid + "  [" + topo.get_buyorder_amount()[x] + "] " + format_price( topo.get_top_buyorder_prices()[x] ) + "\n";
+                                                    reply_command = reply_command + ChatColor.DARK_GREEN + Itemex.language.getString("buyorder") + " " + ChatColor.DARK_GRAY + itemid + "  [" + topo.get_buyorder_amount()[x] + "] " + format_price( topo.get_top_buyorder_prices()[x] ) + "\n";
                                                 else
-                                                    reply_command = reply_command + ChatColor.GREEN + "buyorder  " + ChatColor.WHITE + itemid + "  [" + topo.get_buyorder_amount()[x] + "] " + format_price( topo.get_top_buyorder_prices()[x] ) + "\n";
+                                                    reply_command = reply_command + ChatColor.GREEN + Itemex.language.getString("buyorder") + " " + ChatColor.WHITE + itemid + "  [" + topo.get_buyorder_amount()[x] + "] " + format_price( topo.get_top_buyorder_prices()[x] ) + "\n";
                                             }
 
                                             reply_command = reply_command + "-----------------------------\n";
                                             p.sendMessage(reply_command);
                                             reply_command = "";
-                                            TextComponent message = new TextComponent(ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + "CLICK HERE" + ChatColor.BLUE + ") to confirm order at prices above!");
+                                            TextComponent message = new TextComponent(ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + Itemex.language.getString("click_here") + ChatColor.BLUE + ") " + Itemex.language.getString("confirm_order_price"));
                                             message.setClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix sell " + itemid +" " + sellorder.amount + " market confirm "));
                                             p.spigot().sendMessage(message);
                                         }
@@ -412,13 +406,13 @@ public class ItemexCommand implements CommandExecutor {
                                 }
                             }
                             else
-                                reply_command = reply_command + ChatColor.RED + "No given items: " + ChatColor.GOLD + strings[1] + ChatColor.RED + " found in your inventory!\n" + ChatColor.WHITE +"Please check the correct name with: /ix whatIsInMyRightHand";
+                                reply_command = reply_command + ChatColor.RED + Itemex.language.getString("no_given_items") + ChatColor.GOLD + strings[1] + ChatColor.RED + Itemex.language.getString("found_in_inventory") + "\n" + ChatColor.WHITE + Itemex.language.getString("check_correct_name") + " /ix whatIsInMyRightHand";
                         }
                     } // end ix sell limit
 
                     else {
-                        reply_command = "argc count is: " + strings.length +"\n";
-                        reply_command = reply_command + "Wrong command: use: /ix sell <itemname> <amount> limit <price>";
+                        //reply_command = "argc count is: " + strings.length +"\n";
+                        reply_command = reply_command + Itemex.language.getString("wrong_command") + " /ix sell <itemname> <amount> limit <price>";
                     }
                 } // end sell
 
@@ -428,7 +422,7 @@ public class ItemexCommand implements CommandExecutor {
 
                 else if(strings[0].equals("price") ) {
                     if (!p.hasPermission("itemex.command.price")) {
-                        p.sendMessage(ChatColor.RED + "You don't have the permission to execute this command!");
+                        p.sendMessage(ChatColor.RED + Itemex.language.getString("message_no_permission"));
                         return true;
                     }
 
@@ -446,26 +440,27 @@ public class ItemexCommand implements CommandExecutor {
                     }
 
                     if(itemid.equals("AIR")) {
-                        reply_command = "You only have AIR in your hand!";
+                        reply_command = Itemex.language.getString("price_no_item");
+                        //reply_command = "You only have AIR in your hand!";
                     }
                     else {
                         topo = Itemex.getPlugin().mtop.get( itemid );
-                        reply_command = reply_command + "Prices of the ITEM: " + ChatColor.GOLD +  itemid + ChatColor.WHITE + "\n";
+                        reply_command = reply_command + Itemex.language.getString("price_of_item") + ChatColor.GOLD +  itemid + ChatColor.WHITE + "\n";
                         reply_command = reply_command + "-----------------------------\n";
-                        reply_command = reply_command + "ORDERTYPE - ITEMID - AMOUNT - PRICE\n";
+                        reply_command = reply_command + Itemex.language.getString("ordertype_itemid_amount_price") + "\n";
 
 
                         for(int x=3; x>=0; x--){
                             if(topo.get_sellorder_amount()[x] == 0)
-                                reply_command = reply_command + ChatColor.DARK_RED + "sellorder  " + ChatColor.DARK_GRAY + itemid + "  [" + topo.get_sellorder_amount()[x] + "] " + format_price( topo.get_top_sellorder_prices()[x] ) + "\n";
+                                reply_command = reply_command + ChatColor.DARK_RED + Itemex.language.getString("sellorder") + ChatColor.DARK_GRAY + itemid + "  [" + topo.get_sellorder_amount()[x] + "] " + format_price( topo.get_top_sellorder_prices()[x] ) + "\n";
                             else
-                                reply_command = reply_command + ChatColor.RED + "sellorder  " + ChatColor.WHITE + itemid + "  [" + topo.get_sellorder_amount()[x] + "] " + format_price( topo.get_top_sellorder_prices()[x] ) + "\n";
+                                reply_command = reply_command + ChatColor.RED + Itemex.language.getString("sellorder") + ChatColor.WHITE + itemid + "  [" + topo.get_sellorder_amount()[x] + "] " + format_price( topo.get_top_sellorder_prices()[x] ) + "\n";
                         }
                         for(int x=0; x<=3; x++){
                             if(topo.get_buyorder_amount()[x] == 0)
-                                reply_command = reply_command + ChatColor.DARK_GREEN + "buyorder  " + ChatColor.DARK_GRAY + itemid + "  [" + topo.get_buyorder_amount()[x] + "] " + format_price( topo.get_top_buyorder_prices()[x] ) + "\n";
+                                reply_command = reply_command + ChatColor.DARK_GREEN + Itemex.language.getString("buyorder") + ChatColor.DARK_GRAY + itemid + "  [" + topo.get_buyorder_amount()[x] + "] " + format_price( topo.get_top_buyorder_prices()[x] ) + "\n";
                             else
-                                reply_command = reply_command + ChatColor.GREEN + "buyorder  " + ChatColor.WHITE + itemid + "  [" + topo.get_buyorder_amount()[x] + "] " + format_price( topo.get_top_buyorder_prices()[x] ) + "\n";
+                                reply_command = reply_command + ChatColor.GREEN + Itemex.language.getString("buyorder") + ChatColor.WHITE + itemid + "  [" + topo.get_buyorder_amount()[x] + "] " + format_price( topo.get_top_buyorder_prices()[x] ) + "\n";
                         }
                         reply_command = reply_command + "-----------------------------\n";
                     }
@@ -480,7 +475,7 @@ public class ItemexCommand implements CommandExecutor {
                 else if(strings[0].equals("whatIsInMyRightHand") ) {
 
                     if (!p.hasPermission("itemex.command.ix.whatIsInMyRightHand")) {
-                        p.sendMessage(ChatColor.RED + "You don't have the permission to execute this command!");
+                        p.sendMessage(ChatColor.RED + Itemex.language.getString("message_no_permission"));
                         return true;
                     }
 
@@ -489,20 +484,20 @@ public class ItemexCommand implements CommandExecutor {
 
                     // GET DAMAGE 0 = no damage
                     if(item.getDurability() != 0)
-                        reply_command = reply_command + "Durability: " + item.getDurability() + "\n";
+                        reply_command = reply_command + Itemex.language.getString("durability") + item.getDurability() + "\n";
 
                     // CHECK if ITEM HAS ENCHANTMENTS
                     if (item.getItemMeta().hasEnchants()) {
-                        reply_command = reply_command + "Number of Enchantments: " + item.getEnchantments().size() + "\n";
+                        reply_command = reply_command + Itemex.language.getString("nr_of_enchant") + item.getEnchantments().size() + "\n";
                         Map enc = item.getEnchantments();
-                        reply_command = reply_command + "Enchantments: " + item.getEnchantments() + " size: " + enc.size();
+                        reply_command = reply_command + Itemex.language.getString("enchantments") + item.getEnchantments() + Itemex.language.getString("size") + enc.size();
                     }
 
 
                     // CHECK POTION
                     if (item.getType() == Material.POTION) {
                         PotionMeta potionMeta = (PotionMeta) item.getItemMeta();
-                        reply_command = reply_command + "POTION: " + potionMeta.getBasePotionData().getType() + " ";
+                        reply_command = reply_command + Itemex.language.getString("potion") + potionMeta.getBasePotionData().getType() + " ";
                         // DURATION ?
                         PotionMeta meta = (PotionMeta) item.getItemMeta();
                         List po_effects = meta.getCustomEffects();
@@ -540,7 +535,7 @@ public class ItemexCommand implements CommandExecutor {
                     }
                     else if( strings[1].equals("close") ) {
                         if (!p.hasPermission("itemex.command.ix.order.close")) {
-                            p.sendMessage(ChatColor.RED + "You don't have the permission to execute this command!");
+                            p.sendMessage(ChatColor.RED + Itemex.language.getString("message_no_permission"));
                             return true;
                         }
 
@@ -548,22 +543,22 @@ public class ItemexCommand implements CommandExecutor {
                             try {
                                 orderid = parseInt(strings[3]);;
                             } catch (NumberFormatException e) {
-                                reply_command = "OrderID must be a number!\n";
+                                reply_command = Itemex.language.getString("orderid_must_be_number") + "\n";
                             }
                             if(orderid != -1) {
                                 if( sqliteDb.PlayercloseOrder(p.getUniqueId().toString(), strings[2].toUpperCase(), orderid) )
-                                    reply_command = reply_command + ChatColor.GREEN + "Order deleted sucessfully!" + ChatColor.RESET;
+                                    reply_command = reply_command + ChatColor.GREEN + Itemex.language.getString("order_del_success") + ChatColor.RESET;
                                 else
-                                    reply_command = reply_command + ChatColor.RED + "Order NOT deleted sucessfully!" + ChatColor.RESET;
+                                    reply_command = reply_command + ChatColor.RED + Itemex.language.getString("order_not_del_success") + ChatColor.RESET;
                             }
                         }
                         else
-                            reply_command = reply_command + ChatColor.RED + "only buyorder or sellorder are accepted!" + ChatColor.RESET;;
+                            reply_command = reply_command + ChatColor.RED + Itemex.language.getString("only_buy_or_sellorders") + ChatColor.RESET;;
                     }
 
                     else if( strings[1].equals("edit") ) {
                         if (!p.hasPermission("itemex.command.ix.order.edit")) {
-                            p.sendMessage(ChatColor.RED + "You don't have the permission to execute this command!");
+                            p.sendMessage(ChatColor.RED + Itemex.language.getString("message_no_permission"));
                             return true;
                         }
                         reply_command = reply_command + "not implemented. If you need it. Write me to xcatpc@proton.me";
@@ -572,7 +567,7 @@ public class ItemexCommand implements CommandExecutor {
 
                     else if( strings[1].equals("list") ) {
                         if( strings.length <= 2) {
-                            reply_command = reply_command + ChatColor.RED + "You can only use buyorders or sellorders!" + ChatColor.RESET;
+                            reply_command = reply_command + ChatColor.RED + Itemex.language.getString("you_can_only_use_buy_or_sellorders") + ChatColor.RESET;
                         }
                         else if( strings[2].equals("buyorders") || strings[2].equals("sellorders") ) {
                             boolean buy_or_sell;
@@ -592,7 +587,7 @@ public class ItemexCommand implements CommandExecutor {
                                 buy_or_sell = false;
 
                             sqliteDb.OrderBuffer[] list = sqliteDb.getOrdersOfPlayer(p.getUniqueId().toString(), item_id, buy_or_sell, 1); //true = buy ; false = sell
-                            reply_command = reply_command + ".\nList of all your ORDERS: \nORDER ID- ITEMID - AMOUNT - PRICE - ORDERTYPE\n";
+                            reply_command = reply_command + Itemex.language.getString("list_all_orders_and_categories");
                             for(int i=0; i<100; i++){ // 100 is max
                                 if(list[i] == null) {
                                     break;
@@ -601,11 +596,11 @@ public class ItemexCommand implements CommandExecutor {
                                     reply_command = reply_command +  color + list[i].id + " " +ChatColor.WHITE +list[i].itemid + " " + list[i].amount + " " + color + list[i].price + " " + list[i].ordertype + "\n" + ChatColor.WHITE;
                                 }
                             } // end for
-                            reply_command = reply_command + "\nand more.. please use /ix order list <sellorders | buyorders> <itemid>";
+                            reply_command = reply_command + "\n" + Itemex.language.getString("and_more") + " /ix order list <sellorders | buyorders> <itemid>";
 
                         }
                         else
-                            reply_command = reply_command + ChatColor.RED + "You can only use buyorders or sellorders!" + ChatColor.RESET;
+                            reply_command = reply_command + ChatColor.RED + Itemex.language.getString("you_can_only_use_buy_or_sellorders") + ChatColor.RESET;
 
                     } // end of list
 
@@ -617,19 +612,19 @@ public class ItemexCommand implements CommandExecutor {
                 else if(strings[0].equals("withdraw") ) {
 
                     if (!p.hasPermission("itemex.command.ix.withdraw")) {
-                        p.sendMessage(ChatColor.RED + "You don't have the permission to execute this command!");
+                        p.sendMessage(ChatColor.RED + Itemex.language.getString("message_no_permission"));
                         return true;
                     }
 
                     if(strings.length == 1 || (strings.length == 2) && ( strings[1].equals("list") || strings[1].equals("_list") ) ){ // /ix withdraw list
                         //reply_command = reply_command + " /ix withdraw list \n";
                         sqliteDb.Payout[] payouts = sqliteDb.getPayout(p.getUniqueId().toString());
-                        reply_command = reply_command + "\n\nYou can withdraw following items: [Amount] ItemID\n";
+                        reply_command = reply_command + "\n\n" + Itemex.language.getString("only_following_items") + "\n";
 
                         for (int i = 0; i < payouts.length; i++) {
                             if(payouts[i] == null) { //skip empty entries
                                 if(i == 0)
-                                    reply_command = reply_command + "\n\nThere are no items to withdraw!";
+                                    reply_command = reply_command + "\n\n" + Itemex.language.getString("nothing_to_withdraw");
                                 break;
                             }
                             reply_command = reply_command + "\n [" + payouts[i].amount + "] " + ChatColor.GREEN + payouts[i].itemid + ChatColor.WHITE +  " \n";
@@ -698,10 +693,10 @@ public class ItemexCommand implements CommandExecutor {
                             }
 
                             if(payouts[i].amount > x) {
-                                reply_command = reply_command + free_space + "\nPayout [" + x + "/" + payouts[i].amount + "] " + ChatColor.GOLD + payouts[i].itemid + ChatColor.WHITE +  " not enough space! \n.\n";
+                                reply_command = reply_command + free_space + "\n" + Itemex.language.getString("payout") + " [" + x + "/" + payouts[i].amount + "] " + ChatColor.GOLD + payouts[i].itemid + ChatColor.WHITE +  " " + Itemex.language.getString("no_space") + " \n.\n";
                             }
                             else {
-                                reply_command = reply_command + free_space + "\nPayout [" + x + "/" + payouts[i].amount + "] " + ChatColor.GREEN + payouts[i].itemid + ChatColor.WHITE +  " \n.\n";
+                                reply_command = reply_command + free_space + "\n" + Itemex.language.getString("payout") + " [" + x + "/" + payouts[i].amount + "] " + ChatColor.GREEN + payouts[i].itemid + ChatColor.WHITE +  " \n.\n";
                             }
 
                             //update db (subtract x)
@@ -712,7 +707,7 @@ public class ItemexCommand implements CommandExecutor {
 
                     }
                     else {
-                        reply_command = reply_command + "Wrong syntax. Please look at: /help";
+                        reply_command = reply_command + Itemex.language.getString("wrong_command") + " /help";
                     }
                 }
 
@@ -720,7 +715,7 @@ public class ItemexCommand implements CommandExecutor {
 
                 else if(strings[0].equals("gui") ) {
                     if (!p.hasPermission("itemex.command.ix.gui")) {
-                        p.sendMessage(ChatColor.RED + "You don't have the permission to execute this command!");
+                        p.sendMessage(ChatColor.RED + Itemex.language.getString("message_no_permission"));
                         return true;
                     }
                     GUI.generateGUI(p, "ITEMEX - Market Orders", 0, 0);
@@ -876,7 +871,7 @@ public class ItemexCommand implements CommandExecutor {
     };
 
     public static String create_order(Player p, String itemid, double price, int amount, String buy_or_sell, String market_option) {
-        System.out.println("# DEBUG AT: create_order: " + amount);
+        //System.out.println("# DEBUG AT: create_order: " + amount);
         String reply_command = "";
 
         Order order = new Order();
@@ -891,21 +886,21 @@ public class ItemexCommand implements CommandExecutor {
 
         if(buy_or_sell.equals("sell")) {
             if( db_order.createSellOrder() != -1 )
-                reply_command = ChatColor.RED + "SELLORDER " + ChatColor.WHITE + ChatColor.BOLD+  "[" + amount + "] " + itemid.toUpperCase() + ChatColor.WHITE + " created!";
+                reply_command = ChatColor.RED + Itemex.language.getString("sellorder_C") + ChatColor.WHITE + ChatColor.BOLD+  "[" + amount + "] " + itemid.toUpperCase() + ChatColor.WHITE + " " + Itemex.language.getString("created");
             else
-                reply_command = "ERROR! Sellorder NOT created!";
+                reply_command = Itemex.language.getString("er_sello_ncreated");
             p.getInventory().removeItem(new ItemStack(Material.getMaterial(itemid.toUpperCase()), amount));
         }
         else if(buy_or_sell.equals("buy")) {
             double buyer_balance = econ.getBalance(p);
             if( (amount * price) < buyer_balance ) {
                 if( db_order.createBuyOrder() != -1)
-                    reply_command =  ChatColor.GREEN + "BUYORDER " + ChatColor.WHITE + "created! " + ChatColor.BOLD + "[" + amount + "] " + itemid + ChatColor.WHITE ;
+                    reply_command =  ChatColor.GREEN + Itemex.language.getString("buyorder_C") + ChatColor.WHITE + Itemex.language.getString("created") + ChatColor.BOLD + " [" + amount + "] " + itemid + ChatColor.WHITE ;
                 else
-                    reply_command = "ERROR! Buyorder NOT created!";
+                    reply_command = Itemex.language.getString("erbuyo_ncreated");
             }
             else {  //not enough money
-                reply_command = ChatColor.RED+ "NOT ENOUGH MONEY!" + ChatColor.WHITE + " You got need " + ChatColor.GREEN + format_price( (amount * price) ) + ChatColor.WHITE + " but you only have " + ChatColor.RED + " " + format_price( buyer_balance );
+                reply_command = ChatColor.RED+ Itemex.language.getString("not_enough_money") + ChatColor.WHITE + Itemex.language.getString("you_need") + ChatColor.GREEN + format_price( (amount * price) ) + ChatColor.WHITE + Itemex.language.getString("but_you_only_have") + ChatColor.RED + " " + format_price( buyer_balance );
             }
 
 
@@ -938,24 +933,24 @@ public class ItemexCommand implements CommandExecutor {
 
         String reply_command = "\n";
         reply_command = reply_command + gold + "ix = ITEMEX = Item Exchange v" + Itemex.version + white + "\n.\n";
-        reply_command = reply_command + "USAGE: \n" + green + "/ix buy " + dark_gray + "| buy what is in right hand on market price " +
-                "\n" + green + "/ix gui " + dark_gray + "| Graphical User Interface\n." +
+        reply_command = reply_command + "USAGE: \n" + green + "/ix buy " + dark_gray + "| " + Itemex.language.getString("help_ix_buy") +
+                "\n" + green + "/ix gui " + dark_gray + "| " + Itemex.language.getString("help_gui") +
 
-                "\n" + green + "/ix sell " + dark_gray + "| sell what is in right hand on market price" +
-                "\n" + green + "/ix price " + dark_gray + "| prints the current buy and sell orders" +
-                "\n" + green + "/ix price <itemid> " + dark_gray + "| prints the current buy and sell orders\n." +
+                "\n" + green + "/ix sell " + dark_gray + "| " + Itemex.language.getString("help_ix_sell") +
+                "\n" + green + "/ix price " + dark_gray + "| " + Itemex.language.getString("help_price") +
+                "\n" + green + "/ix price <itemid> " + dark_gray + "| " + Itemex.language.getString("help_price_id") +
 
-                "\n" + green + "/ix buy <itemname> <amount> <limit | market> <price> " + dark_gray + "| creates buy order" +
-                "\n" + green + "/ix sell <itemname> <amount> <limit | market> <price> " + dark_gray + "| creates sell order\n." +
+                "\n" + green + "/ix buy <itemname> <amount> <limit | market> <price> " + dark_gray + "| " + Itemex.language.getString("help_cbo") +
+                "\n" + green + "/ix sell <itemname> <amount> <limit | market> <price> " + dark_gray + "| " + Itemex.language.getString("help_cso") + "\n." +
 
-                "\n" + green + "/ix order list <buyordery | sellorders> *<item id>" + dark_gray + "| list all own buy- and sellorders" +
-                "\n" + green + "/ix order close <buyordery | sellorders> <order id> " + dark_gray + "| close your specific order\n." +
+                "\n" + green + "/ix order list <buyordery | sellorders> *<item id>" + dark_gray + "| " + Itemex.language.getString("help_order_list") +
+                "\n" + green + "/ix order close <buyordery | sellorders> <order id> " + dark_gray + "| " + Itemex.language.getString("help_order_close") +
 
-                "\n" + green + "/ix whatIsInMyRightHand" + dark_gray+ "| prints out the item name\n." +
+                "\n" + green + "/ix whatIsInMyRightHand" + dark_gray+ "| " + Itemex.language.getString("help_wiimrh") +
 
-                "\n" + green + "/ix withdraw list " + dark_gray+ "| list all your available payouts" +
-                "\n" + green + "/ix withdraw <itemname> <amount> " + dark_gray + "| withdraw " + dark_purple +
-                "\n.\nThis version is in beta, if you have any problems or suggestions please write me to" + white +" xcatpc@proton.me " + dark_purple + "or join us on discord: " + white + "https://discord.gg/rKEwQjpmXj" + white;
+                "\n" + green + "/ix withdraw list " + dark_gray+ "| " + Itemex.language.getString("help_with_list") +
+                "\n" + green + "/ix withdraw <itemname> <amount> " + dark_gray + "| " + Itemex.language.getString("help_withdraw") + dark_purple +
+                "\n.\n" + Itemex.language.getString("help_message") + white +" xcatpc@proton.me " + dark_purple + Itemex.language.getString("help_or_join_disc") + white + "https://discord.gg/rKEwQjpmXj" + white;
         reply_command = reply_command + "\n";
         return reply_command;
     } // end print_help

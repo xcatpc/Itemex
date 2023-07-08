@@ -119,6 +119,7 @@ public class commandAutoComplete implements TabCompleter {
                 List<String> edit_options = Arrays.asList("<order id>");
                 return edit_options;
             }
+
             else if(args.length == 4 && args[1].equals("list")) {
                 List<String> materialNames = new ArrayList<>(Material.values().length);
                 materialNames.add("- let empty for all");

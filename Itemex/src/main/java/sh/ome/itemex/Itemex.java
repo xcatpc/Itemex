@@ -3,29 +3,36 @@
 
 /* BUGS AND IMPROVEMENTS:
 
-- insertPayout - collect all payouts of a item in one entry
+- insertPayout - collect all payouts of an item in one entry
 - collect all orders with the same price at /price and GUI
-
-- /ix withdraw list must have a parameter of page. only 100 entries can be send to player. Alsa have an error!
+- delete old versions (how?)
+- /ix withdraw list must have a parameter of page. only 100 entries can be sent to player. Also has an error!
 - handle exception if update server not available
 - new orders must be sort down (Because old orders should be fulfilled first if price is equal)
 - /ix quicksell (own gui for quickselling all items)
 - /ix gui orders (list all orders) or is inside the normal /ix gui which would be better
-- at ix sell: If I hold something in the hand it most be in the list on the top
+- at ix sell: If I hold something in the hand it must be in the list on the top (autocomplete)
 - add default prices that reflects on the reserve currency (DIAMOND) (useful if no buy and sellorders are available or only a buy or sellorder) - need statistics
 - GUI: sort items by availability
-
 - add potions and enchanted items
 - add enchantment items
 
  */
 
+
 /*
-changelog 0.19.5
-- Market sign shop
-- Limit chest shop
-- full implementation of order preview for MARKET ORDERS (confirm|preview)
+changelog 0.20.1
+- Multi Language support (en, de, cn, fr, es, ru)
+- bugfix at close sell order
  */
+
+
+/*
+changelog 0.20.0
+- Limit chest shop bugfix (can't sell to chest limit, player get the items)
+- optional listing fee added for sell- or buyorders to config.yml: default: 0.0
+ */
+
 
 
 
@@ -35,6 +42,7 @@ import com.google.gson.Gson;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -50,6 +58,7 @@ import sh.ome.itemex.functions.sqliteDb;
 import sh.ome.itemex.shedule.Metrics;
 import sh.ome.itemex.shedule.UpdateItemex;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -64,7 +73,8 @@ public final class Itemex extends JavaPlugin implements Listener {
 
     private static Itemex plugin;
     public static Economy econ = null;
-    public static String version = "0.19.5";
+    public static String version = "0.20.2";
+    public static String lang;
 
     public static boolean admin_function;
     public static double admin_function_percentage;
@@ -77,10 +87,13 @@ public final class Itemex extends JavaPlugin implements Listener {
 
     public static double broker_fee_buyer;
     public static double broker_fee_seller;
+    public static double sell_listing_fee;
+    public static double buy_listing_fee;
     public static boolean bstats;
     public static String server_id;
     public static boolean itemex_stats;
     public static String server_url = "https://ome.sh";
+    public static YamlConfiguration language;
 
     public Map<String, TopOrders> mtop = new HashMap<>();
 
@@ -141,6 +154,7 @@ public final class Itemex extends JavaPlugin implements Listener {
         config.options().copyDefaults(true);
         config.addDefault("id", getAlphaNumericString(15));
         saveConfig();
+        this.lang = config.getString("lang");
         this.admin_function = config.getBoolean("admin_function");
         this.admin_function_percentage = config.getDouble("admin_function_percentage");
         this.broker_fee_buyer = config.getDouble("broker_fee_buyer");
@@ -148,6 +162,8 @@ public final class Itemex extends JavaPlugin implements Listener {
         this.bstats = config.getBoolean("bstats");
         this.server_id = config.getString("id");
         this.itemex_stats = config.getBoolean("itemex_stats");
+        this.buy_listing_fee = config.getDouble("buy_listing_fee");
+        this.sell_listing_fee = config.getDouble("sell_listing_fee");
 
         this.currencySymbol = config.getString("currencySymbol");
         this.decimals = config.getInt("decimals");
@@ -161,6 +177,54 @@ public final class Itemex extends JavaPlugin implements Listener {
         CategoryFile.init();
         CategoryFile.get().options().copyDefaults(true);
         CategoryFile.save();
+
+        // load lang files from resource folder
+        File en_lang_file = new File(getDataFolder(), "lang_en.yml");
+        saveResource("lang_en.yml", true);
+        YamlConfiguration en_lang = YamlConfiguration.loadConfiguration(en_lang_file);
+
+        File de_lang_file = new File(getDataFolder(), "lang_de.yml");
+        saveResource("lang_de.yml", true);
+        YamlConfiguration de_lang = YamlConfiguration.loadConfiguration(de_lang_file);
+
+        File es_lang_file = new File(getDataFolder(), "lang_es.yml");
+        saveResource("lang_es.yml", true);
+        YamlConfiguration es_lang = YamlConfiguration.loadConfiguration(es_lang_file);
+
+        File fr_lang_file = new File(getDataFolder(), "lang_fr.yml");
+        saveResource("lang_fr.yml", true);
+        YamlConfiguration fr_lang = YamlConfiguration.loadConfiguration(fr_lang_file);
+
+        File cn_lang_file = new File(getDataFolder(), "lang_cn.yml");
+        saveResource("lang_cn.yml", true);
+        YamlConfiguration cn_lang = YamlConfiguration.loadConfiguration(cn_lang_file);
+
+        File ru_lang_file = new File(getDataFolder(), "lang_ru.yml");
+        saveResource("lang_ru.yml", true);
+        YamlConfiguration ru_lang = YamlConfiguration.loadConfiguration(ru_lang_file);
+
+
+        // set language from config.yml to global language
+        switch(this.lang) {
+            case "cn":
+                this.language = cn_lang;
+                break;
+            case "de":
+                this.language = de_lang;
+                break;
+            case "en":
+                this.language = en_lang;
+                break;
+            case "es":
+                this.language = es_lang;
+                break;
+            case "fr":
+                this.language = fr_lang;
+                break;
+            case "ru":
+                this.language = ru_lang;
+                break;
+        }
 
 
         // checks database
@@ -185,26 +249,7 @@ public final class Itemex extends JavaPlugin implements Listener {
         getLogger().info("Loading all BestOrders into RAM...");
         sqliteDb.loadAllBestOrdersToRam(false);
 
-
-/*
-        Plugin plugin = Bukkit.getServer().getPluginManager().getPlugin("Itemex");
-        //Fulfill Order
-        Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
-            try {
-                new FulfillOrder();
-            } catch (SQLException e) {
-                getLogger().info("Problem with Fulfill Order Scheduler");
-                throw new RuntimeException(e);
-            }
-        }, 0, 20); //20 == 1 second 40
-
-
-  */
-
-
-
         //Check update
-
         Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
             try {
                 new UpdateItemex(version);
@@ -214,7 +259,7 @@ public final class Itemex extends JavaPlugin implements Listener {
 
             getLogger().info("Problem with Update Itemex Scheduler");
 
-        }, 0, 288000); //20 == 1 second 1,728,000 = 24h */ 4h
+        }, 100, 288000); //20 == 1 second 1,728,000 = 24h */ 4h
 
     }
 

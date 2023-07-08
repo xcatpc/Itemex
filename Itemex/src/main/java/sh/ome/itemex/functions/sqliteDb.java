@@ -111,6 +111,9 @@ public class sqliteDb {
         Connection c = null;
         Statement stmt = null;
         int insertedId = -1;
+        boolean buy_or_sellorder = true; // buyorder
+        if(table_name.equalsIgnoreCase("SELLORDERS"))
+            buy_or_sellorder = false; // sellorder
 
 
         try {
@@ -126,7 +129,16 @@ public class sqliteDb {
             ResultSet generatedKeys = stmt.getGeneratedKeys();
             if (generatedKeys.next()) {
                 insertedId = generatedKeys.getInt(1);
-                //System.out.println("# DEBUG: Inserted ID: " + insertedId);
+
+                // charge a listing fee
+                OfflinePlayer o_player =  Bukkit.getOfflinePlayer(UUID.fromString(this.uuid));
+                if(buy_or_sellorder)
+                    if(Itemex.buy_listing_fee > 0.0)
+                        econ.withdrawPlayer(o_player, Itemex.buy_listing_fee);  // substract amount from player
+
+                else
+                    if(Itemex.sell_listing_fee > 0.0)
+                        econ.withdrawPlayer(o_player, Itemex.sell_listing_fee);  // substract amount from player
             }
 
             stmt.close();
@@ -283,7 +295,7 @@ public class sqliteDb {
             stmt.close();
 
         } catch ( Exception e ) {
-            System.out.println("ERROR at getPayou()");
+            //System.out.println("ERROR at getPayou()");
             System.err.println( e.getClass().getName() + ": " + e.getMessage() );
             System.exit(0);
         }
@@ -663,13 +675,13 @@ public class sqliteDb {
                     // ADMIN ORDER if admin order enabled AND (sell-order OR buy-order is an admin order)
                     // same as limit, but each single amount fullfilled price in- or decreases to spread. Default amount of spread =
                     if( Itemex.admin_function && (sell_limit_or_market[1].equals("admin") || buy_limit_or_market[1].equals("admin")) ) { // sell and buy order cannot be the same time!
-                        System.out.println("# DEBUG: at fulfill order (admin)");
+                        //System.out.println("# DEBUG: at fulfill order (admin)");
                         if(sell_limit_or_market[1].equals("admin")) {   // if sell order is admin
-                            System.out.println("Sellorder = admin" + se.id + " " + se.amount + " " + se.price);
+                            //System.out.println("Sellorder = admin" + se.id + " " + se.amount + " " + se.price);
                         }
 
                         if(buy_limit_or_market[1].equals("admin")) {    // if buy order is admin
-                            System.out.println("Buyorder = admin" + be.id + " " + be.amount + " " + be.price);
+                            //System.out.println("Buyorder = admin" + be.id + " " + be.amount + " " + be.price);
                         }
                     }
 
@@ -680,7 +692,7 @@ public class sqliteDb {
 
 
                         if(se.amount < be.amount) {
-                            System.out.println("# DEBUG: at fulfill order (if sell amount < buy amount than close sell order + update buy order)");
+                            //System.out.println("# DEBUG: at fulfill order (if sell amount < buy amount than close sell order + update buy order)");
                             if(withdraw(se.uuid, be.uuid, se.itemid, se.amount, se.price, normal_buyorder, be.ordertype) ){ //if buyer have enough money than true
                                 be.amount = be.amount - se.amount;
                                 if(be.ordertype.equals("buy:market"))
@@ -704,7 +716,7 @@ public class sqliteDb {
 
 
                         else if(se.amount > be.amount) { // if sell amount > buy amount than update sell order + close buy order
-                            System.out.println("# DEBUG: at fulfill order (if sell amount > buy amount than update sell order + close buy order)");
+                            //System.out.println("# DEBUG: at fulfill order (if sell amount > buy amount than update sell order + close buy order)");
                             if(withdraw(se.uuid, be.uuid, se.itemid, be.amount, se.price, normal_buyorder, be.ordertype) ){ //if buyer have enough money than true
                                 se.amount = se.amount - be.amount;
                                 if(be.ordertype.equals("sell:market"))
@@ -727,7 +739,7 @@ public class sqliteDb {
 
                         // if sell amount == buy amount than close buy and sell order
                         else if(se.amount == be.amount) {
-                            System.out.println("# DEBUG: at fulfill order (if sell amount == buy amount than close buy and sell order)");
+                            //System.out.println("# DEBUG: at fulfill order (if sell amount == buy amount than close buy and sell order)");
                             if(withdraw(se.uuid, be.uuid, se.itemid, be.amount, se.price, normal_buyorder, be.ordertype) ){ //if buyer have enough money than true
                                 be.amount = 0;
                                 if(normal_buyorder)
@@ -764,7 +776,7 @@ public class sqliteDb {
 
 
     public static boolean withdraw(String seller_uuid, String buyer_uuid, String itemid, int amount, double price, boolean normal_buyorder, String be_ordertype) {
-        System.out.println("#DEBUG: AT WITHDRAW");
+        //System.out.println("#DEBUG: AT WITHDRAW");
         OfflinePlayer o_seller =  Bukkit.getOfflinePlayer(UUID.fromString(seller_uuid));
         OfflinePlayer o_buyer =  Bukkit.getOfflinePlayer(UUID.fromString(buyer_uuid));
         Player seller = Bukkit.getPlayer(UUID.fromString(seller_uuid));
@@ -775,8 +787,8 @@ public class sqliteDb {
         double seller_total = sub_total - (sub_total/100*Itemex.broker_fee_seller);
         double buyer_balance = econ.getBalance(o_buyer);
 
-        if( buyer_total < buyer_balance ) {                     // check if buyer have enough money
-            System.out.println("# DEBUG: Player have enough money" );
+        if( buyer_total < buyer_balance || be_ordertype.equals("refund")) {                     // check if buyer have enough money
+            //System.out.println("# DEBUG: Player have enough money" );
             econ.withdrawPlayer(o_buyer, buyer_total);          // subtract money from buyer
             econ.depositPlayer(o_seller, seller_total);         // give money to seller
 
@@ -785,7 +797,7 @@ public class sqliteDb {
             sqliteDb.insertFullfilledOrders(seller_uuid, buyer_uuid, itemid, amount, price); // Insert Fullfilled order into db
 
             if(seller_uuid.equals(buyer_uuid)) {   // REFUND IF PLAYER CLOSES ORDER
-                System.out.println("# DEBUG: Own order");
+                //System.out.println("# DEBUG: Own order");
                 if(seller != null) {
                     seller.sendMessage("SELLORDER CLOSED SUCESSFULLY");
                     TextComponent message = new TextComponent("\n.\n" + ChatColor.BLUE + ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + "CLICK HERE" + ChatColor.BLUE + ") You can withdraw with: /ix withdraw " + itemid +" " + amount);
@@ -796,9 +808,9 @@ public class sqliteDb {
                 return true;
             }
             if(normal_buyorder) { // send the item to payouts
-                System.out.println("# DEBUG: withdraw the buy to user -> not insert to ChestShop order");
+                //System.out.println("# DEBUG: withdraw the buy to user -> not insert to ChestShop order");
                 if(buyer == null) {
-                    System.out.println("--DEBUG: BUYER IS OFFLINE!");
+                    //System.out.println("--DEBUG: BUYER IS OFFLINE!");
                     insertPayout(buyer_uuid, itemid, amount); // Insert item payout into db
                 }
                 else {
@@ -810,8 +822,8 @@ public class sqliteDb {
                 }
             }
             else {  // send the item to chest shop order
-                System.out.println("# DEBUG: Not withdraw the buy to user -> insert to ChestShop order");
-                System.out.println(be_ordertype);
+                //System.out.println("# DEBUG: Not withdraw the buy to user -> insert to ChestShop order");
+                //System.out.println(be_ordertype);
                 String[] parts = be_ordertype.split(":");
                 OrderBuffer temp = getOrder(parts[3], false);
                 updateOrder("SELLORDERS", Integer.parseInt(parts[3]),temp.amount + amount, temp.price, temp.ordertype, temp.itemid);
@@ -821,7 +833,7 @@ public class sqliteDb {
             }
 
             if(seller == null) {
-                System.out.println("--DEBUG: SELLER IS OFFLINE!");
+                //System.out.println("--DEBUG: SELLER IS OFFLINE!");
                 //sqliteDb.insertPayout(seller_uuid, itemid, amount); // Insert payout into db
             }
             else {
@@ -895,11 +907,11 @@ public class sqliteDb {
                     itemid = rs.getString("itemid");
                     se_ordertype = rs.getString("itemid");
                 }
-                System.out.println("REFUND AMOUNT: " + refund_amount);
+                //System.out.println("REFUND AMOUNT: " + refund_amount);
                 stmt.close();
 
             } catch ( Exception e ) {
-                System.out.println("ERROR at getPayou()");
+                //System.out.println("ERROR at getPayou()");
                 System.err.println( e.getClass().getName() + ": " + e.getMessage() );
                 System.exit(0);
             }
@@ -926,7 +938,7 @@ public class sqliteDb {
             // refund
             if(table_name.equals("SELLORDERS")) {
                 if(refund_amount != 0) {
-                    if (withdraw(player_uuid , player_uuid, refund_item_id, refund_amount, refund_price, true, "") ) {
+                    if (withdraw(player_uuid , player_uuid, refund_item_id, refund_amount, refund_price, true, "refund") ) {
                         return true;
                     }
                     else return false;
