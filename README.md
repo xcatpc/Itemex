@@ -2,12 +2,15 @@
 
 Tested MC Version: 1.20.1
 
-Tested MC Version: 1.20.1
 Requirements:
+
 Vault: https://www.spigotmc.org/resources/vault.34315/
+
 TNE: https://www.spigotmc.org/resources/the-new-economy.7805/
 
+
 Github: https://github.com/xcatpc/Itemex
+
 Discord: https://discord.gg/wTyjfjCmEU (english, german)
 
 Description in: DE , ES , FR , CN , RU
