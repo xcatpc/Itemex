@@ -2,22 +2,16 @@
 
 Tested MC Version: 1.20.1
 
+Tested MC Version: 1.20.1
 Requirements:
-
 Vault: https://www.spigotmc.org/resources/vault.34315/
-
 TNE: https://www.spigotmc.org/resources/the-new-economy.7805/
 
-(Maybe also other economy plugins than TNE, please test and mail me)
-
-
 Github: https://github.com/xcatpc/Itemex
+Discord: https://discord.gg/wTyjfjCmEU (english, german)
 
-Discord: https://discord.gg/wTyjfjCmEU
-
-STATUS: BETA - tested serveral hours with multiple players
-
-https://youtu.be/C5-e7snYyns
+Description in: DE , ES , FR , CN , RU
+This plugin is multilingual at 0.20.1
 
 ITEMEX: Realistic Economic Simulation and Dynamic Marketplace for Minecraft​
 
