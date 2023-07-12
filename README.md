@@ -60,36 +60,19 @@ Usage: (autocompletion in console)
 # Roadmap: (priority in order) #
 ----------------------------------------------
 
-- GUI - Outstanding GUI (POWERFUL & EASY TO USE)
-
-- miscellaneous
-
-- market order confirmation. Otherwise It could be dangerous to pay extrem prices or get near to nothing if there are not much sell- or buyorders.
-- create categories -> config file
+- insertPayout - collect all payouts of an item in one entry
+- delete old versions (how?)
+- /ix withdraw list must have a parameter of page. only 100 entries can be sent to player. Also has an error!
 - handle exception if update server not available
-- old orders prioritize (Because old orders should be fulfilled first if price is equal)
-- remove autocomplete price at market orders
-- /ix gui load very slow because of heavy db usage -> insert all best_prices into class or hover over
-- /ix gui best sell orders wrong if no at least 4 sell and 4 buy orders!
-- remove sub and add 16 and insert 1.
+- new orders must be sort down (Because old orders should be fulfilled first if price is equal)
 - /ix quicksell (own gui for quickselling all items)
 - /ix gui orders (list all orders) or is inside the normal /ix gui which would be better
-- at ix sell: If I hold something in the hand it most be in the list on the top
-- "confirm" on market order could be a good thing. ie. have to hold the product/price for 10seconds or something
-- include the broker_fee (the half of it) into the buy price (sell order)
-- /ix withdraw list must have a parameter of page. only 100 entries can be send to player.
+- at ix sell: If I hold something in the hand it must be in the list on the top (autocomplete)
 - add default prices that reflects on the reserve currency (DIAMOND) (useful if no buy and sellorders are available or only a buy or sellorder) - need statistics
-- proof input of user like on /ix list everywhere. (On some commands its not checking if the values are valide)
-- GUI: on /ix gui add each 3 or 4 sell and buy orders by hoover over item and sum of all available items
-- GUI: filter out some blocks (like commandblock)
-- GUI: sort items by availibity
+- GUI: sort items by availability
 - add potions and enchanted items
+- add enchantment items
 
-- Admin Function
-A admin shop function creates automatically a buy and sell order for every item. If someone buys an item from the admin order, the price will increase and update the admin order. Also If a seller sells an item, the price will decrease.
-
-- Signs
-Easy use /ix buy and /ix sell by clicking right or left on a sign. If there are a lot of signs on a server could be difficult to update prices. Not sure, I have also to investigate.
 
 - WEBUI (my favorite but a lot of work)
 *This idea will be implemented after the basic plugin is stable -
