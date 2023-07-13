@@ -1,5 +1,5 @@
 name: Itemex
-version: '0.20.2'
+version: '0.20.3'
 main: sh.ome.itemex.Itemex
 api-version: 1.19
 authors: [ oMesh_ ]

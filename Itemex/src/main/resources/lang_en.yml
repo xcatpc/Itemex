@@ -5,7 +5,7 @@ message_cant_buy_nothing: "You can't buy nothing (AIR)"
 buy_no_sellorders_to_buy: "There are no sell orders to buy! "
 buy_click_here_create: " -> (CLICK HERE) You can create a "
 buy_order: "buy order "
-buyorder: "buyorder"
+buyorder: "buyorder "
 buyorder_C: "BUYORDER "
 buy_best_sellorder_price: "Best sellorder price: "
 buy_price_cant_be_0: "Price can't be 0"
@@ -136,6 +136,8 @@ cs_best_to_buy: " best to buy"
 cs_best_to_sell: " best to sell"
 cs_top_orders: "- Top Orders -"
 cs_not_implemented: "NOT IMPLEMENTED"
+
+sq_you_can_with: "You can withdraw with:"
 
 
 

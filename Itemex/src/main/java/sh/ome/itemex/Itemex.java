@@ -1,10 +1,9 @@
 // new version change version in: pom.xml, Itemex.java
 
-
 /* BUGS AND IMPROVEMENTS:
-
+- error if no orders, admin enabled and then creation of chestshop!!! (seller uuid not given, its empty)
+- if server only restarts - ram still be full (complete shutdown is necessary)
 - insertPayout - collect all payouts of an item in one entry
-- collect all orders with the same price at /price and GUI
 - delete old versions (how?)
 - /ix withdraw list must have a parameter of page. only 100 entries can be sent to player. Also has an error!
 - handle exception if update server not available
@@ -16,24 +15,14 @@
 - GUI: sort items by availability
 - add potions and enchanted items
 - add enchantment items
-
  */
-
 
 /*
-changelog 0.20.1
-- Multi Language support (en, de, cn, fr, es, ru)
-- bugfix at close sell order
+changelog 0.20.3
+- admin shop - preview (no execution: will be implemented in 21.0
+- collect all orders with the same price at /price and GUI
+- server reload clear RAM usage (huge performance improvement)
  */
-
-
-/*
-changelog 0.20.0
-- Limit chest shop bugfix (can't sell to chest limit, player get the items)
-- optional listing fee added for sell- or buyorders to config.yml: default: 0.0
- */
-
-
 
 
 package sh.ome.itemex;
@@ -47,6 +36,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import sh.ome.itemex.Listeners.PlayerJoin;
+import sh.ome.itemex.RAM.Order;
 import sh.ome.itemex.RAM.TopOrders;
 import sh.ome.itemex.events.ChestShop;
 import sh.ome.itemex.events.ClickGUI;
@@ -65,6 +55,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public final class Itemex extends JavaPlugin implements Listener {
@@ -73,11 +64,12 @@ public final class Itemex extends JavaPlugin implements Listener {
 
     private static Itemex plugin;
     public static Economy econ = null;
-    public static String version = "0.20.2";
+    public static String version = "0.20.3";
     public static String lang;
 
     public static boolean admin_function;
-    public static double admin_function_percentage;
+    public static double admin_function_spread_percentage;
+    public static double admin_function_initial_last_price;
 
     public static String currencySymbol;
     public static int decimals;
@@ -118,8 +110,6 @@ public final class Itemex extends JavaPlugin implements Listener {
         String ANSI_CYAN = "\u001B[36m";
         String ANSI_WHITE = "\u001B[37m";
 
-        
-
         getLogger().info("\n\n");
         getLogger().info(ANSI_CYAN + "  88" + ANSI_RESET);
         getLogger().info(ANSI_CYAN + "  88    ,d"  + ANSI_RESET);
@@ -156,7 +146,8 @@ public final class Itemex extends JavaPlugin implements Listener {
         saveConfig();
         this.lang = config.getString("lang");
         this.admin_function = config.getBoolean("admin_function");
-        this.admin_function_percentage = config.getDouble("admin_function_percentage");
+        this.admin_function_spread_percentage = config.getDouble("admin_function_spread_percentage");
+        this.admin_function_initial_last_price = config.getDouble("admin_function_initial_last_price");
         this.broker_fee_buyer = config.getDouble("broker_fee_buyer");
         this.broker_fee_seller = config.getDouble("broker_fee_seller");
         this.bstats = config.getBoolean("bstats");
@@ -230,24 +221,13 @@ public final class Itemex extends JavaPlugin implements Listener {
         // checks database
         sqliteDb.createDBifNotExists();
 
-
-
-        // if admin function enabled -> create admin function for every item
-        if( Itemex.admin_function ) {
-            // look if admin function already exists each item
-            // if yes skip; else look if already a buy and a sell order exists ;;;; procentrual_increase = admin_function_percentage (from config file)
-            // if only buy order ( =100/ (1/100*120+1)*1    |   #1 procentual_decrease = 100 / (1 / 100 * procentrual_increase + 1) * 1
-            //                                              |   #2 sellorder_price = buyorder_price / 100 * procentual_decrease
-            // if only sell order (buyorder_price = sellorder_price / 100 * procentrual_increase + sellorder_price)
-            // if both:  # 1. take the best buy order and decrease by the half of the percentage of config file (calculate procentual_decrease of half of procentrual_increase), that is the buy admin order. Then increate by in the config given value: that is the buy admin order
-            // if nothing # admin_function_initial_buy_price and calulate sell price
-        }
-
         plugin = this;  // make this private static Itemex accessable in other files
+
 
         // load best orders from db into ram
         getLogger().info("Loading all BestOrders into RAM...");
         sqliteDb.loadAllBestOrdersToRam(false);
+
 
         //Check update
         Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
@@ -287,6 +267,8 @@ public final class Itemex extends JavaPlugin implements Listener {
         if(itemex_stats) {
             checkAndSendUsageCounts();
         }
+        mtop = null;
+        System.gc(); // Suggest JVM to run garbage collection
         getLogger().info("ITEMEX - Free Market Item Exchange Plugin unloaded");
     }
 

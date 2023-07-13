@@ -1,12 +1,16 @@
 # Language cn, de, en, es, fr, ru supported by default
-lang: de
+lang: en
 
 # The Admin function creates a buy- and sellorder each item with a spread (gab between buy- and sellorder) of 100% by default. You can edit this
-#   variable by editing "admin_function_percentage".
-admin_function: true
-admin_function_percentage: 100.0
+# variable by editing "admin_function_percentage".
+admin_function: false
+admin_function_spread_percentage: 100.0
+
+# If a order will be fulfilled with the admin order, the order will be recreated with an adjusted price by that percentage value (sellorder = increase price; buyorder = decrease price)
+admin_function_price_change_percentage: 10
+
 # If there is no buy limit or sell limit order at an item, Itemex use this value for initial admin-sellorder-price and adds admin_function_percentage (default 100) to the admin-buyorder-price.
-admin_function_initial_buy_price: 100
+admin_function_initial_last_price: 100
 
 # currency representation
 currencySymbol: "$"

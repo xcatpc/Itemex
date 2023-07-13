@@ -1,7 +1,6 @@
 package sh.ome.itemex.functions;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
-import net.milkbowl.vault.chat.Chat;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
@@ -397,10 +396,10 @@ public class sqliteDb {
     }
 
     public static void loadBestOrdersToRam(String item, boolean update){
-        double[] top_buy_price = new double[4];
-        double[] top_sell_price = new double[4];
-        int[] top_buy_amount = new int[4];
-        int[] top_sell_amount = new int[4];
+        double[] top_buy_price = new double[5];
+        double[] top_sell_price = new double[5];
+        int[] top_buy_amount = new int[5];
+        int[] top_sell_amount = new int[5];
         int row_counter = 0;
 
         Connection c = null;
@@ -411,17 +410,26 @@ public class sqliteDb {
             Class.forName("org.sqlite.JDBC");
             c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
             stmt = c.createStatement();
-            String sql = "SELECT * FROM SELLORDERS WHERE itemid = '" + item + "' ORDER by price ASC LIMIT 4";
+            String sql = "SELECT * FROM SELLORDERS WHERE itemid = '" + item + "' ORDER by price ASC LIMIT 20";
 
             stmt.executeUpdate(sql);
             ResultSet rs    = stmt.executeQuery(sql);
 
             while (rs.next()) {
-                top_sell_price[row_counter] = rs.getDouble("price");
-                top_sell_amount[row_counter] = rs.getInt("amount");
-                //System.out.println("# DEBUG - RROW_COUNTER SELL = " + row_counter + " " + rs.getString("ordertype"));
-                row_counter++;
+                // proof if price of previous entry is equal, if true: combine the order
+                double temp_price = rs.getDouble("price");
+                int temp_amount = rs.getInt("amount");
 
+                if( row_counter > 0 && temp_price == top_sell_price[row_counter-1])
+                    top_sell_amount[row_counter-1] = top_sell_amount[row_counter-1] + temp_amount;
+
+                else {
+                    top_sell_price[row_counter] = temp_price;
+                    top_sell_amount[row_counter] = temp_amount;
+                    row_counter++;
+                }
+                if(row_counter > 3)
+                    break;
             }
             stmt.close();
 
@@ -432,21 +440,37 @@ public class sqliteDb {
 
         row_counter = 0;
 
+
         //BUYORDERS
         try {
             Class.forName("org.sqlite.JDBC");
             c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
             stmt = c.createStatement();
-            String sql = "SELECT * FROM BUYORDERS WHERE itemid = '" + item + "' ORDER by price DESC LIMIT 4";
+            String sql = "SELECT * FROM BUYORDERS WHERE itemid = '" + item + "' ORDER by price DESC LIMIT 20";
 
             stmt.executeUpdate(sql);
             ResultSet rs    = stmt.executeQuery(sql);
-
+/*
             while (rs.next()) {
                 top_buy_price[row_counter] = rs.getDouble("price");
                 top_buy_amount[row_counter] = rs.getInt("amount");
-                //System.out.println("# DEBUG - ROW_COUNTER BUY= " + row_counter + " " + rs.getString("ordertype"));
                 row_counter++;
+            } */
+            while (rs.next()) {
+                // proof if price of previous entry is equal, if true: combine the order
+                double temp_price = rs.getDouble("price");
+                int temp_amount = rs.getInt("amount");
+
+                if( row_counter > 0 && temp_price == top_buy_price[row_counter-1]) {
+                    top_buy_amount[row_counter-1] = top_buy_amount[row_counter-1] + temp_amount;
+                }
+                else {
+                    top_buy_price[row_counter] = temp_price;
+                    top_buy_amount[row_counter] = temp_amount;
+                    row_counter++;
+                }
+                if(row_counter > 3)
+                    break;
             }
             stmt.close();
 
@@ -457,6 +481,20 @@ public class sqliteDb {
 
         if(top_buy_price != null) {
             TopOrders topo = new TopOrders(top_buy_price, top_sell_price, top_buy_amount, top_sell_amount);
+
+            // activate admin function (if in config == true)
+            if(Itemex.admin_function) {
+                double lastPrice = getLastPrice(item);
+                if(lastPrice == 0)
+                    lastPrice = Itemex.admin_function_initial_last_price;
+
+                double spread = Itemex.admin_function_spread_percentage / 200.0; // Halve the spread to share it on both sides
+
+                double buy_price = lastPrice / (1 + spread);  // 1000 / (1 + 0.5) = 666.67
+                double sell_price = buy_price * (1 + 2*spread); // 666.67 * (1 + 1) = 1333.33
+                topo.admin_function(buy_price, sell_price);
+            } // end admin_function
+
             Itemex.getPlugin().mtop.put(item, topo);
             boolean match = topo.find_order_match();
             if(match && update) {
@@ -470,71 +508,6 @@ public class sqliteDb {
     }
 
 
-    public static OrderBuffer[] getBestOrders(String item){
-        OrderBuffer[] buffer = new OrderBuffer[8];
-        OrderBuffer[] temp = new OrderBuffer[4];
-        int row_counter = 0;
-
-        Connection c = null;
-        Statement stmt = null;
-
-        // SELLORDERS
-        try {
-            Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
-            stmt = c.createStatement();
-            String sql = "SELECT * FROM SELLORDERS WHERE itemid = '" + item + "' ORDER by price ASC LIMIT 4";
-
-            stmt.executeUpdate(sql);
-            ResultSet rs    = stmt.executeQuery(sql);
-
-            while (rs.next()) {
-                buffer[row_counter] = new OrderBuffer(rs.getInt("id"), rs.getString("player_uuid"), rs.getString("itemid"), rs.getString("ordertype"),rs.getInt("amount"), rs.getDouble("price"), rs.getLong("timestamp") );
-                row_counter++;
-            }
-            //copy sells into temp
-            for(int x=0; x<=3; x++)
-                temp[x] = buffer[x];
-
-            int y=0;
-            for(int x = row_counter-1; x>=0; x--) {
-                buffer[y] = temp[x];
-                y++;
-            }
-
-            stmt.close();
-
-        } catch ( Exception e ) {
-            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-            System.exit(0);
-        }
-
-        //BUYORDERS
-        try {
-            Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
-            stmt = c.createStatement();
-            String sql = "SELECT * FROM BUYORDERS WHERE itemid = '" + item + "' ORDER by price DESC LIMIT 4";
-
-            stmt.executeUpdate(sql);
-            ResultSet rs    = stmt.executeQuery(sql);
-
-            while (rs.next()) {
-                buffer[row_counter] = new OrderBuffer(rs.getInt("id"), rs.getString("player_uuid"), rs.getString("itemid"), rs.getString("ordertype"),rs.getInt("amount"), rs.getDouble("price"), rs.getLong("timestamp") );
-                row_counter++;
-            }
-            stmt.close();
-
-        } catch ( Exception e ) {
-            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-            System.exit(0);
-        }
-
-        return buffer;
-    }
-
-
-
     private static Connection connect() {
         String url = "jdbc:sqlite:./plugins/Itemex/itemex.db";
         Connection conn = null;
@@ -544,33 +517,6 @@ public class sqliteDb {
             //System.out.println(e.getMessage());
         }
         return conn;
-    }
-
-
-    public static sqliteDb.OrderBuffer[] selectAllold(String table){
-        sqliteDb.OrderBuffer[] buffer = new sqliteDb.OrderBuffer[MAX_BUFFER];
-        String sql = null;
-        if(table.equals("SELLORDERS")) {
-            sql = "SELECT * FROM SELLORDERS ORDER by itemid ASC, price";
-        }
-        else if(table.equals("BUYORDERS")) {
-            sql = "SELECT * FROM BUYORDERS ORDER by itemid ASC, price DESC";
-        }
-
-        try (Connection conn = connect();
-             Statement stmt  = conn.createStatement();
-             ResultSet rs    = stmt.executeQuery(sql)){
-
-            // loop through the result set
-            int row_counter = 0;
-            while (rs.next()) {
-                buffer[row_counter] = new sqliteDb.OrderBuffer(rs.getInt("id"), rs.getString("player_uuid"), rs.getString("itemid"), rs.getString("ordertype"),rs.getInt("amount"), rs.getDouble("price"), rs.getLong("timestamp") );
-                row_counter++;
-            }
-        } catch (SQLException e) {
-            //System.out.println(e.getMessage());
-        }
-        return buffer;
     }
 
 
@@ -630,14 +576,22 @@ public class sqliteDb {
 
 
 
-    public static boolean fulfillOrder(String itemid) { //ERROR INSIDE
+    public static boolean fulfillOrder(String itemid) {
         ArrayList<OrderBuffer> sellorders = selectAll("SELLORDERS", itemid);
         ArrayList<OrderBuffer> buyorders = selectAll("BUYORDERS", itemid);
         boolean normal_buyorder = true;
         boolean normal_sellorder = true;
 
+        // if admin orders is enabled
+        if(Itemex.admin_function) {
+            OrderBuffer admin_buy_order = new OrderBuffer(-1, "", itemid, "buy:limit:admin", 1, Itemex.getPlugin().mtop.get(itemid).get_top_buyorder_prices()[4], Instant.now().getEpochSecond());
+            OrderBuffer admin_sell_order = new OrderBuffer(-1, "", itemid, "sell:limit:admin", 1, Itemex.getPlugin().mtop.get(itemid).get_top_sellorder_prices()[4], Instant.now().getEpochSecond());
+            sellorders.add( admin_sell_order );
+            buyorders.add( admin_buy_order );
+        }
+
         for (OrderBuffer se : sellorders) {
-            //System.out.println("SELLORDER: " + se.ordertype + " [" + se.amount + "] $" + se.price);
+            System.out.println("SELLORDER: " + se.ordertype + " [" + se.amount + "] $" + se.price);
 
             for (OrderBuffer be : buyorders) {
                 //System.out.println("BUYORDER: " + itemid + " " + be.ordertype + " [" + be.amount + "] $" + be.price);
@@ -648,47 +602,26 @@ public class sqliteDb {
                 String[] sell_limit_or_market = se.ordertype.split(":");
 
                 // if order == market -> adjust price to best market orders
-                if(sell_limit_or_market[1].equals("market")) {
+                if(sell_limit_or_market[1].equals("market"))
                     se.price = be.price;   // set the best price
-                    // WHAT IF NOT be.price available or is 0 -> Remove order!
-                }
 
-                if(buy_limit_or_market[1].equals("market")) {
+                if(buy_limit_or_market[1].equals("market"))
                     be.price = se.price;  // set the best price
-                    // WHAT IF NOT se.price available or is 0 -> Remove order!
-                }
 
                 if( buy_limit_or_market.length > 2)
-                    if(buy_limit_or_market[2].equals("chest")) {
+                    if(buy_limit_or_market[2].equals("chest") || buy_limit_or_market[2].equals("admin") )
                         normal_buyorder = false;
-                    }
 
                 if( sell_limit_or_market.length > 2)
-                    if(sell_limit_or_market[2].equals("chest")) {
+                    if(sell_limit_or_market[2].equals("chest") || sell_limit_or_market[2].equals("admin"))
                         normal_sellorder = false;
-                    }
 
 
                 if (be.price >= se.price && be.amount !=0 && se.amount !=0) { // match found
                     //System.out.println("MATCH AT: be: " + be.id +" ["+ be.amount +"] + se: "+ se.id + "["+ se.amount +"]");
 
-                    // ADMIN ORDER if admin order enabled AND (sell-order OR buy-order is an admin order)
-                    // same as limit, but each single amount fullfilled price in- or decreases to spread. Default amount of spread =
-                    if( Itemex.admin_function && (sell_limit_or_market[1].equals("admin") || buy_limit_or_market[1].equals("admin")) ) { // sell and buy order cannot be the same time!
-                        //System.out.println("# DEBUG: at fulfill order (admin)");
-                        if(sell_limit_or_market[1].equals("admin")) {   // if sell order is admin
-                            //System.out.println("Sellorder = admin" + se.id + " " + se.amount + " " + se.price);
-                        }
-
-                        if(buy_limit_or_market[1].equals("admin")) {    // if buy order is admin
-                            //System.out.println("Buyorder = admin" + be.id + " " + be.amount + " " + be.price);
-                        }
-                    }
-
-
                     // LIMIT ORDER OR MARKET ORDER (Marketorder adjusted aboth)
-                    else if(se.price <= be.price && se.amount != 0 && be.amount !=0)  { // if sell amount < buy amount than close sell order + update buy order
-
+                    if(se.price <= be.price && se.amount != 0 && be.amount !=0)  { // if sell amount < buy amount than close sell order + update buy order
 
 
                         if(se.amount < be.amount) {
@@ -776,9 +709,11 @@ public class sqliteDb {
 
 
     public static boolean withdraw(String seller_uuid, String buyer_uuid, String itemid, int amount, double price, boolean normal_buyorder, String be_ordertype) {
-        //System.out.println("#DEBUG: AT WITHDRAW");
-        OfflinePlayer o_seller =  Bukkit.getOfflinePlayer(UUID.fromString(seller_uuid));
-        OfflinePlayer o_buyer =  Bukkit.getOfflinePlayer(UUID.fromString(buyer_uuid));
+        System.out.println("# DEBUG: AT WITHDRAW");
+        System.out.println("# DEBUG - seller_uuid: " + seller_uuid);
+        System.out.println("# DEBUG: - buyer_uudi: " + buyer_uuid);
+        OfflinePlayer o_seller = Bukkit.getOfflinePlayer(UUID.fromString(seller_uuid));
+        OfflinePlayer o_buyer = Bukkit.getOfflinePlayer(UUID.fromString(buyer_uuid));
         Player seller = Bukkit.getPlayer(UUID.fromString(seller_uuid));
         Player buyer = Bukkit.getPlayer(UUID.fromString(buyer_uuid));
 
@@ -800,7 +735,7 @@ public class sqliteDb {
                 //System.out.println("# DEBUG: Own order");
                 if(seller != null) {
                     seller.sendMessage("SELLORDER CLOSED SUCESSFULLY");
-                    TextComponent message = new TextComponent("\n.\n" + ChatColor.BLUE + ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + "CLICK HERE" + ChatColor.BLUE + ") You can withdraw with: /ix withdraw " + itemid +" " + amount);
+                    TextComponent message = new TextComponent("\n.\n" + ChatColor.BLUE + ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + Itemex.language.getString("click_here") + ChatColor.BLUE + ") " + Itemex.language.getString("sq_you_can_with") + " /ix withdraw " + itemid +" " + amount);
                     message.setClickEvent( new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ix withdraw " + itemid +" " + amount));
                     buyer.spigot().sendMessage(message);
                 }
@@ -816,7 +751,7 @@ public class sqliteDb {
                 else {
                     insertPayout(buyer_uuid, itemid, amount); // Insert item payout into db
                     buyer.sendMessage("BUY ORDER" + ChatColor.GREEN+ " FULFILLED!" + ChatColor.WHITE + " You got [" + amount + "] "  + itemid + " for" + ChatColor.RED + " " + format_price( buyer_total ) );
-                    TextComponent message = new TextComponent("\n.\n" + ChatColor.BLUE + ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + "CLICK HERE" + ChatColor.BLUE + ") You can withdraw with: /ix withdraw " + itemid +" " + amount);
+                    TextComponent message = new TextComponent("\n.\n" + ChatColor.BLUE + ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + Itemex.language.getString("click_here" + ChatColor.BLUE + ") " + Itemex.language.getString("sq_you_can_with") + " /ix withdraw " + itemid +" " + amount));
                     message.setClickEvent( new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ix withdraw " + itemid +" " + amount));
                     buyer.spigot().sendMessage(message);
                 }
@@ -951,6 +886,38 @@ public class sqliteDb {
 
         return false;
     } // end closeOrder
+
+
+    static double getLastPrice(String itemid) {
+        Statement stmt = null;
+        String sql;
+        Connection c = null;
+        double lastPrice = 0;
+
+        sql = "SELECT * FROM FULFILLEDORDERS WHERE itemid = '" + itemid + "' ORDER by timestamp ASC LIMIT 1";
+
+        try {
+            Class.forName("org.sqlite.JDBC");
+            c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+            stmt = c.createStatement();
+
+            stmt.executeUpdate(sql);
+            ResultSet rs = stmt.executeQuery(sql);
+
+            while (rs.next()) {
+                lastPrice = Double.parseDouble( rs.getString("price") ) ;
+                //System.out.println("# DEBUG: getLastPrice (price): " + lastPrice);
+            }
+            stmt.close();
+
+        } catch ( Exception e ) {
+            System.err.println( "- ERROR: at getLastPrice: " + e);
+            System.exit(0);
+            return 0;
+        }
+
+        return lastPrice;
+    }
 
 
 

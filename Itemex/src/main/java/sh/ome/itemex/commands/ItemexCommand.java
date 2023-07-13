@@ -18,6 +18,7 @@ import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.PotionData;
 import org.bukkit.potion.PotionEffect;
 import sh.ome.itemex.Itemex;
+import sh.ome.itemex.RAM.Order;
 import sh.ome.itemex.RAM.TopOrders;
 import sh.ome.itemex.functions.sqliteDb;
 
@@ -146,7 +147,7 @@ public class ItemexCommand implements CommandExecutor {
                         }
 
                         // check if there is a sell order with enough amount (1)
-                        if (Itemex.getPlugin().mtop.get(itemid).get_top_sellorder_prices()[0] == 0) {
+                        if (!Itemex.admin_function && Itemex.getPlugin().mtop.get(itemid).get_top_sellorder_prices()[0] == 0) {
                             TextComponent message = new TextComponent(ChatColor.RED + Itemex.language.getString("buy_no_sellorders_to_buy") + ChatColor.WHITE + itemid + "\n.\n" + ChatColor.BLUE + Itemex.language.getString("buy_click_here_create") + ChatColor.GREEN + Itemex.language.getString("buy_order") + ChatColor.BLUE + Itemex.language.getString("with") + ": /ix buy " + itemid + " 1 limit");
                             message.setClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix buy " + itemid +" 1 limit "));
                             p.spigot().sendMessage(message);
@@ -202,8 +203,7 @@ public class ItemexCommand implements CommandExecutor {
                         }
 
                         else if(strings[3].equals("market")) {
-                            //System.out.println("# DEBUG - MARKET");
-                            if (Itemex.getPlugin().mtop.get(itemid).get_top_sellorder_prices()[0] == 0) {
+                            if (!Itemex.admin_function && Itemex.getPlugin().mtop.get(itemid).get_top_sellorder_prices()[0] == 0) {
                                 TextComponent message = new TextComponent(ChatColor.RED + Itemex.language.getString("buy_no_sellorders_to_buy") + ChatColor.WHITE + itemid + "\n.\n" + ChatColor.BLUE + ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + Itemex.language.getString("click_here") + ChatColor.BLUE + ") " + Itemex.language.getString("buy_you_can_create") + ChatColor.GREEN + Itemex.language.getString("buy_order") + ChatColor.BLUE + Itemex.language.getString("with") + ": /ix buy " + itemid + " " + amount + " limit");
                                 message.setClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix buy " + itemid +" " + amount + " limit "));
                                 p.spigot().sendMessage(message);
@@ -216,12 +216,20 @@ public class ItemexCommand implements CommandExecutor {
                                 }
                                 else {
                                     TopOrders topo = Itemex.getPlugin().mtop.get(itemid);
-                                    for(int x=3; x>=0; x--){
-                                        if(topo.get_sellorder_amount()[x] == 0)
-                                            reply_command = reply_command + ChatColor.DARK_RED + Itemex.language.getString("sellorder") + " " + ChatColor.DARK_GRAY + itemid + "  [" + topo.get_sellorder_amount()[x] + "] " + format_price( topo.get_top_sellorder_prices()[x] ) + "\n";
+                                    List<sh.ome.itemex.RAM.Order> sell_orders = topo.get_top_sell(Itemex.admin_function);
+                                    for (sh.ome.itemex.RAM.Order order : sell_orders) {
+                                        double sprice = order.getPrice();
+                                        int samount = order.getAmount();
+                                        boolean isAdmin = order.isAdmin();
+
+                                        if(amount == 0)
+                                            reply_command = reply_command + ChatColor.DARK_RED + Itemex.language.getString("sellorder") + ChatColor.DARK_GRAY + itemid + "  [" + samount + "] " + format_price( sprice ) + "\n";
+                                        else if(isAdmin)
+                                            reply_command = reply_command + ChatColor.RED + Itemex.language.getString("sellorder") + ChatColor.WHITE + itemid + "  [" + samount + "] " + format_price( sprice ) + ChatColor.YELLOW + " [admin]" + ChatColor.WHITE + "\n";
                                         else
-                                            reply_command = reply_command + ChatColor.RED + Itemex.language.getString("sellorder") + " " +ChatColor.WHITE + itemid + "  [" + topo.get_sellorder_amount()[x] + "] " + format_price( topo.get_top_sellorder_prices()[x] ) + "\n";
+                                            reply_command = reply_command + ChatColor.RED + Itemex.language.getString("sellorder") + ChatColor.WHITE + itemid + "  [" + samount + "] " + format_price( sprice ) + "\n";
                                     }
+
 
                                     reply_command = reply_command + "-----------------------------\n";
                                     p.sendMessage(reply_command);
@@ -290,7 +298,7 @@ public class ItemexCommand implements CommandExecutor {
 
                         if(!itemid.equals("AIR") && is_damaged_or_enchantment) {
                             // check if there is a buy order with enough amount (1)
-                            if (Itemex.getPlugin().mtop.get(itemid).get_top_buyorder_prices()[0] == 0) {
+                            if (!Itemex.admin_function && Itemex.getPlugin().mtop.get(itemid).get_top_buyorder_prices()[0] == 0) {
                                 TextComponent message = new TextComponent(ChatColor.RED + Itemex.language.getString("sell_no_buyorders_to_sell") + ChatColor.WHITE + itemid + "\n.\n" + ChatColor.BLUE + ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + Itemex.language.getString("click_here") + ChatColor.BLUE + ") " + Itemex.language.getString("buy_you_can_create") + ChatColor.GREEN + Itemex.language.getString("sell_order") + ChatColor.BLUE + Itemex.language.getString("with") + ": /ix sell " + itemid + " 1 limit ");
                                 message.setClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix sell " + itemid +" 1 limit "));
                                 p.spigot().sendMessage(message);
@@ -372,7 +380,7 @@ public class ItemexCommand implements CommandExecutor {
                                     reply_command = reply_command + create_order( p, itemid, price, sellorder.amount, "sell", strings[3] );
                                 else {
                                     //System.out.println("# DEBUG SELL market order");
-                                    if (Itemex.getPlugin().mtop.get(itemid).get_top_buyorder_prices()[0] == 0) {
+                                    if (!Itemex.admin_function && Itemex.getPlugin().mtop.get(itemid).get_top_buyorder_prices()[0] == 0) {
                                         TextComponent message = new TextComponent(ChatColor.RED + Itemex.language.getString("sell_no_buyorders_to_sell") + ChatColor.WHITE + itemid + "\n.\n" + ChatColor.BLUE + ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + Itemex.language.getString("click_here") + ChatColor.BLUE + ") " + Itemex.language.getString("buy_you_can_create") + ChatColor.RED + Itemex.language.getString("sell_order") + ChatColor.BLUE + Itemex.language.getString("with") + ": /ix sell " + itemid + " 1 limit ");
                                         message.setClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix sell " + itemid + " " + sellorder.amount + " limit "));
                                         p.spigot().sendMessage(message);
@@ -384,15 +392,20 @@ public class ItemexCommand implements CommandExecutor {
                                             reply_command = reply_command + create_order(p, itemid, Itemex.getPlugin().mtop.get(itemid).get_top_buyorder_prices()[3],sellorder.amount, "sell", "market");
                                         }
                                         else {
-                                            // ##########################################################################################################################################################
-                                            // add here full implementation of a order preview
-                                            TopOrders topo = Itemex.getPlugin().mtop.get(itemid);
 
-                                            for(int x=0; x<=3; x++){
-                                                if(topo.get_buyorder_amount()[x] == 0)
-                                                    reply_command = reply_command + ChatColor.DARK_GREEN + Itemex.language.getString("buyorder") + " " + ChatColor.DARK_GRAY + itemid + "  [" + topo.get_buyorder_amount()[x] + "] " + format_price( topo.get_top_buyorder_prices()[x] ) + "\n";
+                                            TopOrders topo = Itemex.getPlugin().mtop.get(itemid);
+                                            List<sh.ome.itemex.RAM.Order> buy_orders = topo.get_top_buy(Itemex.admin_function);
+                                            for (sh.ome.itemex.RAM.Order order : buy_orders) {
+                                                double sprice = order.getPrice();
+                                                int samount = order.getAmount();
+                                                boolean isAdmin = order.isAdmin();
+
+                                                if(samount == 0)
+                                                    reply_command = reply_command + ChatColor.DARK_GREEN + Itemex.language.getString("buyorder") + ChatColor.DARK_GRAY + itemid + "  [" + samount + "] " + format_price( sprice ) + "\n";
+                                                else if(isAdmin)
+                                                    reply_command = reply_command + ChatColor.GREEN + Itemex.language.getString("buyorder") + ChatColor.WHITE + itemid + "  [" + samount + "] " + format_price( sprice ) + ChatColor.YELLOW + " [admin]" + ChatColor.WHITE + "\n";
                                                 else
-                                                    reply_command = reply_command + ChatColor.GREEN + Itemex.language.getString("buyorder") + " " + ChatColor.WHITE + itemid + "  [" + topo.get_buyorder_amount()[x] + "] " + format_price( topo.get_top_buyorder_prices()[x] ) + "\n";
+                                                    reply_command = reply_command + ChatColor.GREEN + Itemex.language.getString("buyorder") + ChatColor.WHITE + itemid + "  [" + samount + "] " + format_price( sprice ) + "\n";
                                             }
 
                                             reply_command = reply_command + "-----------------------------\n";
@@ -450,19 +463,35 @@ public class ItemexCommand implements CommandExecutor {
                         reply_command = reply_command + Itemex.language.getString("ordertype_itemid_amount_price") + "\n";
 
 
-                        for(int x=3; x>=0; x--){
-                            if(topo.get_sellorder_amount()[x] == 0)
-                                reply_command = reply_command + ChatColor.DARK_RED + Itemex.language.getString("sellorder") + ChatColor.DARK_GRAY + itemid + "  [" + topo.get_sellorder_amount()[x] + "] " + format_price( topo.get_top_sellorder_prices()[x] ) + "\n";
+                        List<sh.ome.itemex.RAM.Order> sell_orders = topo.get_top_sell(Itemex.admin_function);
+                        for (sh.ome.itemex.RAM.Order order : sell_orders) {
+                            double price = order.getPrice();
+                            int amount = order.getAmount();
+                            boolean isAdmin = order.isAdmin();
+
+                            if(amount == 0)
+                                reply_command = reply_command + ChatColor.DARK_RED + Itemex.language.getString("sellorder") + ChatColor.DARK_GRAY + itemid + "  [" + amount + "] " + format_price( price ) + "\n";
+                            else if(isAdmin)
+                                reply_command = reply_command + ChatColor.RED + Itemex.language.getString("sellorder") + ChatColor.WHITE + itemid + "  [" + amount + "] " + format_price( price ) + ChatColor.YELLOW + " [admin]" + ChatColor.WHITE + "\n";
                             else
-                                reply_command = reply_command + ChatColor.RED + Itemex.language.getString("sellorder") + ChatColor.WHITE + itemid + "  [" + topo.get_sellorder_amount()[x] + "] " + format_price( topo.get_top_sellorder_prices()[x] ) + "\n";
+                                reply_command = reply_command + ChatColor.RED + Itemex.language.getString("sellorder") + ChatColor.WHITE + itemid + "  [" + amount + "] " + format_price( price ) + "\n";
                         }
-                        for(int x=0; x<=3; x++){
-                            if(topo.get_buyorder_amount()[x] == 0)
-                                reply_command = reply_command + ChatColor.DARK_GREEN + Itemex.language.getString("buyorder") + ChatColor.DARK_GRAY + itemid + "  [" + topo.get_buyorder_amount()[x] + "] " + format_price( topo.get_top_buyorder_prices()[x] ) + "\n";
+
+                        List<sh.ome.itemex.RAM.Order> buy_orders = topo.get_top_buy(Itemex.admin_function);
+                        for (sh.ome.itemex.RAM.Order order : buy_orders) {
+                            double price = order.getPrice();
+                            int amount = order.getAmount();
+                            boolean isAdmin = order.isAdmin();
+
+                            if(amount == 0)
+                                reply_command = reply_command + ChatColor.DARK_GREEN + Itemex.language.getString("buyorder") + ChatColor.DARK_GRAY + itemid + "  [" + amount + "] " + format_price( price ) + "\n";
+                            else if(isAdmin)
+                                reply_command = reply_command + ChatColor.GREEN + Itemex.language.getString("buyorder") + ChatColor.WHITE + itemid + "  [" + amount + "] " + format_price( price ) + ChatColor.YELLOW + " [admin]" + ChatColor.WHITE + "\n";
                             else
-                                reply_command = reply_command + ChatColor.GREEN + Itemex.language.getString("buyorder") + ChatColor.WHITE + itemid + "  [" + topo.get_buyorder_amount()[x] + "] " + format_price( topo.get_top_buyorder_prices()[x] ) + "\n";
+                                reply_command = reply_command + ChatColor.GREEN + Itemex.language.getString("buyorder") + ChatColor.WHITE + itemid + "  [" + amount + "] " + format_price( price ) + "\n";
                         }
-                        reply_command = reply_command + "-----------------------------\n";
+
+                        reply_command = reply_command + ChatColor.WHITE +  "-----------------------------\n";
                     }
 
 

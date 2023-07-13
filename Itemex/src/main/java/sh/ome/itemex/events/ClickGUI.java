@@ -12,9 +12,12 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import sh.ome.itemex.Itemex;
+import sh.ome.itemex.RAM.Order;
+import sh.ome.itemex.RAM.TopOrders;
 import sh.ome.itemex.files.CategoryFile;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static sh.ome.itemex.commands.ItemexCommand.format_price;
 
@@ -463,21 +466,76 @@ public class ClickGUI implements Listener {
                                     }
                                     else {
                                         String best_to = "";
-                                        for(int z=3; z >= 0; z--) {
+                                        TopOrders topo = Itemex.getPlugin().mtop.get( itemid );
+
+                                        List<Order> sell_orders = topo.get_top_sell(Itemex.admin_function);
+                                        int z=0;
+                                        for (sh.ome.itemex.RAM.Order order : sell_orders) {
+                                            if(z == 4)
+                                                best_to = ChatColor.DARK_GREEN + Itemex.language.getString("cs_best_to_buy");
+                                            else
+                                                best_to = "";
+                                            z++;
+                                            double price = order.getPrice();
+                                            int amount = order.getAmount();
+                                            boolean isAdmin = order.isAdmin();
+
+                                            if(amount == 0)
+                                                item_lore.add(ChatColor.DARK_RED + "[" + amount +"] " + format_price( price ) + best_to);
+                                            else if(isAdmin)
+                                                item_lore.add(ChatColor.RED + "[" + amount +"] " + format_price( price ) + best_to + ChatColor.YELLOW + " [admin]");
+                                            else
+                                                item_lore.add(ChatColor.RED + "[" + amount +"] " + format_price( price ) + best_to);
+                                        }
+
+                                        List<sh.ome.itemex.RAM.Order> buy_orders = topo.get_top_buy(Itemex.admin_function);
+                                        z = 0;
+                                        for (sh.ome.itemex.RAM.Order order : buy_orders) {
+                                            if(z == 0)
+                                                best_to = ChatColor.DARK_RED + Itemex.language.getString("cs_best_to_sell");
+                                            else
+                                                best_to = "";
+                                            z++;
+                                            double price = order.getPrice();
+                                            int amount = order.getAmount();
+                                            boolean isAdmin = order.isAdmin();
+
+                                            if(amount == 0)
+                                                item_lore.add(ChatColor.DARK_GREEN + "[" + amount +"] " + format_price( price ) + best_to);
+                                            else if(isAdmin)
+                                                item_lore.add(ChatColor.GREEN + "[" + amount +"] " + format_price( price ) + best_to + ChatColor.YELLOW + " [admin]");
+                                            else
+                                                item_lore.add(ChatColor.GREEN + "[" + amount +"] " + format_price( price ) + best_to);
+                                        }
+
+
+
+
+
+                                        /*
+                                        for(int z=4; z >= 0; z--) {
                                             if(z == 0)
                                                 best_to = ChatColor.DARK_GREEN + Itemex.language.getString("cs_best_to_buy");
+                                            if(Itemex.admin_function && z == 4)
+                                                best_to = "" +ChatColor.WHITE + z + " [admin]";
+                                            else
+                                                best_to = "";
                                             item_lore.add(ChatColor.DARK_RED + "[" + Itemex.getPlugin().mtop.get(itemid).get_sellorder_amount()[z] +"] " + format_price( Itemex.getPlugin().mtop.get(itemid).get_top_sellorder_prices()[z] ) + best_to);
 
                                         }
 
-                                        for(int z=0; z <= 3; z++) {
+                                        for(int z=0; z <= 4; z++) {
                                             if(z == 0)
                                                 best_to = ChatColor.DARK_RED + Itemex.language.getString("cs_best_to_sell");
                                             else {
                                                 best_to = "";
                                             }
+                                            if(Itemex.admin_function && z == 4)
+                                                best_to = best_to + ChatColor.WHITE + " [admin]";
                                             item_lore.add(ChatColor.DARK_GREEN + "[" + Itemex.getPlugin().mtop.get(itemid).get_buyorder_amount()[z] +"] " + format_price( Itemex.getPlugin().mtop.get(itemid).get_top_buyorder_prices()[z] ) + best_to);
                                         }
+
+                                         */
 
                                     }
 
