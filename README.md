@@ -85,3 +85,6 @@ If you want to spend a coffee: (The Plugin is and going to free forever)
 
 Monero (XMR):
 4AbefhzT7HqFMJr7wYefrmGP1pcgQn5cdBqeVK7Yrmo7QSeitoHYD9ffZUp58ixBxFSwPuvnYNrp56BaQt5moPVxSTsjwXg
+
+Bitcoin (LN)
+lnurl1dp68gurn8ghj7ampd3kx2ar0veekzar0wd5xjtnrdakj7tnhv4kxctttdehhwm30d3h82unvwqhksct4va58g7tnd3jkgvpn3g4le2
