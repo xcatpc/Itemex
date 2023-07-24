@@ -6,7 +6,10 @@ Requirements:
 
 Vault: https://www.spigotmc.org/resources/vault.34315/
 
-TNE: https://www.spigotmc.org/resources/the-new-economy.7805/
+Vault: https://www.spigotmc.org/resources/vault.34315/
+An economy plugin: (list of tested plugins)
+- TNE: https://www.spigotmc.org/resources/the-new-economy.7805/
+- essentialsx: https://essentialsx.net/downloads.html?branch=stable
 
 
 Github: https://github.com/xcatpc/Itemex
