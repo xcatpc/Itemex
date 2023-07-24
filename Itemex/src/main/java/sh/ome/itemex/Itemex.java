@@ -73,7 +73,7 @@ public final class Itemex extends JavaPlugin implements Listener {
 
     private static Itemex plugin;
     public static Economy econ = null;
-    public static String version = "0.21.0";
+    public static String version = "0.21.1";
     public static String lang;
 
     public static boolean admin_function;
@@ -229,6 +229,9 @@ public final class Itemex extends JavaPlugin implements Listener {
                 break;
         }
 
+        // checks database
+        sqliteDb.createDBifNotExists();
+
         // check if database is new version (json format)
         boolean is_json = sqliteDb.check_if_db_is_JSON();
         if(!is_json) {
@@ -238,10 +241,6 @@ public final class Itemex extends JavaPlugin implements Listener {
             sqliteDb.updateDB_from_STRING_to_JSON("PAYOUTS", "itemid");
 
         }
-
-
-        // checks database
-        sqliteDb.createDBifNotExists();
 
         plugin = this;  // make this private static Itemex accessable in other files
 
