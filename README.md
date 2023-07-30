@@ -1,4 +1,4 @@
-<img src="[https://ipfs.ome.sh/ipfs/QmPw8fp7VYfC1dx3RMpg6Be97wtmj8ZhsYtVHaeKiZF4hK](https://ipfs.ome.sh/ipfs/QmPhxsvnTvK9MD7HoRBouBQavebdepiQpbXp1yXvq6j3Yn/)">
+<img src="https://ipfs.ome.sh/ipfs/QmPhxsvnTvK9MD7HoRBouBQavebdepiQpbXp1yXvq6j3Yn/">
 
 Tested MC Version: 1.20.1
 
