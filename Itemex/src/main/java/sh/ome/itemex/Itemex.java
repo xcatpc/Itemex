@@ -13,27 +13,22 @@
 - add default prices that reflects on the reserve currency (DIAMOND) (useful if no buy and sellorders are available or only a buy or sellorder) - need statistics
 - GUI: sort items by availability
 - add a money supply system
-
+- big bug at chesthop order: maybe at withdraw I have to adjust normal_buyorder and normal_sellorder (or chest not existing)
  */
 
 /*
-changelog 0.21.0
-- all potions, tipped arrows and fireworks supported
-- enchanted books supported
-- /ix withdraw complete new implementation
-- terminal filters for /ix buy, /ix sell, /ix price, /ix withdraw
-- admin shop - semi-full implementation
-- bugfix at /ix gui (no exception anymore, if player click outside of inventory)
-- database update function (from String to JSON)
-- language updates
+changelog 0.21.5
+- /ix order edit <buyorders | sellorders> <orderID> <price> <amount>
+- Market Orders in the GUI executing directly
  */
 
 /*
-changelog 0.20.3
-- admin shop - preview (no execution: will be implemented in 21.0
-- collect all orders with the same price at /price and GUI
-- server reload clear RAM usage (huge performance improvement)
+changelog 0.21.4
+- /ix price <itemid> <history>
+- /ix deposit <itemname> <amount>
+- /ix settings <withdraw_threshold> <amount>
  */
+
 
 
 package sh.ome.itemex;
@@ -73,7 +68,7 @@ public final class Itemex extends JavaPlugin implements Listener {
 
     private static Itemex plugin;
     public static Economy econ = null;
-    public static String version = "0.21.1";
+    public static String version = "0.21.5";
     public static String lang;
 
     public static boolean admin_function;
@@ -96,6 +91,7 @@ public final class Itemex extends JavaPlugin implements Listener {
     public static boolean itemex_stats;
     public static String server_url = "https://ome.sh";
     public static YamlConfiguration language;
+    public static String server_version;
 
     public Map<String, TopOrders> mtop = new HashMap<>();
 
@@ -119,6 +115,11 @@ public final class Itemex extends JavaPlugin implements Listener {
         String ANSI_PURPLE = "\u001B[35m";
         String ANSI_CYAN = "\u001B[36m";
         String ANSI_WHITE = "\u001B[37m";
+
+        server_version = Bukkit.getBukkitVersion().split("-")[0];
+        //getLogger().info("Server version: " + server_version);
+        String[] versionParts = server_version.split("\\.");
+        //getLogger().info("Server main version: " + versionParts[0] + "." + versionParts[1]);
 
         getLogger().info("\n\n");
         getLogger().info(ANSI_CYAN + "  88" + ANSI_RESET);
@@ -176,8 +177,9 @@ public final class Itemex extends JavaPlugin implements Listener {
 
         // generate categories.yml
         CategoryFile.setup();
-        //CategoryFile.init();
-        CategoryFile.init_1_20_x();
+
+        CategoryFile.init_cat();
+
         CategoryFile.get().options().copyDefaults(true);
         CategoryFile.save();
 
@@ -255,12 +257,11 @@ public final class Itemex extends JavaPlugin implements Listener {
             try {
                 new UpdateItemex(version);
             } catch (IOException e) {
+                getLogger().info("Problem with Update Itemex Scheduler");
                 throw new RuntimeException(e);
             }
-
-            getLogger().info("Problem with Update Itemex Scheduler");
-
         }, 100, 288000); //20 == 1 second 1,728,000 = 24h */ 4h
+
 
     }
 

@@ -14,20 +14,24 @@ public class TopOrders {
     private double[] top_sellorder_prices = new double[5];
     private int[] buyorder_amount = new int[5];
     private int[] sellorder_amount = new int[5];
+    private int[] last_trade_timestamp = new int[5];
+    private double[] last_trade_price = new double[5];
     public double last_price;
 
     // Constructor
     public TopOrders () {
         create_empty_topOrder();
     }
-    public TopOrders(String itemid, double[] top_buyorder_prices, double[] top_sellorder_prices, int[] buyorder_amount, int[] sellorder_amount) {
+    public TopOrders(String itemid, double[] top_buyorder_prices, double[] top_sellorder_prices, int[] buyorder_amount, int[] sellorder_amount, double[] last_trade_price, int[] last_trade_timestamp) {
         this.top_buyorder_prices = top_buyorder_prices;
         this.top_sellorder_prices = top_sellorder_prices;
         this.buyorder_amount = buyorder_amount;
         this.sellorder_amount = sellorder_amount;
+        this.last_trade_price = last_trade_price;
+        this.last_trade_timestamp = last_trade_timestamp;
         gen_admin_orders(itemid);
     }
-    public boolean update_topOrders(String itemid, double[] top_buyorder_prices, double[] top_sellorder_prices, int[] buyorder_amount, int[] sellorder_amount) {
+    public boolean update_topOrders(String itemid, double[] top_buyorder_prices, double[] top_sellorder_prices, int[] buyorder_amount, int[] sellorder_amount, double[] last_trade_price, int[] last_trade_timestamp) {
         this.top_buyorder_prices = top_buyorder_prices;
         this.top_sellorder_prices = top_sellorder_prices;
         this.buyorder_amount = buyorder_amount;
@@ -35,32 +39,6 @@ public class TopOrders {
         adjust_admin_orders(itemid);
         return true;
     }
-    public void printTopOrders() {
-        for (double price : this.top_buyorder_prices) {
-            if (price != 0) {
-                System.out.println("BUY PRICE: " + price);
-            }
-        }
-
-        for (double price : this.top_sellorder_prices) {
-            if (price != 0) {
-                System.out.println("SELL PRICE: " + price);
-            }
-        }
-
-        for (int amount : this.buyorder_amount) {
-            if (amount != 0) {
-                System.out.println("BUY AMOUNT: " + amount);
-            }
-        }
-
-        for (int amount : this.sellorder_amount) {
-            if (amount != 0) {
-                System.out.println("Sell AMOUNT: " + amount);
-            }
-        }
-    }
-
 
 
     private boolean create_empty_topOrder() {
@@ -69,6 +47,8 @@ public class TopOrders {
             this.top_sellorder_prices[x] = 0;
             this.buyorder_amount[x] = 0;
             this.sellorder_amount[x] = 0;
+            this.last_trade_timestamp[x] = 0;
+            this.last_trade_price[x] = 0;
         }
 
         return true;
@@ -164,6 +144,14 @@ public class TopOrders {
         return output;
     }
 
+
+    public int[] get_last_timestamp() {
+        return this.last_trade_timestamp;
+    }
+
+    public double[] get_last_trade_price() {
+        return this.last_trade_price;
+    }
 
 
     public double[] get_top_buyorder_prices() {

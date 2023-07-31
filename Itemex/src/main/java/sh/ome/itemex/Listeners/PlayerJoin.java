@@ -15,6 +15,10 @@ public class PlayerJoin implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent e) {
         //System.out.println("# DEBUG - PLAYER JOINED THE SERVER");
+
+        // create setting entry for player, if not exist
+        sqliteDb.player_settings(e.getPlayer().getUniqueId().toString(), "", true);
+
         sqliteDb.Payout[] payouts;
         payouts= sqliteDb.getPayout(e.getPlayer().getUniqueId().toString());
 

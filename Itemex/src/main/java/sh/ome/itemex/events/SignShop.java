@@ -13,6 +13,7 @@ import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.scheduler.BukkitRunnable;
 import sh.ome.itemex.Itemex;
+import sh.ome.itemex.commands.ItemexCommand;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -54,10 +55,11 @@ public class SignShop implements Listener {
 
                 if (shopType.equals("null")) {
                     ItemStack heldItem = e.getPlayer().getItemInHand(); // Gegenstand in der Hand des Spielers
+                    String item_meta = ItemexCommand.get_meta( ItemexCommand.identify_item(heldItem));
                     if (heldItem != null && heldItem.getType() != Material.AIR) {
-                        sign.getBlock().setMetadata(METADATA_KEY, new FixedMetadataValue(Itemex.getPlugin(), heldItem.getType().toString()));
-                        sign.setLine(0, ChatColor.GREEN + "[ix] " + ChatColor.GOLD + heldItem.getType().toString()); // Itemname auf das Schild setzen
-                        sign.setLine(2, ChatColor.WHITE + heldItem.getType().toString()); // Itemname auf das Schild setzen
+                        sign.getBlock().setMetadata(METADATA_KEY, new FixedMetadataValue(Itemex.getPlugin(), item_meta));
+                        sign.setLine(0, ChatColor.GREEN + "[ix] " + ChatColor.GOLD + item_meta); // Itemname auf das Schild setzen
+                        sign.setLine(2, ChatColor.WHITE + item_meta); // Itemname auf das Schild setzen
                         sign.setLine(3, ChatColor.WHITE + "<" + Itemex.language.getString("sign_click_m") + ">"); // Reset line 4
                         sign.update(); // Änderungen am Schild speichern
                         e.getPlayer().sendMessage(heldItem.getType() + Itemex.language.getString("sign_created_success"));
@@ -88,8 +90,9 @@ public class SignShop implements Listener {
                             }
                         }
                     } else {
-                        double best_sellorder = Itemex.getPlugin().mtop.get(shopType).get_top_sellorder_prices()[0];
-                        double best_buyorder = Itemex.getPlugin().mtop.get(shopType).get_top_buyorder_prices()[0];
+                        String item_json = ItemexCommand.get_json_from_meta(shopType);
+                        double best_sellorder = Itemex.getPlugin().mtop.get(item_json).get_top_sellorder_prices()[0];
+                        double best_buyorder = Itemex.getPlugin().mtop.get(item_json).get_top_buyorder_prices()[0];
                         sign.setLine(1, ChatColor.RED + "Sell: " + ChatColor.WHITE + best_buyorder); // Buy price moved to line 2
                         sign.setLine(2, ChatColor.GREEN + "Buy: " + ChatColor.WHITE + best_sellorder); // Sell price moved to line 3
                         sign.getBlock().setMetadata(PRICE_KEY, new FixedMetadataValue(Itemex.getPlugin(), true));

@@ -26,7 +26,7 @@ public class commandAutoComplete implements TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 1) {
             String input = args[0].toLowerCase();
-            List<String> options = Arrays.asList("price", "buy", "sell", "whatIsInMyRightHand", "withdraw", "gui", "order");
+            List<String> options = Arrays.asList("price", "buy", "sell", "whatIsInMyRightHand", "withdraw", "deposit", "gui", "order", "setting");
             List<String> filteredOptions = new ArrayList<>();
             for (String option : options) {
                 if (option.startsWith(input))
@@ -141,6 +141,55 @@ public class commandAutoComplete implements TabCompleter {
                 return Arrays.asList("");
         } // end withdraw
 
+        else if(args[0].equals("deposit")) {
+            if(args.length == 2) {
+                // ADD ONLY MATERIAL WHAT PLAYER HAVE IN INVENTORY
+                List<String> materialNames = new ArrayList<>(Material.values().length);
+                Player p = Bukkit.getPlayer(sender.getName());
+                materialNames.add("- list of what you have in inventory");
+                for (ItemStack item : p.getInventory().getContents()) { //check inventory of player
+                    if (item != null && !item.getType().toString().equals("AIR")) { // add all items if not AIR
+                        String json = ItemexCommand.identify_item(item);
+                        String meta = ItemexCommand.get_meta(json);
+                        if (!meta.equals("more_than_one_enchantment_not_supported")) {
+                            if (args.length > 1 && meta.toLowerCase().contains(args[1].toLowerCase())) { // Check without case sensitivity
+                                materialNames.add(meta);
+                            } else if (args.length == 1) { // if no filter is provided, add all items
+                                materialNames.add(meta);
+                            }
+                        }
+                    }
+                }
+                return materialNames;
+            }
+            else if(args.length == 3) {
+                List<String> options = Arrays.asList("max", "1");
+                return options;
+            }
+            else {
+                List<String> options = Arrays.asList("");
+                return options;
+            }
+
+        } // end deposit
+
+        else if(args[0].equals("setting")) {
+            if(args.length == 2) {
+                List<String> options = Arrays.asList("withdraw_threshold");
+                return options;
+            }
+            else if(args.length == 3 && args[1].equals("withdraw_threshold")) {
+                List<String> options = Arrays.asList("0", "16", "64");
+                return options;
+            }
+            else {
+                List<String> options = Arrays.asList("");
+                return options;
+            }
+
+        } // end setting
+
+
         else if(args[0].equals("price")) {
             if(args.length == 2) {
                 List<String> materialNames = new ArrayList<>(Material.values().length);
@@ -162,13 +211,21 @@ public class commandAutoComplete implements TabCompleter {
                 return materialNames;
             }
             else if(args.length == 3) {
+                List<String> options = Arrays.asList("-", "history");
+                return options;
+            }
+            else if(args.length == 4) {
+                List<String> options = Arrays.asList("0_max_entries", "1", "5", "10", "25");
+                return options;
+            }
+            else if(args.length == 5) {
                 List<String> options = Arrays.asList("");
                 return options;
             }
         } // end price
 
         else if(args[0].equals("order")) {
-            List<String> options = Arrays.asList("list", "close");
+            List<String> options = Arrays.asList("list", "close", "edit");
             if(args.length == 2) {
                 return options;
             }
@@ -202,8 +259,19 @@ public class commandAutoComplete implements TabCompleter {
                 return materialNames;
             }
 
+            else if(args.length == 5 && args[1].equals("edit")) {
+                List<String> options_5 = Arrays.asList("0_set_new_price", "1", "100", "1000", "1000");
+                return options_5;
+            }
+            else if(args.length == 6 && args[1].equals("edit")) {
+                List<String> options_6 = Arrays.asList("0_set_new_amount", "1", "16", "64", "512");
+                return options_6;
+            }
+            else if(args.length == 7 && args[1].equals("edit")) {
+                return Arrays.asList("");
+            }
             else if(args.length == 5)
-                return  Arrays.asList("");
+                return Arrays.asList("");
 
 
         } //end order

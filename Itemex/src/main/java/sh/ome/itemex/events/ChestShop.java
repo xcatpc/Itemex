@@ -25,15 +25,12 @@ import static sh.ome.itemex.functions.sqliteDb.updateOrder;
 public class ChestShop implements Listener {
     /*
 
-
-
     String UUID_owner = "";
 
 
     @EventHandler
     public void onSignChange(SignChangeEvent e) {
-        //System.out.println("# DEBUG: onSignChange");
-
+        System.out.println("# DEBUG: onSignChange");
         if (e.getLine(0).contains("[ixc]")) {
             if (e.getLine(1).contains("S:") && e.getLine(2).contains("B:")) {
                 e.setLine(0, ChatColor.GREEN + "[ixc]");
@@ -48,7 +45,7 @@ public class ChestShop implements Listener {
 
     @EventHandler
     public void onInventoryOpen(InventoryOpenEvent event) {
-        //System.out.println("# DEBUG: onInventoryOpen");
+        System.out.println("# DEBUG: onInventoryOpen");
         Inventory inv = event.getInventory();
         if (inv.getHolder() instanceof Chest) {
             Player player = (Player) event.getPlayer();
@@ -91,7 +88,7 @@ public class ChestShop implements Listener {
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent e) {
-        //System.out.println("# DEBUG: onInventoryClose");
+        System.out.println("# DEBUG: onInventoryClose");
         Player player = (Player) e.getPlayer();
         Inventory inventory = e.getInventory();
         InventoryHolder holder = inventory.getHolder();
@@ -128,7 +125,7 @@ public class ChestShop implements Listener {
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent e) {
-        //System.out.println("# DEBUG: onPlayerInteract");
+        System.out.println("# DEBUG: onPlayerInteract");
         UUID playerId = e.getPlayer().getUniqueId();
         long time = System.currentTimeMillis();
 
@@ -164,7 +161,7 @@ public class ChestShop implements Listener {
 
 
 private void updateSignIfAttachedChest(Block block, Player p) {
-    //System.out.println("# DEBUG: updateSignIfAttachedChest");
+    System.out.println("# DEBUG: updateSignIfAttachedChest");
         BlockState state = block.getState();
         String itemname = null;
         int totalAmount = 0;
@@ -313,7 +310,7 @@ private void updateSignIfAttachedChest(Block block, Player p) {
 
 
     private Block getSignBlockAttachedToChest(Block chestBlock) {
-        //System.out.println("# DEBUG: getSignBlockAttachedToChest");
+        System.out.println("# DEBUG: getSignBlockAttachedToChest");
         for (BlockFace face : BlockFace.values()) {
             Block attachedBlock = chestBlock.getRelative(face);
             BlockState state = attachedBlock.getState();
@@ -323,6 +320,8 @@ private void updateSignIfAttachedChest(Block block, Player p) {
         }
         return null;
     }
-*/
 
+
+
+     */
 }

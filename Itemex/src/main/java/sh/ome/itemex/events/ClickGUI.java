@@ -19,7 +19,11 @@ import sh.ome.itemex.commands.ItemexCommand;
 import sh.ome.itemex.files.CategoryFile;
 import sh.ome.itemex.functions.sqliteDb;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import static org.bukkit.Bukkit.getLogger;
@@ -162,7 +166,7 @@ public class ClickGUI implements Listener {
                 }
                 else {  // rest of inventory
                     if(menu_type.contains( menu_type )) {
-                        if(menu_type.contains("Market Orders") || menu_type.contains("Limit Orders") && !menu_type.contains(":")) {
+                        if((menu_type.contains("Market Orders") || menu_type.contains("Limit Orders")) && !menu_type.contains(":")) {
                             String subMenu[] = menu_type.split(":", 3);
                             if(e.getSlot() == 20) {  menu_type = subMenu[0] + ":0:0";  }                       // Category 0 page 0
                             else if(e.getSlot() == 21) {  menu_type = subMenu[0] + ":1:0";  }                  // Category 1 page 0
@@ -207,7 +211,7 @@ public class ClickGUI implements Listener {
                             ItemStack item = e.getCurrentItem();
                             ItemMeta meta = item.getItemMeta();
                             String item_json = ItemexCommand.identify_item( item );
-                            System.out.println("JSON: " + item_json);
+                            //System.out.println("JSON: " + item_json);
                             String customName = "";
 
                             if (meta != null && meta.hasDisplayName()) {
@@ -234,10 +238,10 @@ public class ClickGUI implements Listener {
                         }
 
 
+
                         else if (menu_type.contains("Market Orders") || menu_type.contains("Limit Orders")){
                             // GET ITEM TO BUY OR SELL
                             //System.out.println("# DEBUG: ITEM: " + e.getCurrentItem().getType() + " Click: " + e.getClick() + " Menutype: " + menu_type);
-
                             ItemStack currentItem = e.getCurrentItem();
                             String item_json = identify_item(currentItem);
                             String itemid = "";
@@ -268,7 +272,17 @@ public class ClickGUI implements Listener {
                                         //TextComponent message = new TextComponent(ChatColor.MAGIC + "X" + ChatColor.BLUE + " -> (" + ChatColor.GOLD + Itemex.language.getString("click_here") + ChatColor.BLUE + ") "  + Itemex.language.getString("cs_click_execute_sell") + itemid + " "+ amount + " market");
                                         //message.setClickEvent( new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ix sell " + itemid +" "+ amount +" market confirm"));
                                         //p.spigot().sendMessage(message);
-                                        ItemexCommand.create_order(p, item_json, Itemex.getPlugin().mtop.get(item_json).get_top_buyorder_prices()[3], amount, "sell", "market");
+
+                                        // search if player have enought in inventory
+                                        String parts[] = getFreeInventory(p, item_json).split(":");
+                                        int inv_item_amount = Integer.parseInt( parts[1] );
+                                        if( amount <= inv_item_amount) { // enough in inv
+                                            p.sendMessage(ItemexCommand.create_order(p, item_json, Itemex.getPlugin().mtop.get(item_json).get_top_buyorder_prices()[3], amount, "sell", "market"));
+                                            p.getInventory().removeItem( constructItem(item_json, amount));
+                                        }
+                                        else { // not enought items
+                                            p.sendMessage(ChatColor.RED + " " + Itemex.language.getString("item_not_in_inventory"));
+                                        }
                                         e.getView().close();
                                         return;
                                         //ItemexCommand.create_order(p, itemid, Itemex.getPlugin().mtop.get(itemid).get_top_buyorder_prices()[3], amount, "sell", "market");
@@ -314,9 +328,12 @@ public class ClickGUI implements Listener {
 
 
                 // -- MENU START -------------------------------------------------------
-                if( (e.getSlot() == 7 || e.getSlot() == 8) && !menu_type.contains( "Orders" ) && !menu_type.contains( "Order Book" ) ) {} // menu_type.contains("Orders:") for update add 64
+                if( (e.getSlot() == 7 || e.getSlot() == 8) && !menu_type.contains( "Orders" ) && !menu_type.contains( "Order Book" ) ) {
+                    //System.out.println("CLICKED 7 or 8");
+                } // menu_type.contains("Orders:") for update add 64
 
                 else {
+                    //System.out.println("create inventory");
 
                     // CREATE INVENTORY
                     Inventory inv = Bukkit.createInventory(null, 6*9, ChatColor.BLACK + menu_type);
@@ -524,6 +541,7 @@ public class ClickGUI implements Listener {
 
                     // -- MENU END -------------------------------------------------------
                     if( menu_type.contains("ITEMEX - Market Orders") || menu_type.contains("ITEMEX - Limit Orders")) {
+                        //System.out.println("# DEBUG: ITEMEX - Market or Limit Orders");
 
                         if(!menu_type.contains(":")) {  // SHOW CATEGORY
                             if( menu_type.contains("ITEMEX - Market Orders") )
@@ -588,76 +606,116 @@ public class ClickGUI implements Listener {
                                     ItemStack item = ItemexCommand.constructItem(itemid, 1);
                                     //ItemStack item = ItemexCommand.constructItem(itemid, amount); add amount to item
 
-                                    ItemMeta itemMeta = item.getItemMeta();
-                                    itemMeta.setDisplayName(ChatColor.WHITE + get_itemid(itemid) + ChatColor.GOLD + " [" + amount +"]");
-                                    ArrayList<String> item_lore = new ArrayList<>();
+                                    if(item != null) {
+                                        ItemMeta itemMeta = item.getItemMeta();
+                                        if (itemMeta != null) {
 
-                                    item_lore.add(ChatColor.DARK_GRAY + "--------------------" );
-                                    item_lore.add(ChatColor.WHITE + Itemex.language.getString("cs_total_amount") + ChatColor.GOLD + "[" + amount +"]");
-                                    item_lore.add(ChatColor.RED + Itemex.language.getString("cs_total_sell") + format_price(sell_total) );
-                                    item_lore.add(ChatColor.GREEN +  Itemex.language.getString("cs_total_buy") + format_price(buy_total) );
-                                    item_lore.add(ChatColor.DARK_GRAY + "--------------------" );
-                                    item_lore.add(ChatColor.WHITE +  Itemex.language.getString("cs_left") + ChatColor.GREEN +  Itemex.language.getString("cs_buy") + ChatColor.WHITE + Itemex.language.getString("cs_right") + ChatColor.RED +  Itemex.language.getString("cs_sell") );
-                                    item_lore.add(ChatColor.DARK_GRAY + "--------------------" );
-                                    item_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_top_orders"));
+                                            itemMeta.setDisplayName(ChatColor.WHITE + get_itemid(itemid) + ChatColor.GOLD + " [" + amount +"]");
+                                            ArrayList<String> item_lore = new ArrayList<>();
 
-                                    if(Itemex.getPlugin().mtop.get(itemid) == null) {
-                                        for(int z=0; z <= 3; z++)
-                                            item_lore.add(ChatColor.DARK_RED + "-");
-                                        for(int z=0; z <= 3; z++)
-                                            item_lore.add(ChatColor.DARK_GREEN + "-");
-                                    }
-                                    else {
-                                        String best_to = "";
-                                        TopOrders topo = Itemex.getPlugin().mtop.get( itemid );
+                                            item_lore.add(ChatColor.DARK_GRAY + "--------------------" );
+                                            //item_lore.add(ChatColor.WHITE + Itemex.language.getString("cs_total_amount") + ChatColor.GOLD + "[" + amount +"]");
+                                            item_lore.add(ChatColor.RED + Itemex.language.getString("cs_total_sell") + format_price(sell_total) + ChatColor.WHITE + " " + Itemex.language.getString("cs_right"));
+                                            item_lore.add(ChatColor.GREEN +  Itemex.language.getString("cs_total_buy") + format_price(buy_total) + ChatColor.WHITE + " " +  Itemex.language.getString("cs_left"));
+                                            //item_lore.add(ChatColor.DARK_GRAY + "--------------------" );
+                                            //item_lore.add(ChatColor.WHITE +  Itemex.language.getString("cs_left") + ChatColor.GREEN +  Itemex.language.getString("cs_buy") + ChatColor.WHITE + Itemex.language.getString("cs_right") + ChatColor.RED +  Itemex.language.getString("cs_sell") );
+                                            item_lore.add(ChatColor.DARK_GRAY + "--------------------" );
+                                            item_lore.add(ChatColor.DARK_GRAY + Itemex.language.getString("cs_top_orders"));
 
-                                        List<Order> sell_orders = topo.get_top_sell(Itemex.admin_function);
-                                        int z=0;
-                                        for (sh.ome.itemex.RAM.Order order : sell_orders) {
-                                            if(z == 3)
-                                                best_to = ChatColor.DARK_GREEN + Itemex.language.getString("cs_best_to_buy");
-                                            else
-                                                best_to = "";
-                                            z++;
-                                            double price = order.getPrice();
-                                            int amount = order.getAmount();
-                                            boolean isAdmin = order.isAdmin();
+                                            if(Itemex.getPlugin().mtop.get(itemid) == null) {
+                                                for(int z=0; z <= 3; z++)
+                                                    item_lore.add(ChatColor.DARK_RED + "-");
+                                                for(int z=0; z <= 3; z++)
+                                                    item_lore.add(ChatColor.DARK_GREEN + "-");
+                                            }
+                                            else {
+                                                String best_to = "";
+                                                TopOrders topo = Itemex.getPlugin().mtop.get( itemid );
 
-                                            if(amount == 0)
-                                                item_lore.add(ChatColor.DARK_RED + "[" + amount +"] " + format_price( price ) + best_to);
-                                            else if(isAdmin)
-                                                item_lore.add(ChatColor.RED + "[" + amount +"] " + format_price( price ) + best_to + ChatColor.YELLOW + " [admin]");
-                                            else
-                                                item_lore.add(ChatColor.RED + "[" + amount +"] " + format_price( price ) + best_to);
+                                                List<Order> sell_orders = topo.get_top_sell(Itemex.admin_function);
+                                                int z=0;
+                                                for (sh.ome.itemex.RAM.Order order : sell_orders) {
+                                                    if(z == 3)
+                                                        best_to = ChatColor.DARK_GREEN + Itemex.language.getString("cs_best_to_buy");
+                                                    else
+                                                        best_to = "";
+                                                    z++;
+                                                    double price = order.getPrice();
+                                                    int amount = order.getAmount();
+                                                    boolean isAdmin = order.isAdmin();
+
+                                                    if(amount == 0)
+                                                        item_lore.add(ChatColor.DARK_RED + "[" + amount +"] " + format_price( price ) + best_to);
+                                                    else if(isAdmin)
+                                                        item_lore.add(ChatColor.RED + "[" + amount +"] " + format_price( price ) + best_to + ChatColor.YELLOW + " [admin]");
+                                                    else
+                                                        item_lore.add(ChatColor.RED + "[" + amount +"] " + format_price( price ) + best_to);
+                                                }
+
+                                                List<sh.ome.itemex.RAM.Order> buy_orders = topo.get_top_buy(Itemex.admin_function);
+                                                z = 0;
+                                                for (sh.ome.itemex.RAM.Order order : buy_orders) {
+                                                    if(z == 0)
+                                                        best_to = ChatColor.DARK_RED + Itemex.language.getString("cs_best_to_sell");
+                                                    else
+                                                        best_to = "";
+                                                    z++;
+                                                    double price = order.getPrice();
+                                                    int amount = order.getAmount();
+                                                    boolean isAdmin = order.isAdmin();
+
+                                                    if(amount == 0)
+                                                        item_lore.add(ChatColor.DARK_GREEN + "[" + amount +"] " + format_price( price ) + best_to);
+                                                    else if(isAdmin)
+                                                        item_lore.add(ChatColor.GREEN + "[" + amount +"] " + format_price( price ) + best_to + ChatColor.YELLOW + " [admin]");
+                                                    else
+                                                        item_lore.add(ChatColor.GREEN + "[" + amount +"] " + format_price( price ) + best_to);
+                                                }
+
+                                                item_lore.add(ChatColor.DARK_GRAY + "--------------------" );
+                                                item_lore.add(ChatColor.DARK_GRAY + "- Last Trades: -" );
+
+                                                for (int y=0; y<=3; y++) {
+                                                    double price = topo.get_last_trade_price()[y];
+                                                    int timestamp = topo.get_last_timestamp()[y];
+                                                    String date;
+                                                    if(timestamp != 0) {
+                                                        Instant instant = Instant.ofEpochSecond(timestamp);
+                                                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd HH:mm").withZone(ZoneId.systemDefault());
+                                                        date = formatter.format(instant);
+                                                    }
+                                                    else
+                                                        date = "-";
+
+
+                                                    item_lore.add(ChatColor.DARK_AQUA.toString() + date + " - " + ChatColor.YELLOW + format_price( price ));
+                                                }
+                                            }
+
+
+
+
+                                            itemMeta.setLore(item_lore);
+                                            item.setItemMeta(itemMeta);
+                                            inv.setItem(x+max_stack-page*max_stack+18, item);
+                                        } else {
+                                            // Handle situation when itemMeta is null...
+                                            ItemStack placeholder_item = new ItemStack(Material.getMaterial(get_itemid(itemid)), 1);
+                                            ItemMeta placeholder_itemMeta = placeholder_item.getItemMeta();
+                                            placeholder_itemMeta.setDisplayName(ChatColor.DARK_PURPLE + get_itemid(itemid) + " not supported!");
+                                            placeholder_item.setItemMeta(placeholder_itemMeta);
+                                            inv.setItem(x+max_stack-page*max_stack+18, placeholder_item);
                                         }
-
-                                        List<sh.ome.itemex.RAM.Order> buy_orders = topo.get_top_buy(Itemex.admin_function);
-                                        z = 0;
-                                        for (sh.ome.itemex.RAM.Order order : buy_orders) {
-                                            if(z == 0)
-                                                best_to = ChatColor.DARK_RED + Itemex.language.getString("cs_best_to_sell");
-                                            else
-                                                best_to = "";
-                                            z++;
-                                            double price = order.getPrice();
-                                            int amount = order.getAmount();
-                                            boolean isAdmin = order.isAdmin();
-
-                                            if(amount == 0)
-                                                item_lore.add(ChatColor.DARK_GREEN + "[" + amount +"] " + format_price( price ) + best_to);
-                                            else if(isAdmin)
-                                                item_lore.add(ChatColor.GREEN + "[" + amount +"] " + format_price( price ) + best_to + ChatColor.YELLOW + " [admin]");
-                                            else
-                                                item_lore.add(ChatColor.GREEN + "[" + amount +"] " + format_price( price ) + best_to);
-                                        }
+                                    } else {
+                                        // Handle situation when item is null...
+                                        ItemStack placeholder_item = new ItemStack(Material.BARRIER);
+                                        ItemMeta placeholder_itemMeta = placeholder_item.getItemMeta();
+                                        placeholder_itemMeta.setDisplayName("Item not supported!");
+                                        placeholder_item.setItemMeta(placeholder_itemMeta);
+                                        inv.setItem(x+max_stack-page*max_stack+18, placeholder_item);
                                     }
 
 
-                                    item_lore.add(ChatColor.DARK_GRAY + "--------------------" );
-
-                                    itemMeta.setLore(item_lore);
-                                    item.setItemMeta(itemMeta);
-                                    inv.setItem(x+max_stack-page*max_stack+18, item);
 
                                 }
 
@@ -682,7 +740,7 @@ public class ClickGUI implements Listener {
 
                     else if(menu_type.contains("ITEMEX - Order Book")) {
                         String subMenu[] = menu_type.split(":", 3);
-                        System.out.println("subMenu[2]: " + subMenu[2]);
+                        //System.out.println("subMenu[2]: " + subMenu[2]);
                         boolean is_buy_not_sell = true;
                         String buy_sell_order_string = ChatColor.DARK_GREEN.toString();
                         int currentPage = Integer.parseInt(subMenu[2]); // Liest die aktuelle Seite aus dem Menu-Typen
@@ -735,8 +793,9 @@ public class ClickGUI implements Listener {
                         p.sendMessage("Fast Sell - NOT IMPLEMENTED YET. Stay tuned!");
                     }
                     else if(menu_type.contains("ITEMEX - Vault")) {
+                        //System.out.println("# DEBUG: VAULT");
                         String subMenu[] = menu_type.split(":", 3);
-                        System.out.println("subMenu[1]: " + subMenu[1]);
+                        //System.out.println("subMenu[1]: " + subMenu[1]);
                         int currentPage = Integer.parseInt(subMenu[1]); // Liest die aktuelle Seite aus dem Menu-Typen
                         int itemsPerPage = 36; // Setzt die Anzahl der Items pro Seite
 

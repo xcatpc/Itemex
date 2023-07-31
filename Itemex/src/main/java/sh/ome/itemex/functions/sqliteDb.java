@@ -5,6 +5,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import sh.ome.itemex.Itemex;
 import sh.ome.itemex.RAM.TopOrders;
 import sh.ome.itemex.commands.ItemexCommand;
@@ -90,10 +91,22 @@ public class sqliteDb {
                     " amount           TEXT     , " +
                     " timestamp        TEXT    )";
 
+            String sql5 = "CREATE TABLE IF NOT EXISTS SETTINGS " +
+                    "(id INTEGER PRIMARY KEY AUTOINCREMENT     ," +
+                    " player_uuid           TEXT UNIQUE    , " +
+                    " set1                  TEXT    , " +
+                    " set2                  TEXT    , " +
+                    " set3                  TEXT    , " +
+                    " set4                  TEXT    , " +
+                    " set5                  TEXT    , " +
+                    " set6                  TEXT    , " +
+                    " withdraw_threshold    INT     )";
+
             stmt.executeUpdate(sql);
             stmt.executeUpdate(sql2);
             stmt.executeUpdate(sql3);
             stmt.executeUpdate(sql4);
+            stmt.executeUpdate(sql5);
             stmt.close();
 
         } catch ( Exception e ) {
@@ -166,6 +179,106 @@ public class sqliteDb {
 
         return insertedId;
     }
+
+
+    public static boolean player_settings(String p_uuid, String settings, boolean player_join) {
+        Connection c = null;
+        PreparedStatement pstmt = null;
+        String sql;
+        String withdraw_threshold = settings;
+
+        try {
+            Class.forName("org.sqlite.JDBC");
+            c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+
+            sql = "INSERT OR IGNORE INTO SETTINGS (player_uuid, withdraw_threshold) VALUES (?, ?);";
+            pstmt = c.prepareStatement(sql);
+            pstmt.setString(1, p_uuid);
+            pstmt.setString(2, "0");
+            pstmt.executeUpdate();
+
+            if(!player_join) {
+                sql = "UPDATE SETTINGS SET withdraw_threshold = ? WHERE player_uuid = ?;";
+                pstmt = c.prepareStatement(sql);
+                pstmt.setString(1, settings);
+                pstmt.setString(2, p_uuid);
+                pstmt.executeUpdate();
+            }
+
+        } catch (Exception e) {
+            System.err.println(e.getClass().getName() + ": " + e.getMessage());
+            System.exit(0);
+            return false;
+        } finally {
+            if (pstmt != null) {
+                try {
+                    pstmt.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (c != null) {
+                try {
+                    c.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return true;
+    }
+
+
+    public static String get_player_settings(String p_uuid) {
+        Connection c = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        String withdraw_threshold = null;
+
+        try {
+            Class.forName("org.sqlite.JDBC");
+            c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+
+            String sql = "SELECT withdraw_threshold FROM SETTINGS WHERE player_uuid = ?;";
+            pstmt = c.prepareStatement(sql);
+            pstmt.setString(1, p_uuid);
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                withdraw_threshold = rs.getString("withdraw_threshold");
+            }
+        } catch (Exception e) {
+            System.err.println(e.getClass().getName() + ": " + e.getMessage());
+            System.exit(0);
+        } finally {
+            if (rs != null) {
+                try {
+                    rs.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (pstmt != null) {
+                try {
+                    pstmt.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (c != null) {
+                try {
+                    c.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return withdraw_threshold;
+    }
+
+
+
 
 
 
@@ -535,30 +648,70 @@ public class sqliteDb {
         if(top_buy_price != null) {
             boolean match = false;
 
+            String[] trades = get_last_trades(item, "1");
+            double[] last_trade_price = new double[trades.length];
+            int[] last_trade_timestamp = new int[trades.length];
+
+            for (int i = 0; i < trades.length; i++) {
+                String[] parts = trades[i].split(":");
+                last_trade_timestamp[i] = Integer.parseInt(parts[0]);
+                last_trade_price[i] = Double.parseDouble(parts[1]);
+            }
+
             // If item entry not exists
             if( Itemex.getPlugin().mtop.get(item) == null) {
-                TopOrders topo = new TopOrders(item, top_buy_price, top_sell_price, top_buy_amount, top_sell_amount);
+                TopOrders topo = new TopOrders(item, top_buy_price, top_sell_price, top_buy_amount, top_sell_amount, last_trade_price, last_trade_timestamp);
                 Itemex.getPlugin().mtop.put(item, topo);
             }
             else {
-                Itemex.getPlugin().mtop.get(item).update_topOrders(item, top_buy_price, top_sell_price, top_buy_amount, top_sell_amount);
+                Itemex.getPlugin().mtop.get(item).update_topOrders(item, top_buy_price, top_sell_price, top_buy_amount, top_sell_amount, last_trade_price, last_trade_timestamp);
             }
+
             match = Itemex.getPlugin().mtop.get(item).find_order_match();
 
-            // ONLY FOR TESTING
-            //Itemex.getPlugin().mtop.get(item).printTopOrders();
-
-
-
             if(match && update) {
-                //System.out.println("# DEBUG - at load best order to ram: item: " + item);
                 fulfillOrder(item);
             }
-            //System.out.println("GET: " + Itemex.getPlugin().mtop.get(item).get_top_sellorder_prices()[0]);
         }
 
-
     }
+
+
+    public static String[] get_last_trades(String item_json, String max_entries) {
+        Connection c = null;
+        Statement stmt = null;
+        List<String> trades = new ArrayList<String>();
+
+        // SELLORDERS
+        try {
+            Class.forName("org.sqlite.JDBC");
+            c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+            stmt = c.createStatement();
+            String sql = "SELECT * FROM FULFILLEDORDERS WHERE itemid = '" + item_json + "'  ORDER by timestamp ASC LIMIT '" + max_entries + "'";
+
+            ResultSet rs = stmt.executeQuery(sql);
+
+            while (rs.next()) {
+                double temp_price = rs.getDouble("price");
+                String temp_timestamp = rs.getString("timestamp"); // Assuming amount is the timestamp based on your previous code
+                trades.add(temp_timestamp + ":" + temp_price);
+            }
+            rs.close();
+            stmt.close();
+
+        } catch ( Exception e ) {
+            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+            System.exit(0);
+        }
+
+        while (trades.size() < 4) {
+            trades.add("0:0");
+        }
+
+        return trades.toArray(new String[0]);
+    }
+
+
 
 
     private static Connection connect() {
@@ -777,13 +930,12 @@ public class sqliteDb {
         double buyer_total = sub_total + (sub_total/100*Itemex.broker_fee_buyer);
         double seller_total = sub_total - (sub_total/100*Itemex.broker_fee_seller);
 
-
         if(be_ordertype.contains("admin")) { // buyorder is admin
             OfflinePlayer o_seller = Bukkit.getOfflinePlayer(UUID.fromString(seller_uuid));
             Player seller = Bukkit.getPlayer(UUID.fromString(seller_uuid));
             econ.depositPlayer(o_seller, seller_total);         // give money to seller
             if(seller != null)
-                seller.sendMessage("" + Itemex.language.getString("sellorder_C") + ChatColor.GREEN+ Itemex.language.getString("sq_fulfilled") + ChatColor.WHITE + Itemex.language.getString("sq_you_sold") + " [" + amount + "] "  + itemid + Itemex.language.getString("sq_for") + ChatColor.GREEN + " " + format_price( seller_total ) );
+                seller.sendMessage("" + Itemex.language.getString("sellorder_C") + ChatColor.GREEN+ Itemex.language.getString("sq_fulfilled") + ChatColor.WHITE + Itemex.language.getString("sq_you_sold") + " [" + amount + "] "  + ItemexCommand.get_meta(itemid) + Itemex.language.getString("sq_for") + ChatColor.GREEN + " " + format_price( seller_total ) );
 
             insertFullfilledOrders(seller_uuid, "admin", itemid, amount, price); // Insert Fullfilled order into db
             return true;
@@ -799,7 +951,7 @@ public class sqliteDb {
                 }
                 else {
                     insertPayout(buyer_uuid, itemid, amount); // Insert item payout into db
-                    buyer.sendMessage("" + Itemex.language.get("buyorder_C") + ChatColor.GREEN+ Itemex.language.getString("sq_fulfilled") + ChatColor.WHITE + " " + Itemex.language.getString("sq_you_got") + " [" + amount + "] "  + itemid + Itemex.language.getString("sq_for") + ChatColor.RED + " " + format_price( buyer_total ) );
+                    buyer.sendMessage("" + Itemex.language.get("buyorder_C") + ChatColor.GREEN+ Itemex.language.getString("sq_fulfilled") + ChatColor.WHITE + " " + Itemex.language.getString("sq_you_got") + " [" + amount + "] "  + ItemexCommand.get_meta(itemid) + Itemex.language.getString("sq_for") + ChatColor.RED + " " + format_price( buyer_total ) );
                     TextComponent message = new TextComponent("\n" + ChatColor.BLUE + ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + Itemex.language.getString("click_here") + ChatColor.BLUE + ") " + Itemex.language.getString("sq_you_can_with") + " /ix withdraw " + get_meta(itemid) + " " + amount);
                     message.setClickEvent( new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ix withdraw " + get_meta(itemid) + " " + amount));
                     buyer.spigot().sendMessage(message);
@@ -844,11 +996,32 @@ public class sqliteDb {
                 //System.out.println("# DEBUG: withdraw the buy to user -> not insert to ChestShop order");
                 if(buyer == null) {
                     //System.out.println("--DEBUG: BUYER IS OFFLINE!");
-                    insertPayout(buyer_uuid, itemid, amount); // Insert item payout into db
+                    insertPayout(buyer_uuid, itemid, amount);
+
                 }
                 else {
-                    insertPayout(buyer_uuid, itemid, amount); // Insert item payout into db
-                    buyer.sendMessage("" + Itemex.language.get("buyorder_C") + ChatColor.GREEN+ Itemex.language.getString("sq_fulfilled") + ChatColor.WHITE + " " + Itemex.language.getString("sq_you_got") + " [" + amount + "] "  + itemid + Itemex.language.getString("sq_for") + ChatColor.RED + " " + format_price( buyer_total ) );
+                    int withdraw_threshold = Integer.parseInt(get_player_settings(buyer_uuid));
+
+                    // DIRECT PAYOUT
+                    String[] results =  ItemexCommand.getFreeInventory(buyer, itemid).split(":");;
+                    int player_max_items = Integer.parseInt(results[2]);
+
+                    if(amount > withdraw_threshold) {
+                        //buyer.sendMessage("1 player_max_items: " + player_max_items + " amount: " + amount);
+                        insertPayout(buyer_uuid, itemid, amount); // Insert item payout into db
+                    }
+
+                    else if(amount <= withdraw_threshold) {
+                        //buyer.sendMessage("2 player_max_items: " + player_max_items + " amount: " + amount);
+                        ItemStack item2 = constructItem(itemid, amount);
+                        buyer.getInventory().addItem(item2);
+                    }
+                    else {
+                        // payout directly amount = withdraw_threshold
+                        buyer.sendMessage("error");
+                    }
+
+                    buyer.sendMessage("" + Itemex.language.get("buyorder_C") + ChatColor.GREEN+ Itemex.language.getString("sq_fulfilled") + ChatColor.WHITE + " " + Itemex.language.getString("sq_you_got") + " [" + amount + "] "  + ItemexCommand.get_meta(itemid) + Itemex.language.getString("sq_for") + ChatColor.RED + " " + format_price( buyer_total ) );
                     TextComponent message = new TextComponent("\n" + ChatColor.BLUE + ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + Itemex.language.getString("click_here") + ChatColor.BLUE + ") " + Itemex.language.getString("sq_you_can_with") + " /ix withdraw " + get_meta(itemid) + " " + amount);
                     message.setClickEvent( new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ix withdraw " + get_meta(itemid) + " " + amount));
                     buyer.spigot().sendMessage(message);
@@ -856,7 +1029,7 @@ public class sqliteDb {
             }
             else {  // send the item to chest shop order
                 //System.out.println("# DEBUG: Not withdraw the buy to user -> insert to ChestShop order");
-                //System.out.println(be_ordertype);
+                System.out.println(be_ordertype);
                 String[] parts = be_ordertype.split(":");
                 OrderBuffer temp = getOrder(parts[3], false);
                 updateOrder("SELLORDERS", Integer.parseInt(parts[3]),temp.amount + amount, temp.price, temp.ordertype, temp.itemid);
@@ -869,7 +1042,7 @@ public class sqliteDb {
                 //System.out.println("--DEBUG: SELLER IS OFFLINE!");
             }
             else {
-                seller.sendMessage("" + Itemex.language.getString("sellorder_C") + ChatColor.GREEN+ Itemex.language.getString("sq_fulfilled") + ChatColor.WHITE + Itemex.language.getString("sq_you_sold") + " [" + amount + "] "  + itemid + Itemex.language.getString("sq_for") + ChatColor.GREEN + " " + format_price( seller_total ) );
+                seller.sendMessage("" + Itemex.language.getString("sellorder_C") + ChatColor.GREEN+ Itemex.language.getString("sq_fulfilled") + ChatColor.WHITE + Itemex.language.getString("sq_you_sold") + " [" + amount + "] "  + ItemexCommand.get_meta(itemid) + Itemex.language.getString("sq_for") + ChatColor.GREEN + " " + format_price( seller_total ) );
             }
 
 
@@ -1197,5 +1370,7 @@ public class sqliteDb {
             this.itemid = itemid;
         }
     }
+
+
 
 }
