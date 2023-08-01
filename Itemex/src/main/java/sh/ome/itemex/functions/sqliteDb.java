@@ -28,6 +28,8 @@ public class sqliteDb {
     private double price;
     private long timestamp;
 
+    static String workingDir = System.getProperty("user.dir");
+
 
 
     public sqliteDb(ItemexCommand.Order sellorder) { //constructor
@@ -54,7 +56,8 @@ public class sqliteDb {
 
         try {
             Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+
             stmt = c.createStatement();
 
             String sql = "CREATE TABLE IF NOT EXISTS SELLORDERS " +
@@ -102,11 +105,20 @@ public class sqliteDb {
                     " set6                  TEXT    , " +
                     " withdraw_threshold    INT     )";
 
+            String sql6 = "CREATE TABLE IF NOT EXISTS SELL_NOTIFICATION " +
+                    "(id INTEGER PRIMARY KEY AUTOINCREMENT     ," +
+                    " player_uuid      TEXT    , " +
+                    " itemid           TEXT    , " +
+                    " amount           TEXT     , " +
+                    " price            TEXT     , " +
+                    " timestamp        TEXT    )";
+
             stmt.executeUpdate(sql);
             stmt.executeUpdate(sql2);
             stmt.executeUpdate(sql3);
             stmt.executeUpdate(sql4);
             stmt.executeUpdate(sql5);
+            stmt.executeUpdate(sql6);
             stmt.close();
 
         } catch ( Exception e ) {
@@ -130,7 +142,8 @@ public class sqliteDb {
 
         try {
             Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+
             stmt = c.createStatement();
 
             String sql = "INSERT INTO " + table_name + " (player_uuid, itemid, ordertype, amount, price, timestamp) " +
@@ -189,7 +202,8 @@ public class sqliteDb {
 
         try {
             Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+
 
             sql = "INSERT OR IGNORE INTO SETTINGS (player_uuid, withdraw_threshold) VALUES (?, ?);";
             pstmt = c.prepareStatement(sql);
@@ -237,7 +251,8 @@ public class sqliteDb {
 
         try {
             Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+
 
             String sql = "SELECT withdraw_threshold FROM SETTINGS WHERE player_uuid = ?;";
             pstmt = c.prepareStatement(sql);
@@ -289,7 +304,8 @@ public class sqliteDb {
 
         try {
             Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+
             stmt = c.createStatement();
 
             String sql = "INSERT INTO FULFILLEDORDERS (seller_uuid, buyer_uuid, itemid, amount, price, timestamp) " +
@@ -316,7 +332,8 @@ public class sqliteDb {
 
         try {
             Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+
             stmt = c.createStatement();
 
             String sql = "INSERT INTO PAYOUTS (player_uuid,  itemid, amount, timestamp) " +
@@ -334,6 +351,72 @@ public class sqliteDb {
     } // end insertPayout
 
 
+
+    public static boolean insert_sellNotification(String player_uuid, String itemid, double price, int amount) {
+        System.out.println("AT INSERTPAYOUTinsert_sellNotification");
+        Connection c = null;
+        Statement stmt = null;
+
+        try {
+            Class.forName("org.sqlite.JDBC");
+            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+
+            stmt = c.createStatement();
+
+            String sql = "INSERT INTO SELL_NOTIFICATION (player_uuid, itemid, amount, price, timestamp) " +
+                    "VALUES ('" + player_uuid + "', '" + itemid + "', '" + amount + "', '" + price + "', '" + Instant.now().getEpochSecond() + "' );";
+
+
+            stmt.executeUpdate(sql);
+            stmt.close();
+
+        } catch ( Exception e ) {
+            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+            System.exit(0);
+            return false;
+        }
+        return true;
+    } // end insert_sellNotification
+
+
+    public static List<Map<String, Object>> get_sellNotification(String playerUUID) {
+        Connection c = null;
+        Statement stmt = null;
+        List<Map<String, Object>> sellNotifications = new ArrayList<>();
+
+        try {
+            Class.forName("org.sqlite.JDBC");
+            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+
+            stmt = c.createStatement();
+
+            String sql = "SELECT * FROM SELL_NOTIFICATION WHERE player_uuid = '"+playerUUID+"'";
+
+            ResultSet rs = stmt.executeQuery(sql);
+            ResultSetMetaData rsmd = rs.getMetaData();
+            int columnCount = rsmd.getColumnCount();
+
+            while (rs.next()) {
+                Map<String, Object> row = new HashMap<>();
+                for (int i = 1; i <= columnCount; i++) {
+                    row.put(rsmd.getColumnName(i), rs.getObject(i));
+                }
+                sellNotifications.add(row);
+            }
+            rs.close();
+            stmt.executeUpdate("DELETE FROM SELL_NOTIFICATION WHERE player_uuid = '"+playerUUID+"'");
+
+        } catch (Exception e) {
+            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+            return Collections.emptyList();
+        }
+
+        return sellNotifications;
+    }
+
+
+
+
     /*
     public static boolean updatePayout(String player_uuid, String item_json, int amount) {
         //System.out.println("AT UPDATE PAYOUT");
@@ -347,7 +430,8 @@ public class sqliteDb {
             //System.out.println("remove payout entry");
             try {
                 Class.forName("org.sqlite.JDBC");
-                c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+                String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+
                 stmt = c.createStatement();
                 String sql = "DELETE FROM PAYOUTS WHERE id = " + id;
 
@@ -365,7 +449,8 @@ public class sqliteDb {
             //System.out.println("update payout entry");
             try {
                 Class.forName("org.sqlite.JDBC");
-                c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+                String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+
                 stmt = c.createStatement();
                 String sql = "UPDATE PAYOUTS SET amount = " + amount +  " WHERE id = " + id;
 
@@ -388,7 +473,8 @@ public class sqliteDb {
 
         try {
             Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+
             stmt = c.createStatement();
 
             while (amount > 0) {
@@ -443,7 +529,8 @@ public class sqliteDb {
 
         try {
             Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+
             stmt = c.createStatement();
             String sql = "SELECT * FROM PAYOUTS WHERE player_uuid = '" + player_uuid + "' ORDER by timestamp";
 
@@ -497,7 +584,8 @@ public class sqliteDb {
 
         try {
             Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+
             stmt = c.createStatement();
 
             stmt.executeUpdate(sql);
@@ -532,7 +620,8 @@ public class sqliteDb {
 
         try {
             Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+
             stmt = c.createStatement();
 
             stmt.executeUpdate(sql);
@@ -579,7 +668,8 @@ public class sqliteDb {
         // SELLORDERS
         try {
             Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+
             stmt = c.createStatement();
             String sql = "SELECT * FROM SELLORDERS WHERE itemid = '" + item + "' ORDER by price ASC LIMIT 20";
 
@@ -615,7 +705,8 @@ public class sqliteDb {
         // BUYORDERS
         try {
             Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+
             stmt = c.createStatement();
             String sql = "SELECT * FROM BUYORDERS WHERE itemid = '" + item + "' ORDER by price DESC LIMIT 20";
 
@@ -648,7 +739,7 @@ public class sqliteDb {
         if(top_buy_price != null) {
             boolean match = false;
 
-            String[] trades = get_last_trades(item, "1");
+            String[] trades = get_last_trades(item, "4");
             double[] last_trade_price = new double[trades.length];
             int[] last_trade_timestamp = new int[trades.length];
 
@@ -685,9 +776,10 @@ public class sqliteDb {
         // SELLORDERS
         try {
             Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+
             stmt = c.createStatement();
-            String sql = "SELECT * FROM FULFILLEDORDERS WHERE itemid = '" + item_json + "'  ORDER by timestamp ASC LIMIT '" + max_entries + "'";
+            String sql = "SELECT * FROM FULFILLEDORDERS WHERE itemid = '" + item_json + "'  ORDER by timestamp DESC LIMIT '" + max_entries + "'";
 
             ResultSet rs = stmt.executeQuery(sql);
 
@@ -764,7 +856,8 @@ public class sqliteDb {
         else {
             try {
                 Class.forName("org.sqlite.JDBC");
-                c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+                String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+
                 stmt = c.createStatement();
                 String sql = "UPDATE " + table_name + " SET ordertype = '" + ordertype + "',  amount = " + amount +  ", price = " + price + " WHERE id = " + ID;
 
@@ -990,7 +1083,7 @@ public class sqliteDb {
                     buyer.spigot().sendMessage(message);
                 }
                 insertPayout(seller_uuid, itemid, amount); // Insert item payout into db
-                return true;
+                //return true;
             }
             if(normal_buyorder) { // send the item to payouts
                 //System.out.println("# DEBUG: withdraw the buy to user -> not insert to ChestShop order");
@@ -1022,9 +1115,15 @@ public class sqliteDb {
                     }
 
                     buyer.sendMessage("" + Itemex.language.get("buyorder_C") + ChatColor.GREEN+ Itemex.language.getString("sq_fulfilled") + ChatColor.WHITE + " " + Itemex.language.getString("sq_you_got") + " [" + amount + "] "  + ItemexCommand.get_meta(itemid) + Itemex.language.getString("sq_for") + ChatColor.RED + " " + format_price( buyer_total ) );
-                    TextComponent message = new TextComponent("\n" + ChatColor.BLUE + ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + Itemex.language.getString("click_here") + ChatColor.BLUE + ") " + Itemex.language.getString("sq_you_can_with") + " /ix withdraw " + get_meta(itemid) + " " + amount);
-                    message.setClickEvent( new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ix withdraw " + get_meta(itemid) + " " + amount));
-                    buyer.spigot().sendMessage(message);
+                    if(amount <= withdraw_threshold) {
+                        buyer.sendMessage("Item has been sent directly to your player inventory.");
+                    }
+                    else {
+                        TextComponent message = new TextComponent("\n" + ChatColor.BLUE + ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + Itemex.language.getString("click_here") + ChatColor.BLUE + ") " + Itemex.language.getString("sq_you_can_with") + " /ix withdraw " + get_meta(itemid) + " " + amount);
+                        message.setClickEvent( new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ix withdraw " + get_meta(itemid) + " " + amount));
+                        buyer.spigot().sendMessage(message);
+                    }
+
                 }
             }
             else {  // send the item to chest shop order
@@ -1039,9 +1138,11 @@ public class sqliteDb {
             }
 
             if(seller == null) {
+                insert_sellNotification(seller_uuid, itemid, seller_total, amount);
                 //System.out.println("--DEBUG: SELLER IS OFFLINE!");
             }
             else {
+                //System.out.println("Seller onlie");
                 seller.sendMessage("" + Itemex.language.getString("sellorder_C") + ChatColor.GREEN+ Itemex.language.getString("sq_fulfilled") + ChatColor.WHITE + Itemex.language.getString("sq_you_sold") + " [" + amount + "] "  + ItemexCommand.get_meta(itemid) + Itemex.language.getString("sq_for") + ChatColor.GREEN + " " + format_price( seller_total ) );
             }
 
@@ -1066,7 +1167,8 @@ public class sqliteDb {
         else {
             try {
                 Class.forName("org.sqlite.JDBC");
-                c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+                String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+
                 stmt = c.createStatement();
                 String sql = "DELETE FROM " + table_name + " WHERE id = " + ID;
 
@@ -1099,7 +1201,8 @@ public class sqliteDb {
         if(table_name.equals("SELLORDERS")) {
             try {
                 Class.forName("org.sqlite.JDBC");
-                c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+                String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+
                 stmt = c.createStatement();
                 String sql = "SELECT * FROM SELLORDERS WHERE id = '" + ID + "'";
 
@@ -1126,7 +1229,8 @@ public class sqliteDb {
         // delete the order
         try {
             Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+
             stmt = c.createStatement();
             String sql = "DELETE FROM " + table_name + " WHERE id = " + ID + " AND player_uuid = '" + player_uuid + "'";
 
@@ -1169,7 +1273,8 @@ public class sqliteDb {
 
         try {
             Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+
             stmt = c.createStatement();
 
             stmt.executeUpdate(sql);
@@ -1204,7 +1309,8 @@ public class sqliteDb {
 
         try {
             Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+
             stmt = c.prepareStatement(sql);
 
             stmt.setString(1, itemid);
@@ -1248,7 +1354,8 @@ public class sqliteDb {
 
         try {
             Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+
             stmt = c.createStatement();
 
             ResultSet rs = stmt.executeQuery(sql);
@@ -1287,7 +1394,8 @@ public class sqliteDb {
 
         try {
             Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+
 
             // Select all entries from the table
             String selectSql = "SELECT id, " + fieldName + " FROM " + tableName;

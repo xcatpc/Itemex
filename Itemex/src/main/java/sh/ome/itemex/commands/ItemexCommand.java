@@ -123,7 +123,7 @@ public class ItemexCommand implements CommandExecutor {
                         return true;
                     }
 
-                    if (strings.length == 1 || strings.length == 2) { // /ix buy given itemID or whatisinmyrighthand
+                    if (strings.length == 1) { // /ix buy given itemID or whatisinmyrighthand
                         reply_command = "\n\n\n";
                         // check if something is in right hand
 
@@ -154,32 +154,54 @@ public class ItemexCommand implements CommandExecutor {
 
                     } // end ix buy
 
-                    else if (strings.length >= 4 && strings.length <= 6) { // /ix buy <itemid> <amount> limit <price>
-                        double price;
-                        int amount = 0;
+                    else if (strings.length == 4 || strings.length == 5) { // /ix buy <itemid> <amount> limit <price>
+                        //p.sendMessage("strlen: " + strings.length);
+                        double price = 1;
+                        int amount = 1;
                         boolean buy_order_ok = true;
                         itemid = strings[1].toUpperCase();
                         item_json = get_json_from_meta(itemid);
                         //p.sendMessage(itemid);
                         //p.sendMessage(item_json);
 
-                        if (strings[3].equals("market")) {
-                            price = Itemex.getPlugin().mtop.get(item_json).get_top_sellorder_prices()[0];
-                            if (price <= 0)
-                                buy_order_ok = false;
-                        } else {
-                            price = parseFloat(strings[4]);
-                        }
-
                         //proof amount
                         if (strings[2].equals("max"))
                             amount = item_counter;
-                        else
-                            amount = parseInt(strings[2]);
+                        else {
+                            try {
+                                amount = Integer.parseInt(strings[2]);
+                            } catch (NumberFormatException e) {
+                                buy_order_ok = false;
+                                reply_command = reply_command + "amount have to be an integer";
+                                amount = 0;
+                            }
+                        }
                         if (amount <= 0) {
                             buy_order_ok = false;
                             reply_command = reply_command + Itemex.language.getString("buy_price_cant_be_0");
                         }
+
+
+                        //proof if item is constructible:
+                        ItemStack item_test = constructItem(item_json, 1);
+                        if(item_test.getType().toString().equalsIgnoreCase("AIR"))
+                            buy_order_ok = false;
+
+                        if (strings[3].equals("market")) {
+                            if(Itemex.getPlugin().mtop.get(item_json) == null) {
+                                buy_order_ok = false;
+                                price = 0;
+                                return false;
+                            }
+                            else
+                                price = Itemex.getPlugin().mtop.get(item_json).get_top_sellorder_prices()[0];
+                            if (price <= 0)
+                                buy_order_ok = false;
+                        } else if(strings.length == 5) {
+                            price = parseFloat(strings[4]);
+                        }
+
+
 
 
                         //proof market or limit
@@ -187,7 +209,7 @@ public class ItemexCommand implements CommandExecutor {
                             reply_command = reply_command + Itemex.language.getString("buy_wrong_market_option") + "(" + strings[3] + ")" + Itemex.language.get("buy_only_market_or_limit_accepted");
                             buy_order_ok = false;
                         }
-                        if (strings[3].equals("limit")) {
+                        if (strings[3].equals("limit") && strings.length == 5) {
                             if (price <= 0) {
                                 reply_command = reply_command + Itemex.language.get("buy_price_not_allowed_lower_than_0") + price;
                                 buy_order_ok = false;
@@ -310,7 +332,7 @@ public class ItemexCommand implements CommandExecutor {
                     }
 
 
-                    else if (strings.length >= 4 && strings.length <= 6) { // /ix sell <itemid> <amount> limit <price>
+                    else if (strings.length == 4 || strings.length == 5) { // /ix sell <itemid> <amount> limit <price>
                         double price = 0;
                         boolean sell_order_ok = true;
                         boolean item_found = false;
@@ -847,11 +869,28 @@ public class ItemexCommand implements CommandExecutor {
 
                     // /ix deposit <itemid> <amount>
                     if (strings.length == 3) {
-                        boolean status = deposit(strings[1], strings[2], p);
-                        if(status)
-                            p.sendMessage( ChatColor.GREEN + "deposited!");
+                        boolean is_integer = true;
+                        try {
+                            Integer.parseInt(strings[2]);
+                        } catch (NumberFormatException e) {
+                            is_integer = false;
+                        }
+                        if(strings[2].equalsIgnoreCase("max"))
+                            is_integer = true;
+
+                        if(is_integer) {
+                            boolean status = deposit(strings[1], strings[2], p);
+                            if(status)
+                                p.sendMessage( ChatColor.GREEN + "deposited!");
+                            else
+                                p.sendMessage( ChatColor.RED + "error at deposit: Item not found or not enough amount of it!");
+                        }
                         else
-                            p.sendMessage( ChatColor.RED + "error at deposit!");
+                        {
+                            p.sendMessage("The amount have to be an integer");
+                        }
+
+
                     }
 
                     else {
@@ -875,12 +914,27 @@ public class ItemexCommand implements CommandExecutor {
                         p.sendMessage(ChatColor.RED + Itemex.language.getString("message_no_permission"));
                         return true;
                     }
-                    if (strings.length == 3) {
-                        boolean status = sqliteDb.player_settings(p.getUniqueId().toString(), strings[2], false);
-                        if(status)
-                            p.sendMessage("withdraw_threshold set to: " + ChatColor.GREEN + strings[2]);
+
+                    if (strings.length == 3 && strings[1].equalsIgnoreCase("withdraw_threshold")) {
+                        // proof if strings[2] is an integer
+                        boolean is_integer = true;
+                        try {
+                            Integer.parseInt(strings[2]);
+                        } catch (NumberFormatException e) {
+                            is_integer = false;
+                        }
+
+                        if(is_integer) {
+                            boolean status = sqliteDb.player_settings(p.getUniqueId().toString(), strings[2], false);
+                            if(status)
+                                p.sendMessage("withdraw_threshold set to: " + ChatColor.GREEN + strings[2]);
+                            else
+                                p.sendMessage("Error at DB. Please send a email to: xcatpc@proton.me to fix the bug.");
+                        }
                         else
-                            p.sendMessage("Error at DB. Please send a email to: xcatpc@proton.me to fix the bug.");
+                            p.sendMessage("The amount have to be an integer");
+
+
                     }
                     else {
                         reply_command = reply_command + Itemex.language.getString("wrong_command") + " /help";
@@ -1155,8 +1209,9 @@ public class ItemexCommand implements CommandExecutor {
         return reply;
     }
 
+
     public static String create_order(Player p, String item_json, double price, int amount, String buy_or_sell, String market_option) {
-        System.out.println("# DEBUG AT: create_order: " + amount + " item_json: " + item_json);
+        //System.out.println("# DEBUG AT: create_order: " + amount + " item_json: " + item_json);
         String itemid = get_itemid(item_json);
         String reply_command = "";
 
@@ -1328,6 +1383,8 @@ public class ItemexCommand implements CommandExecutor {
 
 
     public static String identify_item(ItemStack item) {
+        if(item == null)
+            return null;
         String itemid = item.getType().toString().toUpperCase();
         ItemMeta itemMeta = item.getItemMeta();
 
@@ -1499,12 +1556,24 @@ public class ItemexCommand implements CommandExecutor {
                 String key = entry.getKey();
                 JsonElement value = entry.getValue();
 
+                if (key.equals("itemid")) {
+                    itemid = value.getAsString();
+                    Material material = Material.getMaterial(itemid);
+                    if (material == null) {
+                        //System.out.println("Invalid Material: " + itemid);  // Log the invalid material
+                        return new ItemStack(Material.AIR);
+                    }
+                    item = new ItemStack(material, amount);
+                    meta = item.getItemMeta();
+                }
+
+/*
                 // Process each key accordingly
                 if (key.equals("itemid")) {
                     itemid = value.getAsString();
                     item = new ItemStack(Material.getMaterial(itemid), amount);
                     meta = item.getItemMeta();
-                }
+                } */
                 // Handle Potion properties
                 else if(key.equals("bp_name") || key.equals("bp_ext") || key.equals("bp_upg")) {
                     if(key.equals("bp_name"))

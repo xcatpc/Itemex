@@ -1,8 +1,6 @@
 // new version change version in: pom.xml, Itemex.java
 
 /* BUGS AND IMPROVEMENTS:
-- add /deposit (maybe a deposit fee)
-- add /price <itemid> <graph | lastorders>
 - add goat_horns, suspicious_stew, painting support
 - error if no orders, admin enabled and then creation of chestshop!!! (seller uuid not given, its empty)
 - if server only restarts - ram still be full (complete shutdown is necessary)
@@ -20,6 +18,9 @@
 changelog 0.21.5
 - /ix order edit <buyorders | sellorders> <orderID> <price> <amount>
 - Market Orders in the GUI executing directly
+- handle wrong user inputs (ix buy, ix sell, ix setting, ix deposit)
+- /ix price shows now the newest trades
+- at player join: lists all your executed sell orders (during you was offline)
  */
 
 /*
