@@ -1,24 +1,6 @@
 package sh.ome.itemex.events;
 
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.block.*;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.SignChangeEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.inventory.InventoryOpenEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryHolder;
-import org.bukkit.inventory.ItemStack;
-import sh.ome.itemex.Itemex;
-import sh.ome.itemex.commands.ItemexCommand;
-import sh.ome.itemex.functions.sqliteDb;
-
-import java.util.HashMap;
-import java.util.UUID;
 
 import static sh.ome.itemex.functions.sqliteDb.updateOrder;
 

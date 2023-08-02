@@ -39,7 +39,6 @@ import java.util.*;
 
 import static java.lang.Float.parseFloat;
 import static java.lang.Integer.parseInt;
-import static sh.ome.itemex.Itemex.admin_function_spread_percentage;
 import static sh.ome.itemex.Itemex.econ;
 
 public class ItemexCommand implements CommandExecutor {

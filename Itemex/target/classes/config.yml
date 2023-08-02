@@ -1,6 +1,16 @@
 # Language cn, de, en, es, fr, ru supported by default
 lang: en
 
+# Choose your database architecture <sqlite | mariadb> (if you are using mysql type in mariadb)
+database_type: sqlite
+
+# Necessary if you are using mariadb or mysql
+db_name: itemex_db
+db_hostname: localhost
+db_port: 3306
+db_username: itemex
+db_passwd: Str0ngP&&7w0rt
+
 # The Admin function creates a buy- and sellorder each item with a spread (gab between buy- and sellorder) of 100% by default. You can edit this
 # variable by editing "admin_function_percentage".
 admin_function: false

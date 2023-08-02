@@ -28,7 +28,30 @@ public class sqliteDb {
     private double price;
     private long timestamp;
 
-    static String workingDir = System.getProperty("user.dir");
+
+    private static Connection createConnection() {
+        Connection c = null;
+        if(Itemex.database_type.equals("mariadb")) {
+            try {
+                Class.forName("org.mariadb.jdbc.Driver");
+                String url = "jdbc:mariadb://" + Itemex.db_hostname + ":" + Itemex.db_port + "/" + Itemex.db_name;
+                c = DriverManager.getConnection(url, Itemex.db_username, Itemex.db_passwd);
+            } catch (Exception e) {
+                System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+                System.exit(0);
+            }
+        }
+        else {
+            try {
+                Class.forName("org.sqlite.JDBC");
+                c = DriverManager.getConnection("jdbc:sqlite:./plugins/Itemex/itemex.db");
+            } catch (Exception e) {
+                System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+                System.exit(0);
+            }
+        }
+        return c;
+    }
 
 
 
@@ -50,83 +73,167 @@ public class sqliteDb {
     }
 
 
+    public static void createDBifNotExists_mariadb() {
+        Connection c = null;
+        Statement stmt = null;
+
+        c = createConnection();
+        if (c != null) {
+            try {
+                stmt = c.createStatement();
+
+                String sql = "CREATE TABLE IF NOT EXISTS SELLORDERS " +
+                        "(id INT PRIMARY KEY AUTO_INCREMENT, " +
+                        " player_uuid      TEXT, " +
+                        " itemid           TEXT, " +
+                        " ordertype        TEXT, " +
+                        " amount           INT, " +
+                        " price            REAL, " +
+                        " timestamp        TEXT)";
+
+                String sql2 = "CREATE TABLE IF NOT EXISTS BUYORDERS " +
+                        "(id INT PRIMARY KEY AUTO_INCREMENT, " +
+                        " player_uuid      TEXT, " +
+                        " itemid           TEXT, " +
+                        " ordertype        TEXT, " +
+                        " amount           INT, " +
+                        " price            REAL, " +
+                        " timestamp        TEXT)";
+
+                String sql3 = "CREATE TABLE IF NOT EXISTS FULFILLEDORDERS " +
+                        "(id INT PRIMARY KEY AUTO_INCREMENT, " +
+                        " seller_uuid      TEXT, " +
+                        " buyer_uuid       TEXT, " +
+                        " itemid           TEXT, " +
+                        " amount           INT, " +
+                        " price            REAL, " +
+                        " timestamp        TEXT)";
+
+                String sql4 = "CREATE TABLE IF NOT EXISTS PAYOUTS " +
+                        "(id INT PRIMARY KEY AUTO_INCREMENT, " +
+                        " player_uuid      TEXT, " +
+                        " itemid           TEXT, " +
+                        " amount           INT, " +
+                        " timestamp        TEXT)";
+
+                String sql5 = "CREATE TABLE IF NOT EXISTS SETTINGS " +
+                        "(id INT PRIMARY KEY AUTO_INCREMENT, " +
+                        " player_uuid           TEXT UNIQUE, " +
+                        " set1                  TEXT, " +
+                        " set2                  TEXT, " +
+                        " set3                  TEXT, " +
+                        " set4                  TEXT, " +
+                        " set5                  TEXT, " +
+                        " set6                  TEXT, " +
+                        " withdraw_threshold    INT)";
+
+                String sql6 = "CREATE TABLE IF NOT EXISTS SELL_NOTIFICATION " +
+                        "(id INT PRIMARY KEY AUTO_INCREMENT, " +
+                        " player_uuid      TEXT, " +
+                        " itemid           TEXT, " +
+                        " amount           INT, " +
+                        " price            REAL, " +
+                        " timestamp        TEXT)";
+
+                stmt.executeUpdate(sql);
+                stmt.executeUpdate(sql2);
+                stmt.executeUpdate(sql3);
+                stmt.executeUpdate(sql4);
+                stmt.executeUpdate(sql5);
+                stmt.executeUpdate(sql6);
+
+                stmt.close();
+                c.close();
+
+            } catch (SQLException e) {
+                System.err.println(e.getClass().getName() + ": " + e.getMessage());
+                System.exit(0);
+            }
+        }
+
+    } // end createDatabaseIfNotExists
+
+
     public static void createDBifNotExists() {
         Connection c = null;
         Statement stmt = null;
 
-        try {
-            Class.forName("org.sqlite.JDBC");
-            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+        c = createConnection();
+        if (c != null) {
+            try {
+                stmt = c.createStatement();
 
-            stmt = c.createStatement();
+                String sql = "CREATE TABLE IF NOT EXISTS SELLORDERS " +
+                        "(id INTEGER PRIMARY KEY AUTOINCREMENT     ," +
+                        " player_uuid      TEXT    , " +
+                        " itemid           TEXT    , " +
+                        " ordertype        TEXT    , " +
+                        " amount           TEXT     , " +
+                        " price            REAL     , " +
+                        " timestamp        TEXT    )";
 
-            String sql = "CREATE TABLE IF NOT EXISTS SELLORDERS " +
-                    "(id INTEGER PRIMARY KEY AUTOINCREMENT     ," +
-                    " player_uuid      TEXT    , " +
-                    " itemid           TEXT    , " +
-                    " ordertype        TEXT    , " +
-                    " amount           TEXT     , " +
-                    " price            REAL     , " +
-                    " timestamp        TEXT    )";
+                String sql2 = "CREATE TABLE IF NOT EXISTS BUYORDERS " +
+                        "(id INTEGER PRIMARY KEY AUTOINCREMENT     ," +
+                        " player_uuid      TEXT    , " +
+                        " itemid           TEXT    , " +
+                        " ordertype        TEXT    , " +
+                        " amount           TEXT     , " +
+                        " price            REAL     , " +
+                        " timestamp        TEXT    )";
 
-            String sql2 = "CREATE TABLE IF NOT EXISTS BUYORDERS " +
-                    "(id INTEGER PRIMARY KEY AUTOINCREMENT     ," +
-                    " player_uuid      TEXT    , " +
-                    " itemid           TEXT    , " +
-                    " ordertype        TEXT    , " +
-                    " amount           TEXT     , " +
-                    " price            REAL     , " +
-                    " timestamp        TEXT    )";
+                String sql3 = "CREATE TABLE IF NOT EXISTS FULFILLEDORDERS " +
+                        "(id INTEGER PRIMARY KEY AUTOINCREMENT     ," +
+                        " seller_uuid      TEXT    , " +
+                        " buyer_uuid       TEXT    , " +
+                        " itemid           TEXT    , " +
+                        " amount           TEXT     , " +
+                        " price            TEXT     , " +
+                        " timestamp        TEXT    )";
 
-            String sql3 = "CREATE TABLE IF NOT EXISTS FULFILLEDORDERS " +
-                    "(id INTEGER PRIMARY KEY AUTOINCREMENT     ," +
-                    " seller_uuid      TEXT    , " +
-                    " buyer_uuid       TEXT    , " +
-                    " itemid           TEXT    , " +
-                    " amount           TEXT     , " +
-                    " price            TEXT     , " +
-                    " timestamp        TEXT    )";
+                String sql4 = "CREATE TABLE IF NOT EXISTS PAYOUTS " +
+                        "(id INTEGER PRIMARY KEY AUTOINCREMENT     ," +
+                        " player_uuid      TEXT    , " +
+                        " itemid           TEXT    , " +
+                        " amount           TEXT     , " +
+                        " timestamp        TEXT    )";
 
-            String sql4 = "CREATE TABLE IF NOT EXISTS PAYOUTS " +
-                    "(id INTEGER PRIMARY KEY AUTOINCREMENT     ," +
-                    " player_uuid      TEXT    , " +
-                    " itemid           TEXT    , " +
-                    " amount           TEXT     , " +
-                    " timestamp        TEXT    )";
+                String sql5 = "CREATE TABLE IF NOT EXISTS SETTINGS " +
+                        "(id INTEGER PRIMARY KEY AUTOINCREMENT     ," +
+                        " player_uuid           TEXT UNIQUE    , " +
+                        " set1                  TEXT    , " +
+                        " set2                  TEXT    , " +
+                        " set3                  TEXT    , " +
+                        " set4                  TEXT    , " +
+                        " set5                  TEXT    , " +
+                        " set6                  TEXT    , " +
+                        " withdraw_threshold    INT     )";
 
-            String sql5 = "CREATE TABLE IF NOT EXISTS SETTINGS " +
-                    "(id INTEGER PRIMARY KEY AUTOINCREMENT     ," +
-                    " player_uuid           TEXT UNIQUE    , " +
-                    " set1                  TEXT    , " +
-                    " set2                  TEXT    , " +
-                    " set3                  TEXT    , " +
-                    " set4                  TEXT    , " +
-                    " set5                  TEXT    , " +
-                    " set6                  TEXT    , " +
-                    " withdraw_threshold    INT     )";
+                String sql6 = "CREATE TABLE IF NOT EXISTS SELL_NOTIFICATION " +
+                        "(id INTEGER PRIMARY KEY AUTOINCREMENT     ," +
+                        " player_uuid      TEXT    , " +
+                        " itemid           TEXT    , " +
+                        " amount           TEXT     , " +
+                        " price            TEXT     , " +
+                        " timestamp        TEXT    )";
 
-            String sql6 = "CREATE TABLE IF NOT EXISTS SELL_NOTIFICATION " +
-                    "(id INTEGER PRIMARY KEY AUTOINCREMENT     ," +
-                    " player_uuid      TEXT    , " +
-                    " itemid           TEXT    , " +
-                    " amount           TEXT     , " +
-                    " price            TEXT     , " +
-                    " timestamp        TEXT    )";
+                stmt.executeUpdate(sql);
+                stmt.executeUpdate(sql2);
+                stmt.executeUpdate(sql3);
+                stmt.executeUpdate(sql4);
+                stmt.executeUpdate(sql5);
+                stmt.executeUpdate(sql6);
 
-            stmt.executeUpdate(sql);
-            stmt.executeUpdate(sql2);
-            stmt.executeUpdate(sql3);
-            stmt.executeUpdate(sql4);
-            stmt.executeUpdate(sql5);
-            stmt.executeUpdate(sql6);
-            stmt.close();
+                stmt.close();
+                c.close();
 
-        } catch ( Exception e ) {
-            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-            System.exit(0);
+            } catch (SQLException e) {
+                System.err.println(e.getClass().getName() + ": " + e.getMessage());
+                System.exit(0);
+            }
         }
 
     } // end createDatabaseIfNotExists
+
 
 
 
@@ -139,51 +246,49 @@ public class sqliteDb {
         if(table_name.equalsIgnoreCase("SELLORDERS"))
             buy_or_sellorder = false; // sellorder
 
+        c = createConnection();
+        if (c != null) {
+            try {
+                stmt = c.createStatement();
 
-        try {
-            Class.forName("org.sqlite.JDBC");
-            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+                String sql = "INSERT INTO " + table_name + " (player_uuid, itemid, ordertype, amount, price, timestamp) " +
+                        "VALUES ('" + this.uuid + "', '" + this.itemid + "', '" + this.ordertype + "', '" + this.amount + "','" + this.price + "',  '" + this.timestamp + "' );";
 
-            stmt = c.createStatement();
+                stmt.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS);
 
-            String sql = "INSERT INTO " + table_name + " (player_uuid, itemid, ordertype, amount, price, timestamp) " +
-                    "VALUES ('" + this.uuid + "', '" + this.itemid + "', '" + this.ordertype + "', '" + this.amount + "','" + this.price + "',  '" + this.timestamp + "' );";
+                ResultSet generatedKeys = stmt.getGeneratedKeys();
+                if (generatedKeys.next()) {
+                    insertedId = generatedKeys.getInt(1);
 
-            stmt.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS);
+                    // charge a listing fee
+                    OfflinePlayer o_player =  Bukkit.getOfflinePlayer(UUID.fromString(this.uuid));
+                    if(buy_or_sellorder)
+                        if(Itemex.buy_listing_fee > 0.0)
+                            econ.withdrawPlayer(o_player, Itemex.buy_listing_fee);  // substract amount from player
 
-            ResultSet generatedKeys = stmt.getGeneratedKeys();
-            if (generatedKeys.next()) {
-                insertedId = generatedKeys.getInt(1);
-
-                // charge a listing fee
-                OfflinePlayer o_player =  Bukkit.getOfflinePlayer(UUID.fromString(this.uuid));
-                if(buy_or_sellorder)
-                    if(Itemex.buy_listing_fee > 0.0)
-                        econ.withdrawPlayer(o_player, Itemex.buy_listing_fee);  // substract amount from player
-
-                else
-                    if(Itemex.sell_listing_fee > 0.0)
-                        econ.withdrawPlayer(o_player, Itemex.sell_listing_fee);  // substract amount from player
-            }
-
-            stmt.close();
-        } catch (Exception e) {
-            System.err.println(e.getClass().getName() + ": " + e.getMessage());
-            System.exit(0);
-            return -1;
-        } finally {
-            if (stmt != null) {
-                try {
-                    stmt.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
+                        else
+                        if(Itemex.sell_listing_fee > 0.0)
+                            econ.withdrawPlayer(o_player, Itemex.sell_listing_fee);  // substract amount from player
                 }
-            }
-            if (c != null) {
-                try {
-                    c.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
+
+            } catch (Exception e) {
+                System.err.println(e.getClass().getName() + ": " + e.getMessage());
+                System.exit(0);
+                return -1;
+            } finally {
+                if (stmt != null) {
+                    try {
+                        stmt.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (c != null) {
+                    try {
+                        c.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
@@ -194,53 +299,58 @@ public class sqliteDb {
     }
 
 
+
     public static boolean player_settings(String p_uuid, String settings, boolean player_join) {
         Connection c = null;
         PreparedStatement pstmt = null;
         String sql;
         String withdraw_threshold = settings;
 
-        try {
-            Class.forName("org.sqlite.JDBC");
-            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+        c = createConnection();
+        if (c != null) {
+            try {
+                if(Itemex.database_type.equals("sqlite"))
+                    sql = "INSERT OR IGNORE INTO SETTINGS (player_uuid, withdraw_threshold) VALUES (?, ?);";
+                else
+                    sql = "INSERT IGNORE INTO SETTINGS (player_uuid, withdraw_threshold) VALUES (?, ?);";
 
-
-            sql = "INSERT OR IGNORE INTO SETTINGS (player_uuid, withdraw_threshold) VALUES (?, ?);";
-            pstmt = c.prepareStatement(sql);
-            pstmt.setString(1, p_uuid);
-            pstmt.setString(2, "0");
-            pstmt.executeUpdate();
-
-            if(!player_join) {
-                sql = "UPDATE SETTINGS SET withdraw_threshold = ? WHERE player_uuid = ?;";
                 pstmt = c.prepareStatement(sql);
-                pstmt.setString(1, settings);
-                pstmt.setString(2, p_uuid);
+                pstmt.setString(1, p_uuid);
+                pstmt.setString(2, "0");
                 pstmt.executeUpdate();
-            }
 
-        } catch (Exception e) {
-            System.err.println(e.getClass().getName() + ": " + e.getMessage());
-            System.exit(0);
-            return false;
-        } finally {
-            if (pstmt != null) {
-                try {
-                    pstmt.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
+                if(!player_join) {
+                    sql = "UPDATE SETTINGS SET withdraw_threshold = ? WHERE player_uuid = ?;";
+                    pstmt = c.prepareStatement(sql);
+                    pstmt.setString(1, settings);
+                    pstmt.setString(2, p_uuid);
+                    pstmt.executeUpdate();
                 }
-            }
-            if (c != null) {
-                try {
-                    c.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
+
+            } catch (Exception e) {
+                System.err.println(e.getClass().getName() + ": " + e.getMessage());
+                System.exit(0);
+                return false;
+            } finally {
+                if (pstmt != null) {
+                    try {
+                        pstmt.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (c != null) {
+                    try {
+                        c.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
         return true;
     }
+
 
 
     public static String get_player_settings(String p_uuid) {
@@ -249,42 +359,41 @@ public class sqliteDb {
         ResultSet rs = null;
         String withdraw_threshold = null;
 
-        try {
-            Class.forName("org.sqlite.JDBC");
-            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+        c = createConnection();
+        if (c != null) {
+            try {
+                String sql = "SELECT withdraw_threshold FROM SETTINGS WHERE player_uuid = ?;";
+                pstmt = c.prepareStatement(sql);
+                pstmt.setString(1, p_uuid);
+                rs = pstmt.executeQuery();
 
-
-            String sql = "SELECT withdraw_threshold FROM SETTINGS WHERE player_uuid = ?;";
-            pstmt = c.prepareStatement(sql);
-            pstmt.setString(1, p_uuid);
-            rs = pstmt.executeQuery();
-
-            if (rs.next()) {
-                withdraw_threshold = rs.getString("withdraw_threshold");
-            }
-        } catch (Exception e) {
-            System.err.println(e.getClass().getName() + ": " + e.getMessage());
-            System.exit(0);
-        } finally {
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
+                if (rs.next()) {
+                    withdraw_threshold = rs.getString("withdraw_threshold");
                 }
-            }
-            if (pstmt != null) {
-                try {
-                    pstmt.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
+            } catch (Exception e) {
+                System.err.println(e.getClass().getName() + ": " + e.getMessage());
+                System.exit(0);
+            } finally {
+                if (rs != null) {
+                    try {
+                        rs.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                 }
-            }
-            if (c != null) {
-                try {
-                    c.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
+                if (pstmt != null) {
+                    try {
+                        pstmt.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (c != null) {
+                    try {
+                        c.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
@@ -297,217 +406,145 @@ public class sqliteDb {
 
 
 
+
     public static boolean insertFullfilledOrders(String seller_uuid, String buyer_uuid, String itemid, int amount, double price) {
-        //System.out.println("AT insertFullfilledOrders");
         Connection c = null;
         Statement stmt = null;
 
-        try {
-            Class.forName("org.sqlite.JDBC");
-            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+        c = createConnection();
+        if (c != null) {
+            try {
+                stmt = c.createStatement();
 
-            stmt = c.createStatement();
+                String sql = "INSERT INTO FULFILLEDORDERS (seller_uuid, buyer_uuid, itemid, amount, price, timestamp) " +
+                        "VALUES ('" + seller_uuid + "', '" + buyer_uuid + "', '" + itemid + "', '" + amount + "','" + price + "',  '" + Instant.now().getEpochSecond() + "' );";
 
-            String sql = "INSERT INTO FULFILLEDORDERS (seller_uuid, buyer_uuid, itemid, amount, price, timestamp) " +
-                    "VALUES ('" + seller_uuid + "', '" + buyer_uuid + "', '" + itemid + "', '" + amount + "','" + price + "',  '" + Instant.now().getEpochSecond() + "' );";
-
-            stmt.executeUpdate(sql);
-            stmt.close();
-
-        } catch ( Exception e ) {
-            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-            System.exit(0);
-            return false;
+                stmt.executeUpdate(sql);
+                stmt.close();
+            } catch (Exception e) {
+                System.err.println(e.getClass().getName() + ": " + e.getMessage());
+                System.exit(0);
+                return false;
+            } finally {
+                if (stmt != null) {
+                    try {
+                        stmt.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (c != null) {
+                    try {
+                        c.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
         }
+
         // insert last price to ram
         Itemex.getPlugin().mtop.get(itemid).last_price = price;
         return true;
-    } // end insertIntoDB
-
-
-    public static boolean insertPayout(String player_uuid, String itemid, int amount) {
-        //System.out.println("AT INSERTPAYOUT");
-        Connection c = null;
-        Statement stmt = null;
-
-        try {
-            Class.forName("org.sqlite.JDBC");
-            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
-
-            stmt = c.createStatement();
-
-            String sql = "INSERT INTO PAYOUTS (player_uuid,  itemid, amount, timestamp) " +
-                    "VALUES ('" + player_uuid + "', '" + itemid + "', '" + amount + "', '" + Instant.now().getEpochSecond() + "' );";
-
-            stmt.executeUpdate(sql);
-            stmt.close();
-
-        } catch ( Exception e ) {
-            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-            System.exit(0);
-            return false;
-        }
-        return true;
-    } // end insertPayout
-
-
-
-    public static boolean insert_sellNotification(String player_uuid, String itemid, double price, int amount) {
-        System.out.println("AT INSERTPAYOUTinsert_sellNotification");
-        Connection c = null;
-        Statement stmt = null;
-
-        try {
-            Class.forName("org.sqlite.JDBC");
-            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
-
-            stmt = c.createStatement();
-
-            String sql = "INSERT INTO SELL_NOTIFICATION (player_uuid, itemid, amount, price, timestamp) " +
-                    "VALUES ('" + player_uuid + "', '" + itemid + "', '" + amount + "', '" + price + "', '" + Instant.now().getEpochSecond() + "' );";
-
-
-            stmt.executeUpdate(sql);
-            stmt.close();
-
-        } catch ( Exception e ) {
-            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-            System.exit(0);
-            return false;
-        }
-        return true;
-    } // end insert_sellNotification
-
-
-    public static List<Map<String, Object>> get_sellNotification(String playerUUID) {
-        Connection c = null;
-        Statement stmt = null;
-        List<Map<String, Object>> sellNotifications = new ArrayList<>();
-
-        try {
-            Class.forName("org.sqlite.JDBC");
-            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
-
-            stmt = c.createStatement();
-
-            String sql = "SELECT * FROM SELL_NOTIFICATION WHERE player_uuid = '"+playerUUID+"'";
-
-            ResultSet rs = stmt.executeQuery(sql);
-            ResultSetMetaData rsmd = rs.getMetaData();
-            int columnCount = rsmd.getColumnCount();
-
-            while (rs.next()) {
-                Map<String, Object> row = new HashMap<>();
-                for (int i = 1; i <= columnCount; i++) {
-                    row.put(rsmd.getColumnName(i), rs.getObject(i));
-                }
-                sellNotifications.add(row);
-            }
-            rs.close();
-            stmt.executeUpdate("DELETE FROM SELL_NOTIFICATION WHERE player_uuid = '"+playerUUID+"'");
-
-        } catch (Exception e) {
-            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-            return Collections.emptyList();
-        }
-
-        return sellNotifications;
     }
 
 
 
-
-    /*
-    public static boolean updatePayout(String player_uuid, String item_json, int amount) {
-        //System.out.println("AT UPDATE PAYOUT");
-       // System.out.println(player_uuid + " " + id + " " + itemid + " " + amount);
-
+    public static boolean insertPayout(String player_uuid, String itemid, int amount) {
         Connection c = null;
         Statement stmt = null;
 
-        //if amount == 0 -> delete entry -> else update
-        if(amount == 0) {
-            //System.out.println("remove payout entry");
+        c = createConnection();
+        if (c != null) {
             try {
-                Class.forName("org.sqlite.JDBC");
-                String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
-
                 stmt = c.createStatement();
-                String sql = "DELETE FROM PAYOUTS WHERE id = " + id;
+
+                String sql = "INSERT INTO PAYOUTS (player_uuid,  itemid, amount, timestamp) " +
+                        "VALUES ('" + player_uuid + "', '" + itemid + "', '" + amount + "', '" + Instant.now().getEpochSecond() + "' );";
 
                 stmt.executeUpdate(sql);
                 stmt.close();
 
-            } catch ( Exception e ) {
-                System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+            } catch (Exception e) {
+                System.err.println(e.getClass().getName() + ": " + e.getMessage());
                 System.exit(0);
                 return false;
-            }
-        } // end amount == 0
-
-        else {  //update value
-            //System.out.println("update payout entry");
-            try {
-                Class.forName("org.sqlite.JDBC");
-                String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
-
-                stmt = c.createStatement();
-                String sql = "UPDATE PAYOUTS SET amount = " + amount +  " WHERE id = " + id;
-
-                stmt.executeUpdate(sql);
-                stmt.close();
-
-            } catch ( Exception e ) {
-                System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-                System.exit(0);
-                return false;
+            } finally {
+                if (stmt != null) {
+                    try {
+                        stmt.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (c != null) {
+                    try {
+                        c.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
         }
         return true;
-    } // end updatePayout
-    */
+    }
+
+
 
     public static boolean updatePayout(String player_uuid, String item_json, int amount) {
         Connection c = null;
         Statement stmt = null;
 
-        try {
-            Class.forName("org.sqlite.JDBC");
-            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+        c = createConnection();
+        if (c != null) {
+            try {
+                stmt = c.createStatement();
 
-            stmt = c.createStatement();
+                while (amount > 0) {
+                    String selectSql = "SELECT id, amount FROM PAYOUTS WHERE player_uuid = '" + player_uuid + "' AND itemid = '" + item_json + "' ORDER BY id ASC LIMIT 1";
+                    ResultSet rs = stmt.executeQuery(selectSql);
 
-            while (amount > 0) {
-                String selectSql = "SELECT id, amount FROM PAYOUTS WHERE player_uuid = '" + player_uuid + "' AND itemid = '" + item_json + "' ORDER BY id ASC LIMIT 1";
-                ResultSet rs = stmt.executeQuery(selectSql);
+                    if (!rs.next()) {
+                        break; // exit while loop if no more items found
+                    }
 
-                if (!rs.next()) {
-                    break; // exit while loop if no more items found
+                    int id = rs.getInt("id");
+                    int currentAmount = rs.getInt("amount");
+
+                    if (amount >= currentAmount) {
+                        String deleteSql = "DELETE FROM PAYOUTS WHERE id = " + id;
+                        stmt.executeUpdate(deleteSql);
+                        amount -= currentAmount;
+                    } else {
+                        int remainingAmount = currentAmount - amount;
+                        String updateSql = "UPDATE PAYOUTS SET amount = " + remainingAmount + " WHERE id = " + id;
+                        stmt.executeUpdate(updateSql);
+                        amount = 0;
+                    }
+
+                    rs.close();
                 }
 
-                int id = rs.getInt("id");
-                int currentAmount = rs.getInt("amount");
-
-                if (amount >= currentAmount) {
-                    String deleteSql = "DELETE FROM PAYOUTS WHERE id = " + id;
-                    stmt.executeUpdate(deleteSql);
-                    amount -= currentAmount;
-                } else {
-                    int remainingAmount = currentAmount - amount;
-                    String updateSql = "UPDATE PAYOUTS SET amount = " + remainingAmount + " WHERE id = " + id;
-                    stmt.executeUpdate(updateSql);
-                    amount = 0;
+            } catch (Exception e) {
+                System.err.println(e.getClass().getName() + ": " + e.getMessage());
+                e.printStackTrace();
+                return false;
+            } finally {
+                if (stmt != null) {
+                    try {
+                        stmt.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
                 }
-
-                rs.close();
+                if (c != null) {
+                    try {
+                        c.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
-
-            stmt.close();
-            c.close();
-        } catch (Exception e) {
-            System.err.println(e.getClass().getName() + ": " + e.getMessage());
-            e.printStackTrace();
-            return false;
         }
 
         return amount == 0;
@@ -518,37 +555,47 @@ public class sqliteDb {
 
 
 
+
     public static Payout[] getPayout(String player_uuid) {
-        //System.out.println("# DEBUG - UUID: " + player_uuid);
-
         HashMap<String, Integer> itemCounts = new HashMap<>();
-        //System.out.println("# DEBUG - UUID2: " + player_uuid);
-
         Connection c = null;
         Statement stmt = null;
 
-        try {
-            Class.forName("org.sqlite.JDBC");
-            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+        c = createConnection();
+        if (c != null) {
+            try {
+                stmt = c.createStatement();
+                String sql = "SELECT * FROM PAYOUTS WHERE player_uuid = '" + player_uuid + "' ORDER by timestamp";
 
-            stmt = c.createStatement();
-            String sql = "SELECT * FROM PAYOUTS WHERE player_uuid = '" + player_uuid + "' ORDER by timestamp";
+                ResultSet rs = stmt.executeQuery(sql);
 
-            ResultSet rs = stmt.executeQuery(sql);
+                while (rs.next()) {
+                    String itemId = rs.getString("itemid");
+                    int amount = rs.getInt("amount");
 
-            while (rs.next()) {
-                String itemId = rs.getString("itemid");
-                int amount = rs.getInt("amount");
+                    // Add amount to the current total for this itemId
+                    itemCounts.put(itemId, itemCounts.getOrDefault(itemId, 0) + amount);
+                }
 
-                // Add amount to the current total for this itemId
-                itemCounts.put(itemId, itemCounts.getOrDefault(itemId, 0) + amount);
+            } catch (Exception e) {
+                System.err.println(e.getClass().getName() + ": " + e.getMessage());
+                System.exit(0);
+            } finally {
+                if (stmt != null) {
+                    try {
+                        stmt.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (c != null) {
+                    try {
+                        c.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
-            stmt.close();
-
-        } catch (Exception e) {
-            //System.out.println("ERROR at getPayou()");
-            System.err.println(e.getClass().getName() + ": " + e.getMessage());
-            System.exit(0);
         }
 
         // Now convert the map into a Payout array
@@ -561,6 +608,7 @@ public class sqliteDb {
         return buffer;
 
     } // end getPayout
+
 
 
 
@@ -582,27 +630,42 @@ public class sqliteDb {
         else
             sql = "SELECT * FROM SELLORDERS WHERE player_uuid = '" + player_uuid + "' " + itemid_string + " ORDER by timestamp ASC";
 
-        try {
-            Class.forName("org.sqlite.JDBC");
-            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+        c = createConnection();
+        if (c != null) {
+            try {
+                stmt = c.createStatement();
 
-            stmt = c.createStatement();
+                stmt.executeUpdate(sql);
+                ResultSet rs = stmt.executeQuery(sql);
 
-            stmt.executeUpdate(sql);
-            ResultSet rs = stmt.executeQuery(sql);
+                while (rs.next()) {
+                    buffer[row_counter] = new OrderBuffer(rs.getInt("id"), rs.getString("player_uuid"), rs.getString("itemid"), rs.getString("ordertype"),rs.getInt("amount"), rs.getDouble("price"), rs.getLong("timestamp") );
+                    row_counter++;
+                }
 
-            while (rs.next()) {
-                buffer[row_counter] = new OrderBuffer(rs.getInt("id"), rs.getString("player_uuid"), rs.getString("itemid"), rs.getString("ordertype"),rs.getInt("amount"), rs.getDouble("price"), rs.getLong("timestamp") );
-                row_counter++;
+            } catch ( Exception e ) {
+                System.err.println( "at getOrdersOfPlayer: " + e);
+                System.exit(0);
+            } finally {
+                if (stmt != null) {
+                    try {
+                        stmt.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (c != null) {
+                    try {
+                        c.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
-            stmt.close();
-
-        } catch ( Exception e ) {
-            System.err.println( "at getOrdersOfPlayer: " + e);
-            System.exit(0);
         }
         return buffer;
     }
+
 
 
     public static OrderBuffer getOrder(String ID, boolean buy_or_sell){
@@ -610,7 +673,6 @@ public class sqliteDb {
         Connection c = null;
         Statement stmt = null;
         String sql;
-        int row_counter = 0;
 
         //proof if buy or sell
         if(buy_or_sell) // is buy
@@ -618,25 +680,40 @@ public class sqliteDb {
         else
             sql = "SELECT * FROM SELLORDERS WHERE id = '" + ID + "'";
 
-        try {
-            Class.forName("org.sqlite.JDBC");
-            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+        c = createConnection();
+        if (c != null) {
+            try {
+                stmt = c.createStatement();
 
-            stmt = c.createStatement();
+                stmt.executeUpdate(sql);
+                ResultSet rs = stmt.executeQuery(sql);
+                if (rs.next()) {
+                    buffer = new OrderBuffer(rs.getInt("id"), rs.getString("player_uuid"), rs.getString("itemid"), rs.getString("ordertype"),rs.getInt("amount"), rs.getDouble("price"), rs.getLong("timestamp") );
+                }
 
-            stmt.executeUpdate(sql);
-            ResultSet rs = stmt.executeQuery(sql);
-            buffer = new OrderBuffer(rs.getInt("id"), rs.getString("player_uuid"), rs.getString("itemid"), rs.getString("ordertype"),rs.getInt("amount"), rs.getDouble("price"), rs.getLong("timestamp") );
-
-
-            stmt.close();
-
-        } catch ( Exception e ) {
-            System.err.println( "at getOrder: " + e);
-            System.exit(0);
+            } catch ( Exception e ) {
+                System.err.println( "at getOrder: " + e);
+                System.exit(0);
+            } finally {
+                if (stmt != null) {
+                    try {
+                        stmt.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (c != null) {
+                    try {
+                        c.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
         }
         return buffer;
     }
+
 
 
     public static void loadAllBestOrdersToRam(boolean update){
@@ -655,35 +732,25 @@ public class sqliteDb {
     }
 
     public static void loadBestOrdersToRam(String item, boolean update){
-        //System.out.println("# DEBUG loadBestOrdersToRam: " + item);
         double[] top_buy_price = new double[5];
         double[] top_sell_price = new double[5];
         int[] top_buy_amount = new int[5];
         int[] top_sell_amount = new int[5];
         int row_counter = 0;
 
-        Connection c = null;
-        Statement stmt = null;
-
         // SELLORDERS
-        try {
-            Class.forName("org.sqlite.JDBC");
-            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
-
-            stmt = c.createStatement();
-            String sql = "SELECT * FROM SELLORDERS WHERE itemid = '" + item + "' ORDER by price ASC LIMIT 20";
-
-            stmt.executeUpdate(sql);
-            ResultSet rs = stmt.executeQuery(sql);
+        try (Connection c = createConnection()) {
+            PreparedStatement stmt = c.prepareStatement("SELECT * FROM SELLORDERS WHERE itemid = ? ORDER by price ASC LIMIT 20");
+            stmt.setString(1, item);
+            ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
-                // proof if price of previous entry is equal, if true: combine the order
                 double temp_price = rs.getDouble("price");
                 int temp_amount = rs.getInt("amount");
 
-                if( row_counter > 0 && temp_price == top_sell_price[row_counter-1])
+                if( row_counter > 0 && temp_price == top_sell_price[row_counter-1]) {
                     top_sell_amount[row_counter-1] = top_sell_amount[row_counter-1] + temp_amount;
-
+                }
                 else {
                     top_sell_price[row_counter] = temp_price;
                     top_sell_amount[row_counter] = temp_amount;
@@ -692,8 +759,6 @@ public class sqliteDb {
                 if(row_counter > 3)
                     break;
             }
-            stmt.close();
-
         } catch ( Exception e ) {
             System.err.println( e.getClass().getName() + ": " + e.getMessage() );
             System.exit(0);
@@ -701,20 +766,13 @@ public class sqliteDb {
 
         row_counter = 0;
 
-
         // BUYORDERS
-        try {
-            Class.forName("org.sqlite.JDBC");
-            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
-
-            stmt = c.createStatement();
-            String sql = "SELECT * FROM BUYORDERS WHERE itemid = '" + item + "' ORDER by price DESC LIMIT 20";
-
-            stmt.executeUpdate(sql);
-            ResultSet rs    = stmt.executeQuery(sql);
+        try (Connection c = createConnection()) {
+            PreparedStatement stmt = c.prepareStatement("SELECT * FROM BUYORDERS WHERE itemid = ? ORDER by price DESC LIMIT 20");
+            stmt.setString(1, item);
+            ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
-                // proof if price of previous entry is equal, if true: combine the order
                 double temp_price = rs.getDouble("price");
                 int temp_amount = rs.getInt("amount");
 
@@ -729,8 +787,6 @@ public class sqliteDb {
                 if(row_counter > 3)
                     break;
             }
-            stmt.close();
-
         } catch ( Exception e ) {
             System.err.println( e.getClass().getName() + ": " + e.getMessage() );
             System.exit(0);
@@ -739,7 +795,7 @@ public class sqliteDb {
         if(top_buy_price != null) {
             boolean match = false;
 
-            String[] trades = get_last_trades(item, "4");
+            String[] trades = get_last_trades(item, "1");
             double[] last_trade_price = new double[trades.length];
             int[] last_trade_timestamp = new int[trades.length];
 
@@ -764,36 +820,43 @@ public class sqliteDb {
                 fulfillOrder(item);
             }
         }
-
     }
 
 
+
+
+
     public static String[] get_last_trades(String item_json, String max_entries) {
-        Connection c = null;
+        Connection conn = null;
         Statement stmt = null;
         List<String> trades = new ArrayList<String>();
 
-        // SELLORDERS
         try {
-            Class.forName("org.sqlite.JDBC");
-            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
+            conn = createConnection();
 
-            stmt = c.createStatement();
-            String sql = "SELECT * FROM FULFILLEDORDERS WHERE itemid = '" + item_json + "'  ORDER by timestamp DESC LIMIT '" + max_entries + "'";
-
+            stmt = conn.createStatement();
+            String sql = "SELECT * FROM FULFILLEDORDERS WHERE itemid = '" + item_json + "' ORDER by timestamp ASC LIMIT " + max_entries;
             ResultSet rs = stmt.executeQuery(sql);
 
             while (rs.next()) {
                 double temp_price = rs.getDouble("price");
-                String temp_timestamp = rs.getString("timestamp"); // Assuming amount is the timestamp based on your previous code
+                String temp_timestamp = rs.getString("timestamp");
                 trades.add(temp_timestamp + ":" + temp_price);
             }
+
             rs.close();
             stmt.close();
 
         } catch ( Exception e ) {
             System.err.println( e.getClass().getName() + ": " + e.getMessage() );
             System.exit(0);
+        } finally {
+            try {
+                if (stmt != null) stmt.close();
+                if (conn != null) conn.close();
+            } catch (SQLException se) {
+                se.printStackTrace();
+            }
         }
 
         while (trades.size() < 4) {
@@ -804,18 +867,6 @@ public class sqliteDb {
     }
 
 
-
-
-    private static Connection connect() {
-        String url = "jdbc:sqlite:./plugins/Itemex/itemex.db";
-        Connection conn = null;
-        try {
-            conn = DriverManager.getConnection(url);
-        } catch (SQLException e) {
-            //System.out.println(e.getMessage());
-        }
-        return conn;
-    }
 
 
     public static ArrayList<OrderBuffer> selectAll(String table, String itemid){
@@ -829,24 +880,23 @@ public class sqliteDb {
             sql = "SELECT * FROM BUYORDERS WHERE itemid = '" + itemid + "' ORDER by price DESC";
         }
 
-        try (Connection conn = connect();
+        try (Connection conn = createConnection();
              Statement stmt  = conn.createStatement();
              ResultSet rs    = stmt.executeQuery(sql)){
 
             // loop through the result set
             while (rs.next()) {
-                //System.out.println("# DEBUG - id: " + rs.getInt("id") + " itemid: " + rs.getString("itemid") + " price: " + rs.getDouble("price"));
                 buffer.add(new OrderBuffer(rs.getInt("id"), rs.getString("player_uuid"), rs.getString("itemid"), rs.getString("ordertype"),rs.getInt("amount"), rs.getDouble("price"), rs.getLong("timestamp")));
             }
         } catch (SQLException e) {
-            //System.out.println(e.getMessage());
+            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
         }
         return buffer;
     }
 
 
+
     public static boolean updateOrder(String table_name, int ID, int amount, double price, String ordertype, String itemid) {
-        //System.out.println("AT updateORDER: " + table_name + " " +ID + " " + amount + " " + price + " " + ordertype);
         Connection c = null;
         Statement stmt = null;
         int update_status = 0;
@@ -855,9 +905,7 @@ public class sqliteDb {
 
         else {
             try {
-                Class.forName("org.sqlite.JDBC");
-                String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
-
+                c = createConnection();
                 stmt = c.createStatement();
                 String sql = "UPDATE " + table_name + " SET ordertype = '" + ordertype + "',  amount = " + amount +  ", price = " + price + " WHERE id = " + ID;
 
@@ -878,6 +926,7 @@ public class sqliteDb {
 
         return true;
     } // end insertIntoDB
+
 
 
 
@@ -1008,10 +1057,10 @@ public class sqliteDb {
         } // end sellorders loop
         return true;
     }
-    
-    
-    
-    
+
+
+
+
 
 
     public static boolean withdraw(String seller_uuid, String buyer_uuid, String itemid, int amount, double price, boolean normal_buyorder, String be_ordertype, String se_ordertype) {
@@ -1083,7 +1132,7 @@ public class sqliteDb {
                     buyer.spigot().sendMessage(message);
                 }
                 insertPayout(seller_uuid, itemid, amount); // Insert item payout into db
-                //return true;
+                return true;
             }
             if(normal_buyorder) { // send the item to payouts
                 //System.out.println("# DEBUG: withdraw the buy to user -> not insert to ChestShop order");
@@ -1115,15 +1164,9 @@ public class sqliteDb {
                     }
 
                     buyer.sendMessage("" + Itemex.language.get("buyorder_C") + ChatColor.GREEN+ Itemex.language.getString("sq_fulfilled") + ChatColor.WHITE + " " + Itemex.language.getString("sq_you_got") + " [" + amount + "] "  + ItemexCommand.get_meta(itemid) + Itemex.language.getString("sq_for") + ChatColor.RED + " " + format_price( buyer_total ) );
-                    if(amount <= withdraw_threshold) {
-                        buyer.sendMessage("Item has been sent directly to your player inventory.");
-                    }
-                    else {
-                        TextComponent message = new TextComponent("\n" + ChatColor.BLUE + ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + Itemex.language.getString("click_here") + ChatColor.BLUE + ") " + Itemex.language.getString("sq_you_can_with") + " /ix withdraw " + get_meta(itemid) + " " + amount);
-                        message.setClickEvent( new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ix withdraw " + get_meta(itemid) + " " + amount));
-                        buyer.spigot().sendMessage(message);
-                    }
-
+                    TextComponent message = new TextComponent("\n" + ChatColor.BLUE + ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + Itemex.language.getString("click_here") + ChatColor.BLUE + ") " + Itemex.language.getString("sq_you_can_with") + " /ix withdraw " + get_meta(itemid) + " " + amount);
+                    message.setClickEvent( new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ix withdraw " + get_meta(itemid) + " " + amount));
+                    buyer.spigot().sendMessage(message);
                 }
             }
             else {  // send the item to chest shop order
@@ -1138,11 +1181,9 @@ public class sqliteDb {
             }
 
             if(seller == null) {
-                insert_sellNotification(seller_uuid, itemid, seller_total, amount);
                 //System.out.println("--DEBUG: SELLER IS OFFLINE!");
             }
             else {
-                //System.out.println("Seller onlie");
                 seller.sendMessage("" + Itemex.language.getString("sellorder_C") + ChatColor.GREEN+ Itemex.language.getString("sq_fulfilled") + ChatColor.WHITE + Itemex.language.getString("sq_you_sold") + " [" + amount + "] "  + ItemexCommand.get_meta(itemid) + Itemex.language.getString("sq_for") + ChatColor.GREEN + " " + format_price( seller_total ) );
             }
 
@@ -1158,17 +1199,14 @@ public class sqliteDb {
 
 
     public static boolean closeOrder(String table_name, int ID, String itemid, String ordertype) {
-        //System.out.println("# DEBUG - AT closeOrder: " + table_name + " " + ID);
         Connection c = null;
         Statement stmt = null;
-        
+
         if(ordertype.contains("chest")) {}
         else if(ordertype.contains("admin")) {}
         else {
             try {
-                Class.forName("org.sqlite.JDBC");
-                String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
-
+                c = createConnection();
                 stmt = c.createStatement();
                 String sql = "DELETE FROM " + table_name + " WHERE id = " + ID;
 
@@ -1186,8 +1224,8 @@ public class sqliteDb {
     } // end closeOrder
 
 
+
     public static boolean PlayercloseOrder(String player_uuid, String table_name, int ID) {
-        //System.out.println("AT PlayercloseOrder: " + table_name + " " + ID + " Player_uid: "+ player_uuid);
         Connection c = null;
         Statement stmt = null;
         int row_affected = 0;
@@ -1200,9 +1238,7 @@ public class sqliteDb {
         // get the refund_amount of order
         if(table_name.equals("SELLORDERS")) {
             try {
-                Class.forName("org.sqlite.JDBC");
-                String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
-
+                c = createConnection();
                 stmt = c.createStatement();
                 String sql = "SELECT * FROM SELLORDERS WHERE id = '" + ID + "'";
 
@@ -1216,11 +1252,9 @@ public class sqliteDb {
                     itemid = rs.getString("itemid");
                     se_ordertype = rs.getString("itemid");
                 }
-                //System.out.println("REFUND AMOUNT: " + refund_amount);
                 stmt.close();
 
             } catch ( Exception e ) {
-                //System.out.println("ERROR at getPayou()");
                 System.err.println( e.getClass().getName() + ": " + e.getMessage() );
                 System.exit(0);
             }
@@ -1228,9 +1262,7 @@ public class sqliteDb {
 
         // delete the order
         try {
-            Class.forName("org.sqlite.JDBC");
-            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
-
+            c = createConnection();
             stmt = c.createStatement();
             String sql = "DELETE FROM " + table_name + " WHERE id = " + ID + " AND player_uuid = '" + player_uuid + "'";
 
@@ -1248,7 +1280,7 @@ public class sqliteDb {
             // refund
             if(table_name.equals("SELLORDERS")) {
                 if(refund_amount != 0) {
-                    if (withdraw(player_uuid , player_uuid, refund_item_id, refund_amount, refund_price, true, "refund", "") ) {
+                    if (withdraw(player_uuid , player_uuid, refund_item_id, refund_amount, refund_price, true, "refund", "")) {
                         return true;
                     }
                     else return false;
@@ -1258,9 +1290,9 @@ public class sqliteDb {
             return true;
         }
 
-
         return false;
     } // end closeOrder
+
 
 
     static public String getLastPrice(String itemid) {
@@ -1272,9 +1304,7 @@ public class sqliteDb {
         sql = "SELECT * FROM FULFILLEDORDERS WHERE itemid = '" + itemid + "' ORDER by timestamp DESC LIMIT 1";
 
         try {
-            Class.forName("org.sqlite.JDBC");
-            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
-
+            c = createConnection();
             stmt = c.createStatement();
 
             stmt.executeUpdate(sql);
@@ -1308,9 +1338,7 @@ public class sqliteDb {
         String sql = "SELECT price, timestamp FROM FULFILLEDORDERS WHERE itemid = ? ORDER BY timestamp DESC";
 
         try {
-            Class.forName("org.sqlite.JDBC");
-            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
-
+            c = createConnection();
             stmt = c.prepareStatement(sql);
 
             stmt.setString(1, itemid);
@@ -1344,8 +1372,6 @@ public class sqliteDb {
         return result;
     }
 
-
-
     static public boolean check_if_db_is_JSON() {
         Connection c = null;
         Statement stmt = null;
@@ -1353,9 +1379,7 @@ public class sqliteDb {
         boolean is_json_format = false;
 
         try {
-            Class.forName("org.sqlite.JDBC");
-            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
-
+            c = createConnection();
             stmt = c.createStatement();
 
             ResultSet rs = stmt.executeQuery(sql);
@@ -1386,16 +1410,13 @@ public class sqliteDb {
         return is_json_format;
     }
 
-
     public static void updateDB_from_STRING_to_JSON(String tableName, String fieldName) {
         Connection c = null;
         PreparedStatement selectStmt = null;
         PreparedStatement updateStmt = null;
 
         try {
-            Class.forName("org.sqlite.JDBC");
-            String dbPath = "jdbc:sqlite:" + workingDir + "/plugins/Itemex/itemex.db";
-
+            c = createConnection();
 
             // Select all entries from the table
             String selectSql = "SELECT id, " + fieldName + " FROM " + tableName;
@@ -1438,6 +1459,67 @@ public class sqliteDb {
                 e.printStackTrace();
             }
         }
+    }
+
+
+
+    public static boolean insert_sellNotification(String player_uuid, String itemid, double price, int amount) {
+        System.out.println("AT INSERTPAYOUTinsert_sellNotification");
+        Connection c = null;
+        Statement stmt = null;
+
+        try {
+            c = createConnection();
+
+            stmt = c.createStatement();
+
+            String sql = "INSERT INTO SELL_NOTIFICATION (player_uuid, itemid, amount, price, timestamp) " +
+                    "VALUES ('" + player_uuid + "', '" + itemid + "', '" + amount + "', '" + price + "', '" + Instant.now().getEpochSecond() + "' );";
+
+            stmt.executeUpdate(sql);
+            stmt.close();
+
+        } catch ( Exception e ) {
+            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+            System.exit(0);
+            return false;
+        }
+        return true;
+    } // end insert_sellNotification
+
+
+    public static List<Map<String, Object>> get_sellNotification(String playerUUID) {
+        Connection c = null;
+        Statement stmt = null;
+        List<Map<String, Object>> sellNotifications = new ArrayList<>();
+
+        try {
+            c = createConnection();
+
+            stmt = c.createStatement();
+
+            String sql = "SELECT * FROM SELL_NOTIFICATION WHERE player_uuid = '"+playerUUID+"'";
+
+            ResultSet rs = stmt.executeQuery(sql);
+            ResultSetMetaData rsmd = rs.getMetaData();
+            int columnCount = rsmd.getColumnCount();
+
+            while (rs.next()) {
+                Map<String, Object> row = new HashMap<>();
+                for (int i = 1; i <= columnCount; i++) {
+                    row.put(rsmd.getColumnName(i), rs.getObject(i));
+                }
+                sellNotifications.add(row);
+            }
+            rs.close();
+            stmt.executeUpdate("DELETE FROM SELL_NOTIFICATION WHERE player_uuid = '"+playerUUID+"'");
+
+        } catch (Exception e) {
+            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+            return Collections.emptyList();
+        }
+
+        return sellNotifications;
     }
 
 

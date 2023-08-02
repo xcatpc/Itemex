@@ -1,5 +1,4 @@
 package sh.ome.itemex.events;
-import com.sun.tools.javac.jvm.Items;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -23,11 +22,8 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
-import static org.bukkit.Bukkit.getLogger;
-import static org.bukkit.Bukkit.getMaxChainedNeighborUpdates;
 import static sh.ome.itemex.commands.ItemexCommand.*;
 import static sh.ome.itemex.functions.sqliteDb.getPayout;
 

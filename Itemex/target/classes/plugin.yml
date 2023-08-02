@@ -1,5 +1,5 @@
 name: Itemex
-version: '0.20.3'
+version: '0.21.5'
 main: sh.ome.itemex.Itemex
 api-version: 1.19
 authors: [ oMesh_ ]
@@ -28,6 +28,9 @@ permissions:
   itemex.command.ix.withdraw:
     description: list or withdraw all your available payouts
     default: true
+  itemex.command.ix.deposit:
+      description: deposit items from your inventory
+      default: true
   itemex.command.ix.order.list:
     description: list all own buy- and sellorders
     default: true
@@ -36,6 +39,9 @@ permissions:
     default: true
   itemex.command.ix.gui:
     description: Graphical User Interface
+    default: true
+  itemex.command.ix.setting:
+    description: User settings
     default: true
   itemex.command.ix.whatIsInMyRightHand:
     description: prints out the item name

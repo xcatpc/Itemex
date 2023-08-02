@@ -71,6 +71,12 @@ public final class Itemex extends JavaPlugin implements Listener {
     public static Economy econ = null;
     public static String version = "0.21.5";
     public static String lang;
+    public static String database_type;
+    public static String db_name;
+    public static String db_hostname;
+    public static String db_port;
+    public static String db_username;
+    public static String db_passwd;
 
     public static boolean admin_function;
     public static double admin_function_spread_percentage;
@@ -157,6 +163,14 @@ public final class Itemex extends JavaPlugin implements Listener {
         config.addDefault("id", getAlphaNumericString(15));
         saveConfig();
         this.lang = config.getString("lang");
+
+        this.database_type = config.getString("database_type");
+        this.db_name = config.getString("db_name");
+        this.db_hostname = config.getString("db_hostname");
+        this.db_port = config.getString("db_port");
+        this.db_username = config.getString("db_username");
+        this.db_passwd = config.getString("db_passwd");
+
         this.admin_function = config.getBoolean("admin_function");
         this.admin_function_spread_percentage = config.getDouble("admin_function_spread_percentage");
         this.admin_function_initial_last_price = config.getDouble("admin_function_initial_last_price");
@@ -232,8 +246,13 @@ public final class Itemex extends JavaPlugin implements Listener {
                 break;
         }
 
+
         // checks database
-        sqliteDb.createDBifNotExists();
+        if(database_type.equals("sqlite"))
+            sqliteDb.createDBifNotExists();
+        else
+            sqliteDb.createDBifNotExists_mariadb();
+
 
         // check if database is new version (json format)
         boolean is_json = sqliteDb.check_if_db_is_JSON();
@@ -244,6 +263,7 @@ public final class Itemex extends JavaPlugin implements Listener {
             sqliteDb.updateDB_from_STRING_to_JSON("PAYOUTS", "itemid");
 
         }
+
 
         plugin = this;  // make this private static Itemex accessable in other files
 

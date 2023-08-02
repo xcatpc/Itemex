@@ -7,6 +7,7 @@ sh\ome\itemex\events\ClickGUI.class
 sh\ome\itemex\Listeners\PlayerJoin.class
 sh\ome\itemex\RAM\IxStatistics.class
 sh\ome\itemex\shedule\Metrics$1.class
+sh\ome\itemex\commands\ItemexCommand$1.class
 sh\ome\itemex\functions\commandAutoComplete.class
 sh\ome\itemex\shedule\Metrics$JsonObjectBuilder$JsonObject.class
 sh\ome\itemex\RAM\Order.class
@@ -14,6 +15,7 @@ sh\ome\itemex\shedule\Metrics$CustomChart.class
 sh\ome\itemex\shedule\Metrics.class
 sh\ome\itemex\commands\ItemexCommand.class
 sh\ome\itemex\events\ChestShop.class
+sh\ome\itemex\functions\IPFS.class
 sh\ome\itemex\Itemex.class
 sh\ome\itemex\shedule\Metrics$JsonObjectBuilder.class
 sh\ome\itemex\shedule\Metrics$SimplePie.class
