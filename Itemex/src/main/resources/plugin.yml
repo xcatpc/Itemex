@@ -46,6 +46,9 @@ permissions:
   itemex.command.ix.whatIsInMyRightHand:
     description: prints out the item name
     default: true
+  itemex.command.ix.send:
+    description: send items to other players
+    default: true
   itemex.command.price:
     description: Prints the current buy and sell orders
     default: true

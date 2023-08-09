@@ -1,6 +1,7 @@
 package sh.ome.itemex.events;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.chat.SelectorComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -8,13 +9,16 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import sh.ome.itemex.Itemex;
 import sh.ome.itemex.RAM.Order;
 import sh.ome.itemex.RAM.TopOrders;
+import sh.ome.itemex.commands.GUI;
 import sh.ome.itemex.commands.ItemexCommand;
+import sh.ome.itemex.commands.limit_setprice_GUI;
 import sh.ome.itemex.files.CategoryFile;
 import sh.ome.itemex.functions.sqliteDb;
 
@@ -31,18 +35,20 @@ import static sh.ome.itemex.functions.sqliteDb.getPayout;
 public class ClickGUI implements Listener {
     int itemcounter = 0;
     int amount = 1;
+
     @EventHandler
     public void clickEvent(InventoryClickEvent e) {
         Player p = (Player) e.getWhoClicked();
 
-
         if(e.getView().getTitle().contains("ITEMEX")) {                          // If player click on Itemex GUI
             String menu_type = e.getView().getTitle().substring(2);
-            //System.out.println("# DEBUG: at click EVENT: " + menu_type + " " + e.getSlot());
-            e.setCancelled(true);
-            if( e.getClick().isLeftClick() || e.getClick().isRightClick() ) {
+            //System.out.println("# DEBUG: at click EVENT: " + menu_type + " " + e.getSlot() + " " + e.getClickedInventory().getType().toString());
+
+            if( ( e.getClick().isLeftClick() || e.getClick().isRightClick() ) && e.getClickedInventory().getType().toString().equals("CHEST") ) {
+                e.setCancelled(true);
 
                 // SET THE MENU NAME
+
                 // if click is on menu
                 if(e.getSlot() >=0 && e.getSlot() <= 8) {
                     if (e.getSlot() == 0)
@@ -71,6 +77,8 @@ public class ClickGUI implements Listener {
                         }
                         else
                             menu_type = "ITEMEX - Fast Sell";
+
+
                     else if (e.getSlot() == 4) { // prev page
                         if(menu_type.contains("Market Orders:") || menu_type.contains("Limit Orders:")) {
                             String subMenu[] = menu_type.split(":", 3);
@@ -178,12 +186,17 @@ public class ClickGUI implements Listener {
 
                         else if(menu_type.contains("Order Book")) {
                             ItemStack item = e.getCurrentItem();
+                            if (item == null) {
+                                return;
+                            }
                             String item_json = ItemexCommand.identify_item(item);
                             String orderID = "";
                             String buy_or_sell = "";
                             ItemMeta meta = item.getItemMeta();
+                            boolean is_lore = false;
 
                             if (meta != null && meta.hasLore()) {
+                                is_lore = true;
                                 List<String> lore = meta.getLore();
                                 for (String loreLine : lore) {
                                     if (loreLine.contains("ID:")) {
@@ -197,7 +210,8 @@ public class ClickGUI implements Listener {
                                 }
                             }
 
-                            sqliteDb.PlayercloseOrder(p.getUniqueId().toString(), buy_or_sell, Integer.parseInt(orderID));
+                            if(is_lore)
+                                sqliteDb.PlayercloseOrder(p.getUniqueId().toString(), buy_or_sell, Integer.parseInt(orderID));
 
                             //e.getView().close();
                             //return;
@@ -205,9 +219,10 @@ public class ClickGUI implements Listener {
 
                         else if(menu_type.contains("Vault")) {
                             ItemStack item = e.getCurrentItem();
+                            if(item == null)
+                                return;
                             ItemMeta meta = item.getItemMeta();
                             String item_json = ItemexCommand.identify_item( item );
-                            //System.out.println("JSON: " + item_json);
                             String customName = "";
 
                             if (meta != null && meta.hasDisplayName()) {
@@ -215,22 +230,9 @@ public class ClickGUI implements Listener {
                             }
 
                             String amount = customName.replaceAll(".*\\[(\\d+)\\].*", "$1");
+                            if(!amount.equals("") && !customName.equals("."))
+                                ItemexCommand.withdraw(get_meta(item_json), amount, p);
 
-                            ItemexCommand.withdraw(get_meta(item_json), amount, p);
-
-
-                            //System.out.println(e.getCurrentItem());
-                            //System.out.println("current item: " + item_json);
-
-                            /*
-                            TextComponent message = new TextComponent("\n" + ChatColor.BLUE + ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + Itemex.language.getString("click_here") + ChatColor.BLUE + ") " + Itemex.language.getString("sq_you_can_with") + " /ix withdraw " + get_meta(item_json) + " max");
-                            message.setClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix withdraw " + get_meta(item_json) + " max"));
-                            p.spigot().sendMessage(message);
-                             */
-
-
-                            //e.getView().close();
-                            //return;
                         }
 
 
@@ -249,10 +251,14 @@ public class ClickGUI implements Listener {
 
                             if( e.getClick().isRightClick()) {  // SELL
                                 if(menu_type.contains( "Limit" )) {
+                                    limit_setprice_GUI.generateGUI(p, "IX Limit SET PRICE : SELL", itemid, amount);
+                                    /*
                                     TextComponent message = new TextComponent(ChatColor.MAGIC + "X" + ChatColor.BLUE + " -> (" + ChatColor.GOLD + Itemex.language.getString("click_here") + ChatColor.BLUE + ") "  + Itemex.language.getString("cs_click_execute_sell") + itemid + " "+ amount + " limit <" + Itemex.language.getString("cs_set_price") + ")>");
                                     message.setClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix sell " + itemid +" "+ amount +" limit "));
                                     p.spigot().sendMessage(message);
                                     e.getView().close();
+                                    */
+
                                     return;
                                 }
                                 else if(menu_type.contains( "Market" )) {
@@ -265,33 +271,51 @@ public class ClickGUI implements Listener {
                                         return;
                                     }
                                     else { // execute directly
-                                        //TextComponent message = new TextComponent(ChatColor.MAGIC + "X" + ChatColor.BLUE + " -> (" + ChatColor.GOLD + Itemex.language.getString("click_here") + ChatColor.BLUE + ") "  + Itemex.language.getString("cs_click_execute_sell") + itemid + " "+ amount + " market");
-                                        //message.setClickEvent( new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ix sell " + itemid +" "+ amount +" market confirm"));
-                                        //p.spigot().sendMessage(message);
 
                                         // search if player have enought in inventory
                                         String parts[] = getFreeInventory(p, item_json).split(":");
                                         int inv_item_amount = Integer.parseInt( parts[1] );
-                                        if( amount <= inv_item_amount) { // enough in inv
+                                        if (amount <= inv_item_amount) { // enough in inv
                                             p.sendMessage(ItemexCommand.create_order(p, item_json, Itemex.getPlugin().mtop.get(item_json).get_top_buyorder_prices()[3], amount, "sell", "market"));
-                                            p.getInventory().removeItem( constructItem(item_json, amount));
+
+                                            int amountToRemove = amount;
+                                            Inventory inv = p.getInventory();
+                                            for (int i = 0; i < inv.getSize(); i++) {
+                                                ItemStack item = inv.getItem(i);
+                                                if (item != null && identify_item(item).equals(item_json)) {
+                                                    int newAmount = item.getAmount() - amountToRemove;
+                                                    if (newAmount > 0) {
+                                                        item.setAmount(newAmount);
+                                                        break;
+                                                    } else {
+                                                        amountToRemove -= item.getAmount();
+                                                        inv.setItem(i, null);
+                                                    }
+                                                    if (amountToRemove == 0) break;
+                                                }
+                                            }
                                         }
                                         else { // not enought items
                                             p.sendMessage(ChatColor.RED + " " + Itemex.language.getString("item_not_in_inventory"));
                                         }
+
+
                                         e.getView().close();
                                         return;
-                                        //ItemexCommand.create_order(p, itemid, Itemex.getPlugin().mtop.get(itemid).get_top_buyorder_prices()[3], amount, "sell", "market");
                                     }
                                 }
                             }
 
                             else if( e.getClick().isLeftClick()) {  // BUY
                                 if(menu_type.contains( "Limit" )) {
+                                    limit_setprice_GUI.generateGUI(p, "IX Limit SET PRICE : BUY", itemid, amount);
+                                    /*
                                     TextComponent message = new TextComponent(ChatColor.MAGIC + "X" + ChatColor.BLUE + " -> (" + ChatColor.GOLD + Itemex.language.getString("click_here") + ChatColor.BLUE + ") "  + Itemex.language.getString("cs_click_execute_buy") + itemid + " "+ amount + " limit <" + Itemex.language.getString("cs_set_price") + ")>");
                                     message.setClickEvent( new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix buy " + itemid +" "+ amount +" limit "));
                                     p.spigot().sendMessage(message);
                                     e.getView().close();
+
+                                     */
                                     return;
                                 }
                                 else if(menu_type.contains( "Market" )) {
@@ -304,9 +328,6 @@ public class ClickGUI implements Listener {
                                         return;
                                     }
                                     else { // execute directly
-                                        //TextComponent message = new TextComponent(ChatColor.MAGIC + "X" + ChatColor.BLUE + " -> (" + ChatColor.GOLD + Itemex.language.getString("click_here") + ChatColor.BLUE + ") "  + Itemex.language.getString("cs_click_execute_buy") + itemid + " "+ amount + " market ");
-                                        //message.setClickEvent( new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ix buy " + itemid +" "+ amount +" market confirm"));
-                                        //p.spigot().sendMessage(message);
                                         ItemexCommand.create_order(p, item_json, Itemex.getPlugin().mtop.get(item_json).get_top_sellorder_prices()[0], amount, "buy", "market");
                                         e.getView().close();
                                         return;
@@ -520,10 +541,14 @@ public class ClickGUI implements Listener {
 
                     // PLACEHOLDER
                     ItemStack placeholder = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
+                    ItemMeta placeholder_meta = placeholder.getItemMeta();
+                    placeholder_meta.setDisplayName(".");
+                    placeholder.setItemMeta(placeholder_meta);
 
                     // print placeholder:
                     for(int inv_gui_type = 0; inv_gui_type <= 6*9-1; inv_gui_type++)
                         inv.setItem(inv_gui_type, placeholder);
+
 
                     inv.setItem(0, marketorders);
                     inv.setItem(1, limitorders);
@@ -558,6 +583,12 @@ public class ClickGUI implements Listener {
                             }
                         }
                         else { // READ SUBMENU
+
+                            if( menu_type.contains("ITEMEX - Market Orders") )
+                                inv.setItem(9, new ItemStack(Material.GREEN_STAINED_GLASS_PANE));    // market activated
+                            else if( menu_type.contains("ITEMEX - Limit Orders") )
+                                inv.setItem(10, new ItemStack(Material.GREEN_STAINED_GLASS_PANE));    // limit activated
+
                             int max_stack = 4*9;
                             int x=0;
 
@@ -786,8 +817,34 @@ public class ClickGUI implements Listener {
 
                     else if( menu_type.contains("ITEMEX - Fast Sell")) {
                         inv.setItem(12, new ItemStack(Material.GREEN_STAINED_GLASS_PANE));      // fast sell activated
-                        p.sendMessage("Fast Sell - NOT IMPLEMENTED YET. Stay tuned!");
+
+                        // Drop windows
+                        ItemStack drop = new ItemStack(Material.WHITE_STAINED_GLASS_PANE);
+                        ItemMeta drop_meta = drop.getItemMeta();
+                        drop_meta.setDisplayName(ChatColor.GOLD + "Drop your item to sell on market here");
+                        drop.setItemMeta(drop_meta);
+
+                        // SELL ITEM
+                        ItemStack sell = new ItemStack(Material.LIME_STAINED_GLASS_PANE);
+                        ItemMeta sellMeta = sell.getItemMeta();
+                        sellMeta.setDisplayName(ChatColor.GREEN + "Sell");
+                        ArrayList<String> sell_lore = new ArrayList<>();
+                        sell_lore.add(ChatColor.WHITE + "click here to sell items.");
+                        sellMeta.setLore(sell_lore);
+                        sell.setItemMeta(sellMeta);
+
+
+
+                        // confirm button
+                        inv.setItem(53, sell);
+
+                        inv.setItem(e.getSlot(), e.getCursor());
+
+                        p.sendMessage("get_cursor: " + e.getCursor().getType().toString());
+                        p.sendMessage("getSlot: " + e.getSlot());
+
                     }
+
                     else if(menu_type.contains("ITEMEX - Vault")) {
                         //System.out.println("# DEBUG: VAULT");
                         String subMenu[] = menu_type.split(":", 3);
@@ -825,6 +882,218 @@ public class ClickGUI implements Listener {
             } // end right or left click
         }
 
+        if(e.getView().getTitle().contains("IX Limit SET PRICE")) {
+            double d_limit_price;
+            e.setCancelled(true);
+
+            // get double from PLUS 1
+            ItemStack plus1 = e.getView().getItem(5);
+            String limit_price = plus1.getItemMeta().getLore().get(0);
+            limit_price = limit_price.replace("§6[", "");
+            limit_price = limit_price.replace("]", "");
+            d_limit_price = Double.parseDouble(limit_price);
+
+            // get itemid
+            ItemStack item = e.getView().getItem(4);
+
+
+            switch(e.getSlot()) {
+                case 0:
+                    d_limit_price *=10;
+                    break;
+                case 1:
+                    d_limit_price -=100;
+                    break;
+                case 2:
+                    d_limit_price -=10;
+                    break;
+                case 3:
+                    d_limit_price -=1;
+                    break;
+                case 4:
+                    // confirm
+                    break;
+                case 5:
+                    d_limit_price +=1;
+                    break;
+                case 6:
+                    d_limit_price +=10;
+                    break;
+                case 7:
+                    d_limit_price +=100;
+                    break;
+                case 8:
+                    d_limit_price /= 10;
+                    break;
+                case 9:
+                case 10:
+                case 11:
+                case 12:
+                    e.getView().close();
+                    return;
+
+                case 13:
+                case 14:
+                case 15:
+                case 16:
+                    //confirm
+                    create_limit_order(p, ItemexCommand.identify_item(item), e.getView().getTitle(), d_limit_price);
+                    e.getView().close();
+                    return;
+                case 17:
+                    //System.out.println("Back");
+                    e.getView().close();
+                    GUI.generateGUI(p, "ITEMEX - Market Orders", 0, 0);
+                    return;
+                default:
+                    return;
+            }
+
+            // if price lower than 0
+            if(d_limit_price < 0)
+                d_limit_price = 1;
+
+            // PAINT NEW INV
+            String title = e.getView().getTitle();
+            Inventory inv = Bukkit.createInventory(null, 2*9, ChatColor.BLACK +  title);
+
+
+            // ITEMID
+            ItemMeta itemMeta = item.getItemMeta();
+            ArrayList<String> item_lore = new ArrayList<>();
+            item_lore.add(itemMeta.getLore().get(0)); // copy the amount
+            item_lore.add(ChatColor.DARK_GRAY + "Price: " + d_limit_price ); // copy the amount
+            itemMeta.setLore(item_lore);
+            item.setItemMeta(itemMeta);
+
+
+            // Plus 1
+            ItemMeta plus1Meta = plus1.getItemMeta();
+            ArrayList<String> plus1_lore = new ArrayList<>();
+            plus1_lore.add(ChatColor.GOLD + "[" + d_limit_price +"]");
+            plus1Meta.setLore(plus1_lore);
+            plus1.setItemMeta(plus1Meta);
+
+            // Plus 10
+            ItemStack plus10 = e.getView().getItem(6);
+            ItemMeta plus10Meta = plus10.getItemMeta();
+            ArrayList<String> plus10_lore = new ArrayList<>();
+            plus10_lore.add(ChatColor.GOLD + "[" + d_limit_price +"]");
+            plus10Meta.setLore(plus10_lore);
+            plus10.setItemMeta(plus10Meta);
+
+            // Plus 100
+            ItemStack plus100 = e.getView().getItem(7);
+            ItemMeta plus100Meta = plus100.getItemMeta();
+            ArrayList<String> plus100_lore = new ArrayList<>();
+            plus100_lore.add(ChatColor.GOLD + "[" + d_limit_price +"]");
+            plus100Meta.setLore(plus100_lore);
+            plus100.setItemMeta(plus100Meta);
+
+            // comma left
+            ItemStack plus1000 = e.getView().getItem(8);
+            ItemMeta plus1000Meta = plus1000.getItemMeta();
+            ArrayList<String> plus1000_lore = new ArrayList<>();
+            plus1000_lore.add(ChatColor.GOLD + "[" + d_limit_price +"]");
+            plus1000Meta.setLore(plus1000_lore);
+            plus1000.setItemMeta(plus1000Meta);
+
+
+            // Minus 1
+            ItemStack minus1 = e.getView().getItem(3);
+            ItemMeta minus1Meta = minus1.getItemMeta();
+            ArrayList<String> minus1_lore = new ArrayList<>();
+            minus1_lore.add(ChatColor.GOLD + "[" + d_limit_price +"]");
+            minus1Meta.setLore(minus1_lore);
+            minus1.setItemMeta(minus1Meta);
+
+            // Minus 10
+            ItemStack minus10 = e.getView().getItem(2);
+            ItemMeta minus10Meta = minus10.getItemMeta();
+            ArrayList<String> minus10_lore = new ArrayList<>();
+            minus10_lore.add(ChatColor.GOLD + "[" + d_limit_price +"]");
+            minus10Meta.setLore(minus10_lore);
+            minus10.setItemMeta(minus10Meta);
+
+            // Minus 100
+            ItemStack minus100 = e.getView().getItem(1);
+            ItemMeta minus100Meta = minus100.getItemMeta();
+            ArrayList<String> minus100_lore = new ArrayList<>();
+            minus100_lore.add(ChatColor.GOLD + "[" + d_limit_price +"]");
+            minus100Meta.setLore(minus100_lore);
+            minus100.setItemMeta(minus100Meta);
+
+            // comma right
+            ItemStack minus1000 = e.getView().getItem(0);
+            ItemMeta minus1000Meta = minus1000.getItemMeta();
+            ArrayList<String> minus1000_lore = new ArrayList<>();
+            minus1000_lore.add(ChatColor.GOLD + "[" + d_limit_price +"]");
+            minus1000Meta.setLore(minus1000_lore);
+            minus1000.setItemMeta(minus1000Meta);
+
+
+            inv.setItem(5, plus1);
+            inv.setItem(6, plus10);
+            inv.setItem(7, plus100);
+            inv.setItem(8, plus1000);
+            inv.setItem(4, item);
+            inv.setItem(3, minus1);
+            inv.setItem(2, minus10);
+            inv.setItem(1, minus100);
+            inv.setItem(0, minus1000);
+
+            inv.setItem(9, e.getView().getItem(9));
+            inv.setItem(10, e.getView().getItem(10));
+            inv.setItem(11, e.getView().getItem(11));
+            inv.setItem(12, e.getView().getItem(12));
+            inv.setItem(13, e.getView().getItem(13));
+            inv.setItem(14, e.getView().getItem(14));
+            inv.setItem(15, e.getView().getItem(15));
+            inv.setItem(16, e.getView().getItem(16));
+            inv.setItem(17, e.getView().getItem(17));
+
+            p.openInventory(inv);
+
+        }
+
+
+        if (e.getView().getTitle().contains("IX Item Send to:")) {
+
+            String receiver = e.getView().getTitle().split(":")[1].replace(" ", "");
+            Player receiverplayer = Bukkit.getPlayer(receiver);
+            String rec_UUID = Bukkit.getOfflinePlayer(receiver).getUniqueId().toString();
+            ItemStack items[] = new ItemStack[7];
+
+            if (e.getSlot() == 7) {
+                for (int x = 0; x <= 6; x++) {
+                    items[x] = e.getView().getItem(x);
+                    if (items[x] != null) {
+                        sqliteDb.insertPayout(rec_UUID, ItemexCommand.identify_item(items[x]), items[x].getAmount());
+                        e.getView().setItem(x, null);  // <- remove item
+                        p.sendMessage("Item: " + ChatColor.GOLD +  items[x].getType() + " [" + items[x].getAmount() + "] " + ChatColor.GREEN + "sent to " + receiver);
+                        if(receiverplayer != null)
+                            receiverplayer.sendMessage(p.getName() + " send you " + items[x].getType() + " [" + items[x].getAmount() + "] (look in your vault: ix /gui");
+                    }
+                }
+                e.setCancelled(true);
+            }
+
+            else if (e.getSlot() == 8) {
+                for (int x = 0; x <= 6; x++) {
+                    if (items[x] != null) {
+                        p.getInventory().addItem(items[x]);
+                        e.getView().setItem(x, null);
+                    }
+                }
+                e.getView().close();
+                return;
+            }
+
+            //p.sendMessage("Slot: " + e.getSlot());
+        }
+
+
+
         // SCAN ITEM IN CREATIVE FOR EXTRACTION OF ITEMS WITH CATEGORIES
         else {
             //getLogger().info(":" + itemcounter + ":ITEM:" + ItemexCommand.identify_item(p.getInventory().getItemInOffHand()));
@@ -835,4 +1104,67 @@ public class ClickGUI implements Listener {
         // END SCAN ITEMS
 
     }
+
+    private void create_limit_order(Player p, String item_json, String title, double price) {
+
+        boolean buy_or_sell = true;
+        if(title.split(":")[1].replace(" ", "").equals("SELL"))
+            buy_or_sell = false;
+
+        if(buy_or_sell) { //buyorder
+            p.sendMessage(ItemexCommand.create_order(p, item_json, price, amount, "buy", "limit"));
+        } // end buyorde
+
+
+        else { // sellorder
+            // search if player have enought in inventory
+            String parts[] = getFreeInventory(p, item_json).split(":");
+            int inv_item_amount = Integer.parseInt( parts[1] );
+            if (amount <= inv_item_amount) { // enough in inv
+                p.sendMessage(ItemexCommand.create_order(p, item_json, price, amount, "sell", "limit"));
+
+                int amountToRemove = amount;
+                Inventory inv = p.getInventory();
+                for (int i = 0; i < inv.getSize(); i++) {
+                    ItemStack item = inv.getItem(i);
+                    if (item != null && identify_item(item).equals(item_json)) {
+                        int newAmount = item.getAmount() - amountToRemove;
+                        if (newAmount > 0) {
+                            item.setAmount(newAmount);
+                            break;
+                        } else {
+                            amountToRemove -= item.getAmount();
+                            inv.setItem(i, null);
+                        }
+                        if (amountToRemove == 0) break;
+                    }
+                }
+            }
+            else { // not enought items
+                p.sendMessage(ChatColor.RED + " " + Itemex.language.getString("item_not_in_inventory"));
+            }
+
+        } // end sellorder
+
+
+    }
+
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent e) {
+        Player p = (Player) e.getPlayer();
+
+        if (e.getView().getTitle().contains("IX Item Send to:")) {
+            for (int x = 0; x <= 6; x++) {
+                ItemStack item = e.getInventory().getItem(x);
+                if (item != null) {
+                    p.getInventory().addItem(item);
+                    e.getInventory().setItem(x, null);
+                }
+            }
+        }
+    }
+
+
+
+
 }

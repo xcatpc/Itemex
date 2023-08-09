@@ -1,35 +1,33 @@
 // new version change version in: pom.xml, Itemex.java
 
 /* BUGS AND IMPROVEMENTS:
+
+- CHESTSHOP: protect chest from other players, remove all items from chest if open, load from db and insert, support hoppers,
+- ADMIN FUNCTION not working (no seller or buyer uuid at withdraw in sqlite)
+- deposit and send unsupported and damaged items!
+
 - add goat_horns, suspicious_stew, painting support
 - error if no orders, admin enabled and then creation of chestshop!!! (seller uuid not given, its empty)
-- if server only restarts - ram still be full (complete shutdown is necessary)
 - delete old versions (how?)
 - handle exception if update server not available
 - new orders must be sort down (Because old orders should be fulfilled first if price is equal)
 - /ix quicksell (own gui for quickselling all items)
-- add default prices that reflects on the reserve currency (DIAMOND) (useful if no buy and sellorders are available or only a buy or sellorder) - need statistics
 - GUI: sort items by availability
-- add a money supply system
-- big bug at chesthop order: maybe at withdraw I have to adjust normal_buyorder and normal_sellorder (or chest not existing)
  */
+
 
 /*
-changelog 0.21.5
-- /ix order edit <buyorders | sellorders> <orderID> <price> <amount>
-- Market Orders in the GUI executing directly
-- handle wrong user inputs (ix buy, ix sell, ix setting, ix deposit)
-- /ix price shows now the newest trades
-- at player join: lists all your executed sell orders (during you was offline)
- */
-
-/*
-changelog 0.21.4
-- /ix price <itemid> <history>
-- /ix deposit <itemname> <amount>
-- /ix settings <withdraw_threshold> <amount>
- */
-
+changelog 0.21.7
+- show 4 last trades in GUI and /ix price
+- implement /send <username> <itemname> <amount> (default: no permission)
+- item amount will be scanned from your inventory at  /ix sell (autocompletion)
+- ChestShop reimplementation 90% finish (deactivated)
+- Limit order set price GUI
+- redirect from the GUI to the GUI functions (no commands anymore)
+- convert user input itemid to uppercase
+- speedup plugin load extreme
+- admin function deactivated (bug)
+*/
 
 
 package sh.ome.itemex;
@@ -69,7 +67,7 @@ public final class Itemex extends JavaPlugin implements Listener {
 
     private static Itemex plugin;
     public static Economy econ = null;
-    public static String version = "0.21.5";
+    public static String version = "0.21.7";
     public static String lang;
     public static String database_type;
     public static String db_name;
@@ -171,7 +169,8 @@ public final class Itemex extends JavaPlugin implements Listener {
         this.db_username = config.getString("db_username");
         this.db_passwd = config.getString("db_passwd");
 
-        this.admin_function = config.getBoolean("admin_function");
+        //this.admin_function = config.getBoolean("admin_function");
+        this.admin_function = false;
         this.admin_function_spread_percentage = config.getDouble("admin_function_spread_percentage");
         this.admin_function_initial_last_price = config.getDouble("admin_function_initial_last_price");
         this.admin_function_price_change_percentage = config.getDouble("admin_function_price_change_percentage");
@@ -253,16 +252,6 @@ public final class Itemex extends JavaPlugin implements Listener {
         else
             sqliteDb.createDBifNotExists_mariadb();
 
-
-        // check if database is new version (json format)
-        boolean is_json = sqliteDb.check_if_db_is_JSON();
-        if(!is_json) {
-            sqliteDb.updateDB_from_STRING_to_JSON("SELLORDERS", "itemid");
-            sqliteDb.updateDB_from_STRING_to_JSON("BUYORDERS", "itemid");
-            sqliteDb.updateDB_from_STRING_to_JSON("FULFILLEDORDERS", "itemid");
-            sqliteDb.updateDB_from_STRING_to_JSON("PAYOUTS", "itemid");
-
-        }
 
 
         plugin = this;  // make this private static Itemex accessable in other files

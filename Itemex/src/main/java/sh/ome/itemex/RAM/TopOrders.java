@@ -74,11 +74,11 @@ public class TopOrders {
             // if admin then reduce or increase price
             if (parts.length > 1 && parts[1].equals("admin_seller")) {
                 lastPrice = lastPrice + lastPrice/100*Itemex.admin_function_price_change_percentage;
-                //System.out.println("# DEBUG: (seller admin) LAST PRICE: " + lastPrice);
+                System.out.println("# DEBUG: (seller admin) LAST PRICE: " + lastPrice);
             }
             else if (parts.length > 1 && parts[1].equals("admin_buyer")) {
                 lastPrice = lastPrice - lastPrice/100*Itemex.admin_function_price_change_percentage;
-                //System.out.println("# DEBUG: (buyer admin) LAST PRICE: " + lastPrice);
+                System.out.println("# DEBUG: (buyer admin) LAST PRICE: " + lastPrice);
             }
 
             if(lastPrice == 0)

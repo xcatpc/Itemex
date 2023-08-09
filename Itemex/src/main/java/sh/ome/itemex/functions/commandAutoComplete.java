@@ -26,7 +26,7 @@ public class commandAutoComplete implements TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 1) {
             String input = args[0].toLowerCase();
-            List<String> options = Arrays.asList("price", "buy", "sell", "whatIsInMyRightHand", "withdraw", "deposit", "gui", "order", "setting");
+            List<String> options = Arrays.asList("price", "buy", "sell", "whatIsInMyRightHand", "withdraw", "deposit", "gui", "order", "setting", "send");
             List<String> filteredOptions = new ArrayList<>();
             for (String option : options) {
                 if (option.startsWith(input))
@@ -77,18 +77,16 @@ public class commandAutoComplete implements TabCompleter {
                     return materialNames;
                 } // end sell
 
-
-
-
             }
 
             else if(args.length == 3) {
                 List<String> options = null;
                 if( args[0].equals("buy") )
                     options = Arrays.asList("0_set amount", "1", "16", "32", "64", "1024", "2048");
-                else
-                    options = Arrays.asList("0_set amount", "1", "16", "32", "64", "1024", "max");
-
+                else {
+                    String temp[] = ItemexCommand.getFreeInventory(Bukkit.getPlayer(sender.getName()), ItemexCommand.get_json_from_meta(args[1])).split(":");
+                    options = Arrays.asList(temp[1]);
+                }
                 return options;
             }
             else if(args.length == 4) {
@@ -109,6 +107,8 @@ public class commandAutoComplete implements TabCompleter {
 
 
         } // end if buy or sell
+
+
         else if(args[0].equals("withdraw")) {
             if(args.length == 2) {
                 List<String> materialNames = new ArrayList<>(Material.values().length);
@@ -117,7 +117,6 @@ public class commandAutoComplete implements TabCompleter {
                 Player player = (Player) sender;
                 String uuidString = player.getUniqueId().toString();
                 sqliteDb.Payout[] buffer = getPayout( uuidString );
-
                 String filter = args[1].toLowerCase(); // The second argument is the filter
 
                 for (int i = 0; i < buffer.length; i++) {
@@ -140,6 +139,8 @@ public class commandAutoComplete implements TabCompleter {
             if(args.length == 4)
                 return Arrays.asList("");
         } // end withdraw
+
+
 
         else if(args[0].equals("deposit")) {
             if(args.length == 2) {
@@ -190,6 +191,55 @@ public class commandAutoComplete implements TabCompleter {
         } // end setting
 
 
+        else if(args[0].equals("send")) {
+            if(args.length == 2) {
+                List<String> options = new ArrayList<>();
+                List<String> usernames = sqliteDb.getAllUsernamesFromSettings();
+                if(usernames != null) {
+                    String filter = args[1].toLowerCase();
+                    for (String username : usernames) {
+                        if (username.toLowerCase().startsWith(filter)) {
+                            options.add(username);
+                        }
+                    }
+                }
+                return options;
+            }
+
+            else if(args.length == 3) {
+                // ADD ONLY MATERIAL WHAT PLAYER HAVE IN INVENTORY
+                List<String> materialNames = new ArrayList<>(Material.values().length);
+                Player p = Bukkit.getPlayer(sender.getName());
+                materialNames.add("- list of what you have in inventory");
+                for (ItemStack item : p.getInventory().getContents()) { //check inventory of player
+                    if(item != null && !item.getType().toString().equals("AIR") ) { // add all items if not AIR
+                        String json = ItemexCommand.identify_item(item);
+                        String meta = ItemexCommand.get_meta(json);
+                        if(!meta.equals("more_than_one_enchantment_not_supported")) {
+                            if (args.length > 1 && meta.toLowerCase().contains(args[2].toLowerCase())) { // Check without case sensitivity
+                                materialNames.add(meta);
+                            } else if (args.length == 1) { // if no filter is provided, add all items
+                                materialNames.add(meta);
+                            }
+                        }
+                    }
+                }
+                return materialNames;
+            }
+            else if(args.length == 4 ) {
+                String temp[] = ItemexCommand.getFreeInventory(Bukkit.getPlayer(sender.getName()), ItemexCommand.get_json_from_meta(args[2])).split(":");
+                List<String>options = Arrays.asList(temp[1]);
+                return options;
+            }
+            else {
+                List<String> options = Arrays.asList("");
+                return options;
+            }
+        } // end send
+
+
+
+        
         else if(args[0].equals("price")) {
             if(args.length == 2) {
                 List<String> materialNames = new ArrayList<>(Material.values().length);
@@ -223,6 +273,9 @@ public class commandAutoComplete implements TabCompleter {
                 return options;
             }
         } // end price
+
+
+
 
         else if(args[0].equals("order")) {
             List<String> options = Arrays.asList("list", "close", "edit");

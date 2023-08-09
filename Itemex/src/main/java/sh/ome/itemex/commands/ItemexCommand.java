@@ -10,6 +10,7 @@ import org.bukkit.*;
 import org.bukkit.command.*;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.*;
 import org.bukkit.map.MapCanvas;
@@ -92,7 +93,7 @@ public class ItemexCommand implements CommandExecutor {
                     //p = Bukkit.getPlayerExact( strings[strings.length-1] ); // NAME
                     //OfflinePlayer op = Bukkit.getOfflinePlayer(UUID.fromString( strings[strings.length-1] ));
                     //System.out.println("Name: " + op.getName());
-                    System.out.println("Return (break);");
+                    System.out.println("COMMANDS VIA THE SERVER TERMINAL ARE NOT SUPPORTED!");
                     return true;
                 } else if (sender instanceof BlockCommandSender) {
                     OfflinePlayer op;
@@ -158,7 +159,7 @@ public class ItemexCommand implements CommandExecutor {
                         double price = 1;
                         int amount = 1;
                         boolean buy_order_ok = true;
-                        itemid = strings[1].toUpperCase();
+                        itemid = strings[1];
                         item_json = get_json_from_meta(itemid);
                         //p.sendMessage(itemid);
                         //p.sendMessage(item_json);
@@ -311,7 +312,7 @@ public class ItemexCommand implements CommandExecutor {
                             }
                             // check if there is a buy order with enough amount (1)
                             if (!Itemex.admin_function && Itemex.getPlugin().mtop.get(item_json).get_top_buyorder_prices()[0] == 0) {
-                                TextComponent message = new TextComponent(ChatColor.RED + Itemex.language.getString("sell_no_buyorders_to_sell") + ChatColor.WHITE + item_json + "\n" + ChatColor.BLUE + ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + Itemex.language.getString("click_here") + ChatColor.BLUE + ") " + Itemex.language.getString("buy_you_can_create") + ChatColor.GREEN + Itemex.language.getString("sell_order") + ChatColor.BLUE + Itemex.language.getString("with") + ": /ix sell " + itemid + " 1 limit ");
+                                TextComponent message = new TextComponent(ChatColor.RED + Itemex.language.getString("sell_no_buyorders_to_sell") + ChatColor.WHITE + itemid + "\n" + ChatColor.BLUE + ChatColor.MAGIC + "X" + ChatColor.BLUE + "-> (" + ChatColor.GOLD + Itemex.language.getString("click_here") + ChatColor.BLUE + ") " + Itemex.language.getString("buy_you_can_create") + ChatColor.GREEN + Itemex.language.getString("sell_order") + ChatColor.BLUE + Itemex.language.getString("with") + ": /ix sell " + itemid + " 1 limit ");
                                 message.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/ix sell " + get_meta(item_json) + " 1 limit "));
                                 p.spigot().sendMessage(message);
                             } else {
@@ -335,7 +336,7 @@ public class ItemexCommand implements CommandExecutor {
                         double price = 0;
                         boolean sell_order_ok = true;
                         boolean item_found = false;
-                        itemid = strings[1].toUpperCase();
+                        itemid = strings[1];
 
                         // check if player have the amount of items provided at the parameter
                         int item_counter = 0;
@@ -346,6 +347,9 @@ public class ItemexCommand implements CommandExecutor {
                                 item_found = true;
                             }
                         }
+
+                        //p.sendMessage("user amount: " + strings[2]);
+                        //p.sendMessage("found amount: " + item_counter);
 
                         if(itemid.contains("PAINTING") || itemid.contains("GOAT_HORN") || itemid.contains("SUSPICIOUS_STEW") || itemid.equals("more_than_one_enchantment_not_supported"))
                             item_supported = false;
@@ -380,7 +384,9 @@ public class ItemexCommand implements CommandExecutor {
                             sellorder.amount = parseInt(strings[2]);
 
                         // proof inventory amount >= given amount
-                        if (item_counter >= sellorder.amount)
+                        if (item_counter < sellorder.amount)
+                            item_found = false;
+                        else
                             item_found = true;
 
                         if (sellorder.amount <= 0 && strings[3].equals("limit")) {
@@ -456,37 +462,14 @@ public class ItemexCommand implements CommandExecutor {
                         item_json = identify_item(p.getInventory().getItemInHand());
                         itemid = get_itemid(item_json);
 
-/*
-                        // ONLY FOR TESTING !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                        System.out.println("P_JSON: " + item_json);
-                        String effect = "looting";
-
-
-                        // GET CATEGORIES FROM CONFIG
-                        for (String cat : CategoryFile.get().getStringList("categories.CATEGORY_NAMES")) {
-                            String[] category = cat.split(":", 0);
-                            // GET ITEMS
-                            for (String itemid2 : CategoryFile.get().getStringList("categories." + category[0])) {
-                                if( itemid2.contains(itemid)  ) {
-                                    System.out.println("C_JSON: " + itemid2);
-                                    if(itemid2.equals( item_json))
-                                        System.out.println("JUHUU EIN MATCH!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                                }
-                            }
-                        }
-                        // END ONLY FOR TESTING
-                        */
-
-
-
-
 
                     } else if (strings.length >= 2) { // /ix price <item id>
-                        itemid = strings[1].toUpperCase();
+                        itemid = strings[1];
                         item_json = get_json_from_meta( itemid );
                         itemid = get_itemid(item_json);
-
                     }
+
+                    p.sendMessage(item_json);
 
                     if (itemid.equals("AIR")) {
                         reply_command = Itemex.language.getString("price_no_item");
@@ -619,6 +602,76 @@ public class ItemexCommand implements CommandExecutor {
                 } // end price
 
 
+
+
+
+                else if (strings[0].equals("send")) {
+
+                    if (!p.hasPermission("itemex.command.ix.send")) {
+                        p.sendMessage(ChatColor.RED + Itemex.language.getString("message_no_permission"));
+                        return true;
+                    }
+                    //p.sendMessage("len: " + strings.length);
+
+                    if(strings.length <2) {
+                        return true;
+                    }
+                    else if(strings.length == 2) {
+                        //OfflinePlayer receiver = Bukkit.getOfflinePlayer(strings[1]);
+                        sendGUI.generateGUI(p, "IX Item Send to: " + strings[1]);
+                    }
+                    else if(strings.length > 3){
+                        String receiver = Bukkit.getOfflinePlayer(strings[1]).getUniqueId().toString();
+                        Player receiverplayer = Bukkit.getPlayer(strings[1]);
+
+                        String itemid = strings[2];
+                        String amount = strings[3];
+
+                        String item_json = get_json_from_meta(itemid);
+                        boolean item_found = false;
+
+                        // check if player have the amount of items provided at the parameter
+                        int item_counter = 0;
+                        for (ItemStack item : p.getInventory().getContents()) { //check inventory of player
+                            if (item != null && identify_item(item).equals( item_json )) { // search if json match from item in inventory with command
+                                item_counter = item_counter + item.getAmount();
+                                item_json = identify_item(item);
+                                item_found = true;
+                            }
+                        }
+
+                        // Removing the items if found
+                        if (item_found && item_counter >= Integer.parseInt(amount)) {
+                            int amountToRemove = Integer.parseInt(amount);
+                            Inventory inv = p.getInventory();
+                            for (int i = 0; i < inv.getSize(); i++) {
+                                ItemStack item = inv.getItem(i);
+                                if (item != null && identify_item(item).equals(item_json)) {
+                                    int newAmount = item.getAmount() - amountToRemove;
+                                    if (newAmount > 0) {
+                                        item.setAmount(newAmount);
+                                        break;
+                                    } else {
+                                        amountToRemove -= item.getAmount();
+                                        inv.setItem(i, null);
+                                    }
+                                    if (amountToRemove == 0) break;
+                                }
+                            }
+                            sqliteDb.insertPayout(receiver.toString(), item_json, Integer.parseInt(amount)); // Insert item payout into db
+                            p.sendMessage("Item: " + ChatColor.GOLD +  itemid + " [" + amount + "] " + ChatColor.GREEN + "sent to " + strings[1]);
+                            if(receiverplayer != null)
+                                receiverplayer.sendMessage(p.getName() + " send you " + ChatColor.GOLD + itemid + " [" + amount + "] (look in your vault: ix /gui");
+                        } else {
+                            p.sendMessage(ChatColor.RED + "You do not have enough of the specified item to send.");
+                        }
+                    }
+
+                } // end send
+
+
+
+
                 else if (strings[0].equals("whatIsInMyRightHand")) {
 
                     if (!p.hasPermission("itemex.command.ix.whatIsInMyRightHand")) {
@@ -645,15 +698,6 @@ public class ItemexCommand implements CommandExecutor {
 
                     if(enc_counter > 1)
                         reply_command = reply_command + "MORE THAN ONE ENC NOT SUPPORTED\n";
-
-
-
-                    /*
-                    //only for testing - construct item
-                    ItemStack item2 = constructItem(json, 1);
-                    p.sendMessage("construction item: " + json);
-                    p.getInventory().addItem(item2);
-                    */
 
                 }
 
@@ -753,10 +797,26 @@ public class ItemexCommand implements CommandExecutor {
                                     if( (amount - old_order.amount) <= inv_item_amount) { // enough in inv
                                         //remove from inv
 
-                                        if(sqliteDb.updateOrder(strings[2].toUpperCase(), old_order.id, amount, price, old_order.ordertype, old_order.itemid)) {
-                                            p.getInventory().removeItem( constructItem(old_order.itemid, amount-old_order.amount));
+                                        if (sqliteDb.updateOrder(strings[2].toUpperCase(), old_order.id, amount, price, old_order.ordertype, old_order.itemid)) {
+                                            int amountToRemove = amount - old_order.amount;
+                                            Inventory inv = p.getInventory();
+                                            for (int i = 0; i < inv.getSize(); i++) {
+                                                ItemStack item = inv.getItem(i);
+                                                if (item != null && identify_item(item).equals(old_order.itemid)) {
+                                                    int newAmount = item.getAmount() - amountToRemove;
+                                                    if (newAmount > 0) {
+                                                        item.setAmount(newAmount);
+                                                        break;
+                                                    } else {
+                                                        amountToRemove -= item.getAmount();
+                                                        inv.setItem(i, null);
+                                                    }
+                                                    if (amountToRemove == 0) break;
+                                                }
+                                            }
                                             reply_command = reply_command + ChatColor.GREEN + "Order changed! [" + old_order.itemid + " : " + amount + "]";
                                         }
+
                                     }
                                     else {
                                         reply_command = reply_command + ChatColor.RED + " " + Itemex.language.getString("item_not_in_inventory");
@@ -799,7 +859,7 @@ public class ItemexCommand implements CommandExecutor {
                             boolean buy_or_sell;
                             String item_json = "*";
                             if (strings.length == 4)
-                                item_json = strings[3].toUpperCase();
+                                item_json = get_json_from_meta(strings[3]);
 
                             String color = ChatColor.RED.toString();
 
@@ -866,8 +926,20 @@ public class ItemexCommand implements CommandExecutor {
                         return true;
                     }
 
+                    if (strings.length == 2) {
+                        if(strings[1].equals("all")) {
+                            ItemStack[] items = p.getInventory().getContents();
+                            for (ItemStack item : items) {
+                                if (item != null && !item.getType().equals(Material.AIR) && item.getDurability() == 0) {
+                                    deposit(get_meta( identify_item(item)), String.valueOf(item.getAmount()), p);
+                                }
+                            }
+
+                        }
+                    }
+
                     // /ix deposit <itemid> <amount>
-                    if (strings.length == 3) {
+                    else if (strings.length == 3) {
                         boolean is_integer = true;
                         try {
                             Integer.parseInt(strings[2]);
@@ -942,7 +1014,6 @@ public class ItemexCommand implements CommandExecutor {
 
 
                 // hidden commands
-
                 else if (strings[0].equals("update_ram")) { // /ix update_ram <itemid>
                     if (strings.length != 2) {
                         p.sendMessage(ChatColor.RED + " you have to give one argument: ITEMID");
@@ -961,65 +1032,10 @@ public class ItemexCommand implements CommandExecutor {
                     p.sendMessage(p.getUniqueId().toString());
                     System.out.println(p.getUniqueId().toString());
                 }
-
-
-                else if (strings[0].equals("graph")) {
-                    // Retrieve all prices and timestamps: getAllFulfilledOrders(strings[1])
-                    List<String> allOrders = sqliteDb.getAllFulfilledOrders(get_json_from_meta(strings[1]));
-
-                    p.sendMessage("-------------------------------------");
-                    p.sendMessage("# GRAPH of ITEM: " + strings[1]);
-                    p.sendMessage("-------------------------------------");
-
-                    // Find min and max price for scaling the graph
-                    double minPrice = Double.MAX_VALUE;
-                    double maxPrice = Double.MIN_VALUE;
-
-                    long minTimestamp = Long.MAX_VALUE;
-                    long maxTimestamp = Long.MIN_VALUE;
-
-                    List<Double> prices = new ArrayList<>();
-                    List<Long> timestamps = new ArrayList<>();
-
-                    for (String order : allOrders) {
-                        String[] parts = order.split(":");
-                        double price = Double.parseDouble(parts[0]);
-                        long timestamp = Long.parseLong(parts[1]);
-                        prices.add(price);
-                        timestamps.add(timestamp);
-                        minPrice = Math.min(minPrice, price);
-                        maxPrice = Math.max(maxPrice, price);
-                        minTimestamp = Math.min(minTimestamp, timestamp);
-                        maxTimestamp = Math.max(maxTimestamp, timestamp);
-                    }
-
-                    double priceRange = maxPrice - minPrice;
-                    long timestampRange = maxTimestamp - minTimestamp;
-
-                    // Generate graph lines
-                    for (int i = 0; i < prices.size(); i++) {
-                        double price = prices.get(i);
-                        long timestamp = timestamps.get(i);
-                        int position = (int)((price - minPrice) / priceRange * 50); // Scale price to a 50 character wide graph
-                        String timeMarker = new SimpleDateFormat("HH:mm").format(new Date(timestamp * 1000)); // Timestamp is assumed to be in seconds
-
-                        StringBuilder line = new StringBuilder();
-                        for (int j = 0; j < 50; j++) {
-                            if (j == position) {
-                                line.append("*");
-                            } else {
-                                line.append(" ");
-                            }
-                        }
-                        p.sendMessage(timeMarker + " " + line.toString() + " " + String.format("%.2f", price));
-                    }
-
-                    p.sendMessage("********************************************************************************");
+                else if (strings[0].equals("construct_item")) {
+                    ItemStack item = constructItem(strings[1], Integer.parseInt(strings[2]));
+                    p.getInventory().addItem(item);
                 }
-
-
-
-
                 else if (strings[0].equals("map")) {
                     // Create a new map view.
                     MapView mapView = Bukkit.createMap(p.getWorld());
@@ -1118,10 +1134,10 @@ public class ItemexCommand implements CommandExecutor {
         int item_counter = 0;
         for (ItemStack item : p.getInventory().getContents()) { //check inventory of player
             if(item != null && !item.getType().toString().equals("AIR")) {
-                //p.sendMessage(identify_item(item));
-                //p.sendMessage(itemid);
+                p.sendMessage(identify_item(item));
+                p.sendMessage(itemid);
             }
-            if (item != null && get_meta(identify_item(item)).equals(itemid)) { //searching only for items with the given ID from command
+            if (item != null && identify_item(item).equals(get_json_from_meta(itemid)) && item.getDurability() == 0) { //searching only for items with the given ID from command
                 reply_command = reply_command + " " + item.getAmount() + "x" + item.getType() + "\n";
                 item_counter = item_counter + item.getAmount();
                 item_found = true;
@@ -1135,26 +1151,42 @@ public class ItemexCommand implements CommandExecutor {
         if(i_amount > item_counter) {
             return false;
         }
-        else if(item_found && i_amount > 0){
-            // remove item from inventory
-            p.getInventory().removeItem( constructItem(item_json, i_amount));
+        else if (item_found && i_amount > 0) {
+            int amountToRemove = i_amount;
+            Inventory inv = p.getInventory();
+            for (int i = 0; i < inv.getSize(); i++) {
+                ItemStack item = inv.getItem(i);
+                if (item != null && identify_item(item).equals(item_json)) {
+                    int newAmount = item.getAmount() - amountToRemove;
+                    if (newAmount > 0) {
+                        item.setAmount(newAmount);
+                        break;
+                    } else {
+                        amountToRemove -= item.getAmount();
+                        inv.setItem(i, null);
+                    }
+                    if (amountToRemove == 0) break;
+                }
+            }
             // add item to payout
             sqliteDb.insertPayout(p.getUniqueId().toString(), item_json, i_amount); // Insert item payout into db
             return true;
         }
+
+
         else
             return false;
 
     }
 
     public static String withdraw(String itemid, String amount, Player p) {
-        String item_json = get_json_from_meta( itemid );
+        //System.out.println("# DEBUG - at withdraw");
+        String item_json = get_json_from_meta(itemid);
         String reply = "";
         int item_amount = 0;
         int available_items = 0;
 
         sqliteDb.Payout[] payouts = sqliteDb.getPayout(p.getUniqueId().toString());
-
         for (sqliteDb.Payout payout : payouts) {
             if(payout.itemid.equals(item_json))
                 available_items = payout.amount;
@@ -1170,43 +1202,31 @@ public class ItemexCommand implements CommandExecutor {
         }
 
         // proof if player have enough space
-        int empty_slots = 0;
-        int this_item_count = 0;
-        int this_item_stacks = 0;
-        int free_space = 0;
+        String parts[] = getFreeInventory(p, item_json).split(":");
+        int max_item_count = Integer.parseInt(parts[1]);
+        int max_items = Integer.parseInt(parts[2]);
 
-        for (ItemStack item : p.getInventory().getContents()) { //check inventory of player
-            if (item == null) { // if stack is empty
-                empty_slots++;
-            } else if (item.getType().toString().equals(itemid.toUpperCase())) {
-                this_item_count = this_item_count + item.getAmount();
-                this_item_stacks++;
-            }
+        if(max_items < item_amount) {
+            reply = Itemex.language.getString("no_space") + " you can withdraw max: " + max_items;
+            item_amount = max_items; // Adjust the item_amount to the max items the player can hold
         }
-        empty_slots = empty_slots - 5;      // subtract amour and left hand slots
-        //p.sendMessage("# DEBUG: (ix withdraw) EMTPY slots: " + empty_slots);
-        //p.sendMessage("# DEBUG: (ix withdraw) this item stacks: " + this_item_stacks);
-
-        // check how many stacks the given item has (eg. diamond = 64; egg = 16)
-        int max_stack = Material.getMaterial(get_itemid(item_json)).getMaxStackSize();
-        int max_items = empty_slots * max_stack;
-
-        //p.sendMessage("# DEBUG: (ix withdraw) max_items: " + max_items);
-
-        if(available_items < item_amount) {
+        else if(available_items < item_amount) {
             reply = Itemex.language.getString("no_space") + " you can withdraw max: " + available_items;
+            item_amount = available_items; // Adjust the item_amount to the available items
         }
-
-        else {
-            for (sqliteDb.Payout payout : payouts) {
-                if(payout.itemid.equals(item_json)) {
-                    sqliteDb.updatePayout(p.getUniqueId().toString(), item_json, item_amount);
-                    p.getPlayer().getInventory().addItem( constructItem(item_json, item_amount)); // give buyer good from payout
+        for (sqliteDb.Payout payout : payouts) {
+            if(payout.itemid.equals(item_json)) {
+                sqliteDb.updatePayout(p.getUniqueId().toString(), item_json, item_amount);
+                for(int i = 0; i < item_amount; i++) {
+                    p.getPlayer().getInventory().addItem( constructItem(item_json, 1)); // give buyer good from payout
                 }
             }
         }
         return reply;
     }
+
+
+
 
 
     public static String create_order(Player p, String item_json, double price, int amount, String buy_or_sell, String market_option) {
@@ -1225,16 +1245,35 @@ public class ItemexCommand implements CommandExecutor {
         sqliteDb db_order = new sqliteDb(order);
 
         if (buy_or_sell.equals("sell")) {
-            if (db_order.createSellOrder() != -1)
+            if (db_order.createSellOrder() != -1) {
                 reply_command = ChatColor.RED + Itemex.language.getString("sellorder_C") + ChatColor.WHITE + ChatColor.BOLD + "[" + amount + "] " + itemid.toUpperCase() + ChatColor.WHITE + " " + Itemex.language.getString("created");
-            else
+            } else {
                 reply_command = Itemex.language.getString("er_sello_ncreated");
+            }
 
-            p.getInventory().removeItem( constructItem(item_json, amount));
-            //p.getInventory().removeItem(new ItemStack(Material.getMaterial(itemid.toUpperCase()), amount)); OLD
+            //p.sendMessage("item_json: " + item_json);
+            //p.sendMessage("amount: " + amount);
+
+            int amountToRemove = amount;
+            Inventory inv = p.getInventory();
+            for (int i = 0; i < inv.getSize(); i++) {
+                ItemStack item = inv.getItem(i);
+                if (item != null && identify_item(item).equals(item_json)) {
+                    int newAmount = item.getAmount() - amountToRemove;
+                    if (newAmount > 0) {
+                        item.setAmount(newAmount);
+                        break;
+                    } else {
+                        inv.setItem(i, null);
+                        amountToRemove -= item.getAmount();
+                    }
+                    if (amountToRemove == 0) break;
+                }
+            }
+        }
 
 
-        } else if (buy_or_sell.equals("buy")) {
+        else if (buy_or_sell.equals("buy")) {
             double buyer_balance = econ.getBalance(p);
             if ((amount * price) < buyer_balance) {
                 if (db_order.createBuyOrder() != -1)
@@ -1271,21 +1310,21 @@ public class ItemexCommand implements CommandExecutor {
 
         if (elements.length == 1) {
             // Normal item
-            return "[{\"itemid\":\"" + elements[0] +"\"}]";
+            return "[{\"itemid\":\"" + elements[0].toUpperCase() +"\"}]";
         } else if (elements[0].equals("ENCHANTED_BOOK")) {
-            return "[{\"itemid\":\"" + elements[0] + "\"},{\"enc\":\"" + elements[1] + "\",\"lev\":" + elements[2] + "}]";
+            return "[{\"itemid\":\"" + elements[0].toUpperCase() + "\"},{\"enc\":\"" + elements[1] + "\",\"lev\":" + elements[2] + "}]";
         } else if (elements[0].equals("POTION") || elements[0].equals("SPLASH_POTION") || elements[0].equals("LINGERING_POTION") || elements[0].equals("TIPPED_ARROW")) {
-            return "[{\"itemid\":\"" + elements[0] + "\"},{\"bp_ext\":" + elements[2] + ",\"bp_name\":\"" + elements[1] + "\",\"bp_upg\":" + elements[3] + "}]";
+            return "[{\"itemid\":\"" + elements[0].toUpperCase() + "\"},{\"bp_ext\":" + elements[2] + ",\"bp_name\":\"" + elements[1] + "\",\"bp_upg\":" + elements[3] + "}]";
         } else if (elements[0].equals("GOAT_HORN")) {
-            return "[{\"itemid\":\"" + elements[0] + "\"},{\"song\":\"" + elements[1] + "\"}]";
+            return "[{\"itemid\":\"" + elements[0].toUpperCase() + "\"},{\"song\":\"" + elements[1] + "\"}]";
         } else if (elements[0].equals("SUSPICIOUS_STEW")) {
-            return "[{\"itemid\":\"" + elements[0] + "\"},{\"stew_eff\":\"" + elements[1] + "\",\"stew_dur\":" + elements[2] + "}]";
+            return "[{\"itemid\":\"" + elements[0].toUpperCase() + "\"},{\"stew_eff\":\"" + elements[1] + "\",\"stew_dur\":" + elements[2] + "}]";
         } else if (elements[0].equals("PAINTING")) {
-            return "[{\"itemid\":\"" + elements[0] + "\"},{\"paint\":\"" + elements[1] + "\"}]";
+            return "[{\"itemid\":\"" + elements[0].toUpperCase() + "\"},{\"paint\":\"" + elements[1] + "\"}]";
         } else if (elements[0].equals("FIREWORK_ROCKET")) {
-            return "[{\"itemid\":\"" + elements[0] + "\"},{\"f_dur\":" + elements[1] + "}]";
+            return "[{\"itemid\":\"" + elements[0].toUpperCase() + "\"},{\"f_dur\":" + elements[1] + "}]";
         } else {
-            return "[{\"itemid\":\"" + elements[0] +"\"}]";
+            return "[{\"itemid\":\"" + elements[0].toUpperCase() +"\"}]";
         }
     }
 
@@ -1566,13 +1605,7 @@ public class ItemexCommand implements CommandExecutor {
                     meta = item.getItemMeta();
                 }
 
-/*
-                // Process each key accordingly
-                if (key.equals("itemid")) {
-                    itemid = value.getAsString();
-                    item = new ItemStack(Material.getMaterial(itemid), amount);
-                    meta = item.getItemMeta();
-                } */
+
                 // Handle Potion properties
                 else if(key.equals("bp_name") || key.equals("bp_ext") || key.equals("bp_upg")) {
                     if(key.equals("bp_name"))

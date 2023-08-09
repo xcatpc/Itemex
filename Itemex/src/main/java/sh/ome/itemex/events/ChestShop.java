@@ -1,309 +1,344 @@
 package sh.ome.itemex.events;
 
+import org.bukkit.ChatColor;
+import org.bukkit.Material;
+import org.bukkit.block.*;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.SignChangeEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryMoveItemEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
+import sh.ome.itemex.Itemex;
+import sh.ome.itemex.commands.ItemexCommand;
+import sh.ome.itemex.functions.sqliteDb;
 
-import static sh.ome.itemex.functions.sqliteDb.updateOrder;
+import java.util.Arrays;
 
 public class ChestShop implements Listener {
+
     /*
 
-    String UUID_owner = "";
-
-
     @EventHandler
-    public void onSignChange(SignChangeEvent e) {
-        System.out.println("# DEBUG: onSignChange");
-        if (e.getLine(0).contains("[ixc]")) {
-            if (e.getLine(1).contains("S:") && e.getLine(2).contains("B:")) {
-                e.setLine(0, ChatColor.GREEN + "[ixc]");
-                e.setLine(1, ChatColor.RED + "BUY: " + ChatColor.WHITE + e.getLine(1));
-                e.setLine(2, ChatColor.GREEN + "SELL: " + ChatColor.WHITE + e.getLine(2));
-            } else {
-                e.getPlayer().sendMessage(ChatColor.RED + Itemex.language.getString("chestshop_instruction"));
-                e.getBlock().breakNaturally();
-            }
-        }
-    } // ok
+    public void onSignChange(SignChangeEvent event) {
+        Block block = event.getBlock();
 
-    @EventHandler
-    public void onInventoryOpen(InventoryOpenEvent event) {
-        System.out.println("# DEBUG: onInventoryOpen");
-        Inventory inv = event.getInventory();
-        if (inv.getHolder() instanceof Chest) {
-            Player player = (Player) event.getPlayer();
-            Chest chest = (Chest) inv.getHolder();
-            Block attachedBlock = getSignBlockAttachedToChest(chest.getBlock());
+        // Check if the first line on the sign is [ixc]
+        if (event.getLine(0).equals("[ixc]")) {
 
-            if (attachedBlock != null && attachedBlock.getState() instanceof Sign) {
-                Sign sign = (Sign) attachedBlock.getState();
-                if(sign.getLine(0).contains("[ixc]") && sign.getLine(0).contains(ChatColor.GOLD.toString())) {      // if [ixc] and an item already registered
-                    String itemid = sign.getLine(0).substring(10);
-                    if( sign.getLine(3).contains("ID:") ) { // edit limit order
-                        String[] parts = sign.getLine(3).split(":");
+            // Check the attached block to the sign
+            Block attachedBlock = null;
 
-                        // Remove all main items ingots from the chest
-                        ItemStack[] contents = inv.getContents();
-                        for (ItemStack item : contents) {
-                            if (item != null && item.getType() == Material.getMaterial(itemid)) {
-                                inv.removeItem(item);
-                            }
-                        }
-
-                        // load sell chest orders from db
-                        sqliteDb.OrderBuffer buffer = sqliteDb.getOrder(parts[3], false);
-                        //System.out.println("# DEBUG: ShopCest owner: " + buffer.uuid);
-                        UUID_owner = buffer.uuid;
-                        if(player.getUniqueId().toString().equals(buffer.uuid)) {
-                            // insert sell amount
-                            ItemStack goldBarren = new ItemStack(Material.getMaterial(itemid), buffer.amount);
-                            inv.addItem(goldBarren);
-                        }
-                        else {
-                            //System.out.println("# DEBUG: ShopCest owner: " + buffer.uuid + " and not you: " + player.getUniqueId());
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-
-    @EventHandler
-    public void onInventoryClose(InventoryCloseEvent e) {
-        System.out.println("# DEBUG: onInventoryClose");
-        Player player = (Player) e.getPlayer();
-        Inventory inventory = e.getInventory();
-        InventoryHolder holder = inventory.getHolder();
-        if (holder instanceof Chest) {
-            Chest chest = (Chest) holder;
-            Block chestBlock = chest.getBlock();
-            Sign sign = null;
-
-            // Check the blocks around the chest for a sign
-            for(BlockFace face : new BlockFace[] {BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST, BlockFace.UP}) {
-                Block relative = chestBlock.getRelative(face);
-                if(relative.getState() instanceof Sign) {
-                    sign = (Sign) relative.getState();
+            // Check for each possible attached block face
+            for (BlockFace face : new BlockFace[] { BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP, BlockFace.DOWN }) {
+                if (block.getRelative(face).getType() == Material.CHEST || block.getRelative(face).getType() == Material.TRAPPED_CHEST) {
+                    attachedBlock = block.getRelative(face);
                     break;
                 }
             }
 
-            // If a sign was found
-            if(sign != null) {
-                if(sign.getLine(0).contains("[ixc]") && sign.getLine(0).contains(ChatColor.GOLD.toString())) {  // if chest already registred
-                    if(player.getUniqueId().toString().equals( UUID_owner ))    // updateSign only if the player is the owner; UUID_owner will be set onInventoryOpen
-                        updateSignIfAttachedChest(chestBlock, player);
+            if (attachedBlock != null) {
+                Chest chest = (Chest) attachedBlock.getState();
+                ItemStack[] contents = chest.getInventory().getContents();
+                String temp[] = get_content(contents).split(":"); // slot_counter + ":" + full_item_slots + ":" + stackable_amount + ":" + first_item_json + ":" + first_item_amount;
+                String first_item_from_chest = temp[3] + ":" + temp[4]; //item json
+                System.out.println("# DEBUG ixc: " + get_content(contents));
+
+
+                // if no items inside the chest
+                if(temp[2].equals("0")) {
+                    event.getPlayer().sendMessage("You have to put some item into the chest");
+                    event.getBlock().breakNaturally();
+                    return;
                 }
-                else
-                    updateSignIfAttachedChest(chestBlock, player);
+
+                // Check if the sign is set up correctly
+                if (event.getLine(1).contains("S:") && event.getLine(2).contains("B:")) {
+                    String id_line = "";
+
+                    // CREATE SELL ORDER
+                    ItemexCommand.Order sell_order = new ItemexCommand.Order();
+                    sell_order.amount = Integer.parseInt(temp[5]);
+                    sell_order.uuid = event.getPlayer().getUniqueId().toString();
+                    sell_order.itemid = first_item_from_chest;
+                    sell_order.ordertype = "sell:limit:chest";
+                    sell_order.price = Double.parseDouble( event.getLine(1).split(":")[1] );
+
+                    sqliteDb db_sell_order = new sqliteDb(sell_order);
+                    int sellorder_id = db_sell_order.createSellOrder();
+                    if( sellorder_id == -1) {
+                        id_line = id_line + "S:" + -1;
+                    }
+                    else
+                        id_line = id_line + "S:" + sellorder_id;
+
+
+                    // CREATE BUY ORDER
+                    ItemexCommand.Order buy_order = new ItemexCommand.Order();
+
+                    int totalSlots = Integer.parseInt(temp[0]);
+                    int max_stacks = Integer.parseInt(temp[2]);
+                    int amount = Integer.parseInt(temp[5]);
+                    int full_item_slots = Integer.parseInt(temp[1]);
+
+                    buy_order.amount = ((totalSlots * max_stacks) + max_stacks - (amount + full_item_slots * max_stacks));
+                    buy_order.uuid = event.getPlayer().getUniqueId().toString();
+                    buy_order.itemid = first_item_from_chest;
+                    buy_order.ordertype = "buy:limit:chest:" + sellorder_id;
+                    buy_order.price = Double.parseDouble( event.getLine(2).split(":")[1] );
+
+                    sqliteDb db_buy_order = new sqliteDb(buy_order);
+                    int buyorder_id = db_buy_order.createBuyOrder();
+                    if( buyorder_id == -1) {
+                        id_line = id_line + "B:" + -1;
+                    }
+                    else {
+                        id_line = id_line + "B:" + buyorder_id;
+                        if(!sqliteDb.updateOrder("SELLORDERS", sellorder_id, sell_order.amount,  sell_order.price, "buy:limit:chest:" + buyorder_id, first_item_from_chest)) {
+                            System.out.println("ERROR - updating sellorder: " + sellorder_id + " at ChestShop!");
+                            block.breakNaturally();
+                        }
+                    }
+
+                    event.setLine(0, ChatColor.GREEN + "[ixc] " + ChatColor.RESET + ItemexCommand.get_meta(first_item_from_chest));
+                    event.setLine(1, ChatColor.RED + "BUY: " + ChatColor.WHITE + event.getLine(1));
+                    event.setLine(2, ChatColor.GREEN + "SELL: " + ChatColor.WHITE + event.getLine(2));
+                    event.setLine(3, ChatColor.BLACK + id_line );
+                } else {
+                    event.getPlayer().sendMessage(ChatColor.RED + Itemex.language.getString("chestshop_instruction"));
+                    event.getBlock().breakNaturally();
+                }
+
+
             }
+            else // remove sign
+                event.getBlock().breakNaturally();
         }
-    } // ok
 
 
 
+        // Check if the first line contains a registred shop
 
-    private HashMap<UUID, Long> cooldowns = new HashMap<>();
+    }
 
     @EventHandler
-    public void onPlayerInteract(PlayerInteractEvent e) {
-        System.out.println("# DEBUG: onPlayerInteract");
-        UUID playerId = e.getPlayer().getUniqueId();
-        long time = System.currentTimeMillis();
-
-        if (cooldowns.containsKey(playerId) && cooldowns.get(playerId) > time) {
-            return;
+    public void onInventoryOpen(InventoryOpenEvent event) {
+        InventoryHolder holder = event.getInventory().getHolder();
+        if (holder instanceof Chest) {
+            Chest chest = (Chest) holder;
+            Block block = chest.getBlock();
+            if (hasIXCSign(block)) {
+                ItemStack[] contents = chest.getInventory().getContents();
+                //print_content("single", contents);
+                System.out.println("# DEBUG (onInventoryOpen): " + get_content(contents));
+            }
+        } else if (holder instanceof DoubleChest) {
+            DoubleChest doubleChest = (DoubleChest) holder;
+            Chest left = (Chest) doubleChest.getLeftSide();
+            Chest right = (Chest) doubleChest.getRightSide();
+            if (hasIXCSign(left.getBlock()) || hasIXCSign(right.getBlock())) {
+                ItemStack[] contents = doubleChest.getInventory().getContents();
+                //print_content("double", contents);
+                System.out.println("# DEBUG (onInventoryOpen): " + get_content(contents));
+            }
         }
+    }
 
-        cooldowns.put(playerId, time + 50); // milli seconds
-        if (e.getClickedBlock() == null) return;
-        if (e.getClickedBlock().getState() instanceof Sign) {
-            //System.out.println("instanceof sign");
-            Sign sign = (Sign) e.getClickedBlock().getState();
-            if (sign.getLine(0).contains(ChatColor.GREEN + "[ixc]")) {
-                //System.out.println(sign.getLine(0));
-                String itemid = sign.getLine(0).substring(10); // reads the itemid from sign
-                if (e.getAction().toString().contains("RIGHT")) {
-                    if (e.getPlayer().isSneaking()) {
-                        e.getPlayer().performCommand("ix sell " + itemid + " 1 market");
-                    }
-                    else
-                        e.getPlayer().performCommand("ix sell " + itemid + " 1 market confirm");
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent event) {
+        InventoryHolder holder = event.getInventory().getHolder();
+        Block block = null;
+        ItemStack[] contents = new ItemStack[0];
+        if (holder instanceof Chest) {
+            Chest chest = (Chest) holder;
+            block = chest.getBlock();
+            if (hasIXCSign(block)) {
+                contents = chest.getInventory().getContents();
+                f_inventroy_close(contents, event, block);
+            }
+        } else if (holder instanceof DoubleChest) {
+            DoubleChest doubleChest = (DoubleChest) holder;
+            Chest left = (Chest) doubleChest.getLeftSide();
+            Chest right = (Chest) doubleChest.getRightSide();
 
-                } else if (e.getAction().toString().contains("LEFT")) {
-                    if (e.getPlayer().isSneaking()) {
-                        e.getPlayer().performCommand("ix buy " + itemid + " 1 market");
-                    }
-                    else
-                        e.getPlayer().performCommand("ix buy " + itemid + " 1 market confirm");
-                }
+            if (hasIXCSign(left.getBlock())) {
+                block = left.getBlock();
+                contents = doubleChest.getInventory().getContents();
+                f_inventroy_close(contents, event, block);
+            }
+            if(hasIXCSign(right.getBlock())) {
+                block = right.getBlock();
+                contents = doubleChest.getInventory().getContents();
+                f_inventroy_close(contents, event, block);
+            }
+            else
+                return;
+        } // end double chest
+
+    }
+
+    private boolean f_inventroy_close(ItemStack[] contents, InventoryCloseEvent event, Block block) {
+        String cheast_content[] = get_content(contents).split(":");
+        String all_lines[] = get_all_lines(block);
+        sendOrdersizeToPlayer(cheast_content, event);
+        update_dbs(cheast_content, all_lines);
+        return true;
+    }
+
+    private boolean update_dbs(String[] cheast_content, String[] all_lines) {
+        int sellorder_id = Integer.parseInt( all_lines[3].split(":")[1].replace("B", "") );
+        int buyorder_id = Integer.parseInt( all_lines[3].split(":")[2] );
+        String item_json = cheast_content[3] + ":" + cheast_content[4];
+        int amount = Integer.parseInt( cheast_content[5] );
+        int totalSlots = Integer.parseInt(cheast_content[0]);
+        int max_stacks = Integer.parseInt(cheast_content[2]);
+        int full_item_slots = Integer.parseInt(cheast_content[1]);
+
+        boolean s_status = sqliteDb.updateOrder("SELLORDERS", sellorder_id, amount, -1, "", item_json); //-1 means no change in price
+        boolean b_status = sqliteDb.updateOrder("BUYORDERS", buyorder_id, ((totalSlots * max_stacks) + max_stacks - (amount + full_item_slots * max_stacks)-64), -1, "", item_json);
+
+        System.out.println("status: " + s_status + ":" + b_status);
+        return true;
+    }
+
+
+
+    private void sendOrdersizeToPlayer(String[] temp, InventoryCloseEvent event) { // temp = slot_counter + ":" + full_item_slots + ":" + stackable_amount + ":" + first_item_json + ":" + first_item_amount;
+        int totalSlots = Integer.parseInt(temp[0]);
+        int max_stacks = Integer.parseInt(temp[2]);
+        int amount = Integer.parseInt(temp[5]);
+        int full_item_slots = Integer.parseInt(temp[1]);
+        event.getPlayer().sendMessage("Buy Order amount: " + ((totalSlots * max_stacks) + max_stacks - (amount + full_item_slots * max_stacks)-64));
+        event.getPlayer().sendMessage("Sell Order amount: " + amount);
+    }
+
+
+
+
+    @EventHandler
+    public void onHopperMoveItem(InventoryMoveItemEvent event) {
+        if (event.getSource().getHolder() instanceof Hopper || event.getDestination().getHolder() instanceof Hopper) {
+            // Hier kannst du die gewünschten Aktionen durchführen, wenn ein Gegenstand von oder in einen Trichter verschoben wird.
+            // Du kannst auf das Quell- und Zielinventar über event.getSource() und event.getDestination() zugreifen.
+        }
+    }
+
+
+
+
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent event) {
+        Block block = event.getBlock();
+        Material blockType = block.getType();
+
+        if (blockType.equals(Material.CHEST) || blockType.equals(Material.TRAPPED_CHEST)) {
+            Chest chest = (Chest) block.getState();
+            Chest connectedChest = getConnectedChest(chest);
+
+            if (hasIXCSign(block) || (connectedChest != null && hasIXCSign(connectedChest.getBlock()))) {
+                event.setCancelled(true);
+                event.getPlayer().sendMessage(ChatColor.RED + "You have to remove the sign first!");
+            }
+        }
+        else if (block.getState() instanceof Sign) {
+            Sign sign = (Sign) block.getState();
+            if (sign.getLine(0).contains("[ixc]")) {
+                String orderIds = sign.getLine(3); // S:123B:456
+                int sellorder_id = Integer.parseInt( orderIds.split(":")[1].replace("B", "") );
+                int buyorder_id = Integer.parseInt( orderIds.split(":")[2] );
+
+                // now delete the orders from the database
+                sqliteDb.closeOrder("SELLORDERS", sellorder_id,"" , "");
+                sqliteDb.closeOrder("BUYORDERS", buyorder_id, "", "");
+
+                event.getPlayer().sendMessage(ChatColor.GREEN + "ChestShop orders deleted.");
             }
         }
     }
 
 
-private void updateSignIfAttachedChest(Block block, Player p) {
-    System.out.println("# DEBUG: updateSignIfAttachedChest");
-        BlockState state = block.getState();
-        String itemname = null;
-        int totalAmount = 0;
-        int freeSpace = 0;
+    private Chest getConnectedChest(Chest chest) {
+        for (BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST}) {
+            Block relativeBlock = chest.getBlock().getRelative(face);
 
-        if (state instanceof Chest) {
-            Chest chest = (Chest) state;
-            Block signBlock = getSignBlockAttachedToChest(block);
-            if (signBlock != null) {
-                Sign sign = (Sign) signBlock.getState();
-                if (sign.getLine(0).contains(ChatColor.GREEN + "[ixc]")) {
-                    //System.out.println("# DEBUG: LINE 0: " + sign.getLine(0));
-                    Inventory inventory = chest.getInventory();
-                    ItemStack[] contents = inventory.getContents();
-
-                    for (ItemStack item : contents) {
-                        if (item != null && !item.getType().toString().equals("AIR")) {
-                            if(itemname == null) {
-                                itemname = item.getType().toString();
-                                //System.out.println("# DEBUG: (first item of ixc) " + itemname);
-                                sign.setLine(0, ChatColor.GREEN + "[ixc] " + ChatColor.GOLD + itemname);
-                                sign.update();
-                            }
-                            if (item.getType().toString().equalsIgnoreCase(itemname)) {
-                                totalAmount += item.getAmount();
-                            }
-                        }
-                        //evaluate free space in stakes and items
-                        else {
-                            freeSpace++;
-                        }
-                    }
-
-                    //if there are no items in the chest (itemname == null)
-                    if( itemname == null)
-                        itemname = sign.getLine(0).substring(10);
-
-                    //create or update order
-                    //.println("# DEBUG: " + itemname + " amount in chest: " + totalAmount);
-                    //System.out.println("# DEBUG: freespace slots: " + freeSpace);
-                    p.sendMessage(itemname + Itemex.language.getString("chestshop_amount_in_chest") + totalAmount);
-                    p.sendMessage(Itemex.language.getString("chestshop_free_slots") + freeSpace);
-                    Material item_material = Material.getMaterial(itemname.toUpperCase());
-                    int stackSize = item_material.getMaxStackSize();
-                    String[] buy_line = sign.getLine(1).split(":");
-                    String[] sell_line = sign.getLine(2).split(":");
-
-                    //update order
-                    if( sign.getLine(3).contains("ID:") ) { // edit limit order
-                        String[] parts = sign.getLine(3).split(":");
-                        String buyorder_id = parts[2].substring(0, parts[2].length() - 1);
-                        //System.out.println("# DEBUG: BUYORDER ID: " + buyorder_id);
-                        //System.out.println("# DEBUG: SELLORDER ID: " + parts[3]);
-
-                        if(!updateOrder("SELLORDERS", Integer.parseInt(parts[3]), totalAmount, Double.parseDouble( buy_line[2]), "sell:limit:chest:" + buyorder_id, itemname)) {
-                            //System.out.println("ERROR - updating sellorder: " + buyorder_id + " at ChestShop!");
-                            block.breakNaturally();
-                        }
-
-                        if(!updateOrder("BUYORDERS", Integer.parseInt(buyorder_id), freeSpace * stackSize, Double.parseDouble( sell_line[2]), "buy:limit:chest:" + parts[3], itemname)) {
-                            //System.out.println("ERROR - updating buyorder: " + parts[3] + " at ChestShop!");
-                            block.breakNaturally();
-                        }
-
-
-                    }
-                    // creates new limit order
-                    else {
-                        //System.out.println("BUY_LINE: " + sign.getLine(1));
-                        //System.out.println("SELL_LINE: " + sign.getLine(2));
-
-
-                        String id_line = "ID:";
-                        int buyorder_id = -1;
-                        int sellorder_id = -1;
-
-                        //System.out.println("# DEBUG: buy_line[1]: " + buy_line[2]);
-                        if(!buy_line[2].equals("0")) {
-                            //create buy order: amount == free inventory space
-                            ItemexCommand.Order order = new ItemexCommand.Order();
-                            order.amount = freeSpace * stackSize;
-                            order.uuid = p.getUniqueId().toString();
-                            order.itemid = itemname;
-                            order.ordertype = "buy:limit:chest";
-                            order.price = Double.parseDouble( sell_line[2]);
-
-                            sqliteDb db_order = new sqliteDb(order);
-                            buyorder_id = db_order.createBuyOrder();
-                            if( buyorder_id == -1) {
-                                //System.out.println("# DEBUG: order not created! failure at db operation");
-                                id_line = id_line + "B:" + -1;
-                            }
-                            else
-                                id_line = id_line + "B:" + buyorder_id;
-                        }
-                        else
-                            id_line = id_line + "B:" + -1;
-
-
-                        //System.out.println("# DEBUG: sell_line[1]: " + sell_line[2]);
-                        if(!sell_line[2].equals("0")) {
-                            //create sell order: amount == full inventory items
-                            ItemexCommand.Order order = new ItemexCommand.Order();
-
-                            order.amount = totalAmount;
-                            order.uuid = p.getUniqueId().toString();
-                            order.itemid = itemname;
-                            order.ordertype = "sell:limit:chest:" + buyorder_id;
-                            order.price = Double.parseDouble( buy_line[2]);
-
-                            sqliteDb db_order = new sqliteDb(order);
-                            sellorder_id = db_order.createSellOrder();
-                            if( sellorder_id == -1) {
-                                System.out.println("# DEBUG: order not created! failure at db operation");
-                                id_line = id_line + "S:" + -1;
-                            }
-                            else {
-                                id_line = id_line + "S:" + sellorder_id;
-                                if( buyorder_id != -1) {
-                                    if(!updateOrder("BUYORDERS", buyorder_id, freeSpace * stackSize, Double.parseDouble( sell_line[2]), "buy:limit:chest:" + sellorder_id, itemname)) {
-                                        System.out.println("ERROR - updating buyorder: " + buyorder_id + " at ChestShop!");
-                                        block.breakNaturally();
-                                    }
-
-                                }
-                            }
-                        }
-                        else {
-                            id_line = id_line + "S:" + -1;
-                            if(!updateOrder("BUYORDERS", buyorder_id, freeSpace * stackSize, Double.parseDouble( sell_line[2]), "buy:limit:chest:" + sellorder_id, itemname)) {
-                                System.out.println("ERROR - updating buyorder: " + buyorder_id + " at ChestShop!");
-                                block.breakNaturally();
-                            }
-
-                        }
-
-
-                        sign.setLine(3, id_line); // ONLY FOR TEST
-                        p.sendMessage("LINE SET");
-                        sign.update();
-                    }
-                }
+            if (relativeBlock.getType().equals(chest.getBlock().getType())) {
+                return (Chest) relativeBlock.getState();
             }
         }
-    }
 
-
-    private Block getSignBlockAttachedToChest(Block chestBlock) {
-        System.out.println("# DEBUG: getSignBlockAttachedToChest");
-        for (BlockFace face : BlockFace.values()) {
-            Block attachedBlock = chestBlock.getRelative(face);
-            BlockState state = attachedBlock.getState();
-            if (state instanceof Sign) {
-                return attachedBlock;
-            }
-        }
         return null;
     }
 
 
+    private String get_content(ItemStack[] contents) {
+        // Print the contents of the chest
+        int slot_counter = 0;
+        int empty_slots = 0;
+        int full_item_slots = 0;
+        int first_item_amount = 0;
+        int stackable_amount = 0;
+        String first_item_json = "";
 
-     */
+        for (ItemStack item : contents) {
+            if (item != null) {
+                if(item.getType().toString().equals("AIR"))
+                    empty_slots++;
+                else {
+                    // set the itemid
+                    if(first_item_amount == 0) {
+                        first_item_json = ItemexCommand.identify_item(item);
+                        first_item_amount = item.getAmount();
+                        stackable_amount = item.getType().getMaxStackSize();
+                    }
+
+                    else if(ItemexCommand.identify_item(item).equals(first_item_json))
+                        first_item_amount = first_item_amount + item.getAmount();
+                    else
+                        full_item_slots++;
+                }
+            }
+            slot_counter++;
+        }
+        return slot_counter + ":" + full_item_slots + ":" + stackable_amount + ":" + first_item_json + ":" + first_item_amount;
+    }
+
+
+
+
+    private boolean hasIXCSign(Block block) {
+        for (BlockFace face : new BlockFace[] { BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP, BlockFace.DOWN }) {
+            Block relativeBlock = block.getRelative(face);
+            if (relativeBlock.getState() instanceof Sign) {
+                Sign sign = (Sign) relativeBlock.getState();
+                if (sign.getLine(0).contains("[ixc]")) {
+                    System.out.println("SIGN FOUND");
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+
+    private String[] get_all_lines(Block block) {
+        String[] tmp = new String[4];
+        for (BlockFace face : new BlockFace[] { BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP, BlockFace.DOWN }) {
+            Block relativeBlock = block.getRelative(face);
+            if (relativeBlock.getState() instanceof Sign) {
+                Sign sign = (Sign) relativeBlock.getState();
+                for(int i=0; i<=3; i++)
+                    tmp[i] = sign.getLine(i);
+                }
+            }
+        return tmp;
+    }
+
+
+
+
+*/
+
 }
