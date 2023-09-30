@@ -488,7 +488,12 @@ public class commands {
         }
         empty_slots = empty_slots - 5;      // subtract amour and left hand slots
         // check how many stacks the given item has (eg. diamond = 64; egg = 16)
-        int max_stack = Material.getMaterial(get_itemid(item_json)).getMaxStackSize();
+        
+        Material mat = Material.getMaterial(get_itemid(item_json));
+        int max_stack = 0;
+        if(mat != null)
+            max_stack = mat.getMaxStackSize();
+
         int max_items = empty_slots * max_stack;
 
         return empty_slots + ":" + this_item_count + ":" + max_items;

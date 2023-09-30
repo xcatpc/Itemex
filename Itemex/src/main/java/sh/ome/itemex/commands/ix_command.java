@@ -312,7 +312,7 @@ public class ix_command implements CommandExecutor {
                             else if (strings.length == 1)
                                 reply_command = Itemex.language.getString("noting_in_right_hand");
                             else if (item_supported)
-                                reply_command = "NOT IMPLEMENTED";
+                                reply_command = "ix gui: NOT IMPLEMENTED";
                             else
                                 reply_command = Itemex.language.getString("item_not_in_inventory");
                         }
@@ -605,7 +605,7 @@ public class ix_command implements CommandExecutor {
                     }
                     else if(strings.length == 2) {
                         //OfflinePlayer receiver = Bukkit.getOfflinePlayer(strings[1]);
-                        sendGUI.generateGUI(p, "IX Item Send to: " + strings[1]);
+                        sendGUI.generateGUI(p, "SEND ITEM TO: " + strings[1]);
                     }
                     else if(strings.length > 3){
                         String receiver = Bukkit.getOfflinePlayer(strings[1]).getUniqueId().toString();
@@ -613,6 +613,14 @@ public class ix_command implements CommandExecutor {
 
                         String itemid = strings[2];
                         String amount = strings[3];
+                        int amountToRemove;
+
+                        try {
+                            amountToRemove = Integer.parseInt(amount);
+                        } catch (NumberFormatException e) {
+                            p.sendMessage(Itemex.language.getString("buy_price_not_allowed_lower_than_0"));
+                            return false;
+                        }
 
                         String item_json = get_json_from_meta(itemid);
                         boolean item_found = false;
@@ -629,7 +637,6 @@ public class ix_command implements CommandExecutor {
 
                         // Removing the items if found
                         if (item_found && item_counter >= Integer.parseInt(amount)) {
-                            int amountToRemove = Integer.parseInt(amount);
                             Inventory inv = p.getInventory();
                             for (int i = 0; i < inv.getSize(); i++) {
                                 ItemStack item = inv.getItem(i);
@@ -1095,9 +1102,9 @@ public class ix_command implements CommandExecutor {
                     if (strings.length != 2) {
                         p.sendMessage(ChatColor.RED + " you have to give one argument: ITEMID");
                     } else {
-                        getLogger().info("ITEMID: " + strings[1].toUpperCase());
-                        sqliteDb.loadBestOrdersToRam(strings[1].toUpperCase(), true);
-                        p.sendMessage(ChatColor.GREEN + "Top Order for Item: " + strings[1].toUpperCase() + " updated in RAM!");
+                        getLogger().info("ITEMID: " + strings[1]);
+                        sqliteDb.loadBestOrdersToRam(get_json_from_meta(strings[1]), true);
+                        p.sendMessage(ChatColor.GREEN + "Top Order for Item: " + strings[1] + " updated in RAM!");
                     }
                 } else if (strings[0].equals("command_usage")) {
                     for (Map.Entry<String, Integer> entry : Itemex.commandUsageCounts.entrySet()) {

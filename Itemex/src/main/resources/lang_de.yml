@@ -78,6 +78,7 @@ help_or_join_disc: "oder tritt unserem Discord bei: "
 chestshop_instruction: "Du kannst einen Limit-Auftrag ChestShop nicht öffnen, da du den folgenden Anweisungen folgen musst:\n1. Zeile: [ixc]\n2. Zeile: S:<Verkaufspreis>\n3. Zeile: B:<Kaufpreis>"
 chestshop_amount_in_chest: " im Kasten: "
 chestshop_free_slots: "Freie Slots: "
+chestshop_not_your_chest: "Das ist nicht dein ChestShop!"
 
 sign_click_m: "Klick"
 sign_enable: "Aktivieren"

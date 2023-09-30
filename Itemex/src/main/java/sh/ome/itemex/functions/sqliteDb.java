@@ -50,9 +50,18 @@ public class sqliteDb {
         return insertIntoDB("BUYORDERS");
     }
 
+    public int createSellOrder(boolean reload_ram) {
+        return insertIntoDB("SELLORDERS", reload_ram);
+    }
+
+    public int createBuyOrder(boolean reload_ram) { return insertIntoDB("BUYORDERS", reload_ram); }
+
 
 
     private int insertIntoDB(String table_name) {
+        return insertIntoDB(table_name, true);
+    }
+    private int insertIntoDB(String table_name, boolean reload_ram) {
         //getLogger().info("# DEBUG: insertIntoDB: itemid: " + this.itemid);
         Statement stmt = null;
         int insertedId = -1;
@@ -99,7 +108,7 @@ public class sqliteDb {
             }
         }
 
-        loadBestOrdersToRam(this.itemid, true);
+        loadBestOrdersToRam(this.itemid, reload_ram);
 
         return insertedId;
     }
@@ -899,6 +908,43 @@ public class sqliteDb {
     }
 
 
+    public static boolean blockOrder(String table_name, int ID) {
+        //getLogger().info("# DEBUG - blockOrder");
+        Statement stmt = null;
+        int update_status = 0;
+        String sql;
+
+        if (Itemex.c == null) {
+            Itemex.c = createDatabase.createConnection();
+            getLogger().info("# WARN - reopen Database");
+        }
+
+        if (Itemex.c != null) {
+            try {
+                stmt = Itemex.c.createStatement();
+                sql = "UPDATE " + table_name + " SET amount = 0 WHERE id = " + ID;
+
+                update_status = stmt.executeUpdate(sql);
+
+            } catch ( Exception e ) {
+                System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+
+                return false;
+            } finally {
+                if (stmt != null) {
+                    try {
+                        stmt.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            return update_status == 1;
+        }
+        return false;
+    }
+
+
     public static boolean fulfillOrder(String itemid) {
         ArrayList<OrderBuffer> sellorders = selectAll("SELLORDERS", itemid);
         ArrayList<OrderBuffer> buyorders = selectAll("BUYORDERS", itemid);
@@ -1075,29 +1121,32 @@ public class sqliteDb {
         }
 
         else if(be_ordertype.contains("chest")) { // buyorder chest
-            getLogger().info("IS A CHEST: " + be_ordertype);
             String[] parts = be_ordertype.split(":");
             OrderBuffer temp = getOrder(parts[3], false);
             updateOrder("SELLORDERS", Integer.parseInt(parts[3]),temp.amount + amount, temp.price, temp.ordertype, temp.itemid);
+            getLogger().info("# DEBUG: - update sqlite: SELL ORDER: " + temp.ordertype);
 
             if(buyer != null)
-                buyer.sendMessage(ChatColor.GREEN + " 1 Your ChestShop bought: " + ChatColor.WHITE + amount + " [" + get_meta(itemid) + "] " + Itemex.language.getString("sq_for") + " " + format_price(price));
+                buyer.sendMessage(ChatColor.RED + "Your ChestShop bought: " + ChatColor.WHITE + amount + " [" + get_meta(itemid) + "] " + Itemex.language.getString("sq_for") + " " + format_price(price));
+            if(seller != null)
+                seller.sendMessage(ChatColor.RED + "You Sold to ChestShop: " + ChatColor.WHITE + amount + " [" + get_meta(itemid) + "] " + Itemex.language.getString("sq_for") + " " + format_price(price));
         }
 
         else if(se_ordertype.contains("chest")) { // sellorder chest
-            getLogger().info("IS A CHEST: " + se_ordertype);
             String[] parts = se_ordertype.split(":");
             OrderBuffer temp = getOrder(parts[3], true);
             updateOrder("BUYORDERS", Integer.parseInt(parts[3]),temp.amount + amount, temp.price, temp.ordertype, temp.itemid);
+            getLogger().info("# DEBUG: - update sqlite: BUY ORDER: " + temp.ordertype);
 
             if(buyer != null)
-                buyer.sendMessage(ChatColor.GREEN + "2 Your ChestShop bought: " + ChatColor.WHITE + amount + " [" + get_meta(itemid) + "] " + Itemex.language.getString("sq_for") + " " + format_price(price));
+                buyer.sendMessage(ChatColor.RED + "You bought from ChestShop: " + ChatColor.WHITE + amount + " [" + get_meta(itemid) + "] " + Itemex.language.getString("sq_for") + " " + format_price(price));
+            if(seller != null)
+                seller.sendMessage(ChatColor.GREEN + "Your ChestShop sold: " + ChatColor.WHITE + amount + " [" + get_meta(itemid) + "] " + Itemex.language.getString("sq_for") + " " + format_price(price));
         }
 
 
         // NORMAL ORDERS
-
-        else if( buyer_total <= buyer_balance || be_ordertype.equals("refund")) {                     // check if buyer have enough money
+        if( buyer_total <= buyer_balance || be_ordertype.equals("refund")) {                     // check if buyer have enough money
             //getLogger().info("# DEBUG: at refund - Player have enough money" );
 
             if(!be_ordertype.equals("refund")) {
@@ -1173,10 +1222,10 @@ public class sqliteDb {
             return true;
         } // end enough money
         else {
-            buyer.sendMessage(ChatColor.RED+ Itemex.language.getString("not_enough_money") + ChatColor.WHITE + Itemex.language.getString("sq_you_need") + ChatColor.GREEN + format_price( buyer_total ) + ChatColor.WHITE + Itemex.language.getString("sq_but_you_only_have") + ChatColor.RED + " " + format_price( buyer_balance ));
+            if(buyer != null)
+                buyer.sendMessage(ChatColor.RED+ Itemex.language.getString("not_enough_money") + ChatColor.WHITE + Itemex.language.getString("sq_you_need") + ChatColor.GREEN + format_price( buyer_total ) + ChatColor.WHITE + Itemex.language.getString("sq_but_you_only_have") + ChatColor.RED + " " + format_price( buyer_balance ));
             return false;
         }
-        return true;
     } // end withdraw
 
 

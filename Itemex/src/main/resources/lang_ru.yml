@@ -78,6 +78,7 @@ help_or_join_disc: "или присоединись к нашему Discord: "
 chestshop_instruction: "Ты не можешь открыть ограниченный заказ ChestShop, тебе следует следовать следующим инструкциям:\n1. Линия: [ixc]\n2. Линия: S:<Цена продажи>\n3. Линия: B:<Цена покупки>"
 chestshop_amount_in_chest: " в сундуке: "
 chestshop_free_slots: "Свободные слоты: "
+chestshop_not_your_chest: "That is not your ChestShop!"
 
 sign_click_m: "Клик"
 sign_enable: "Включить"

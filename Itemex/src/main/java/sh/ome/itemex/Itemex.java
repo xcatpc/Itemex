@@ -3,16 +3,16 @@
 /* BUGS AND IMPROVEMENTS:
 
 # Important
-- CHESTSHOP: protect chest from other players, remove all items from chest if open, load from db and insert, support hoppers,
-- logging upgrade -> send all errors to the server
-- implement /i and /i gui
+- chestshop: if two chests buy from each other -> missing items! Need cooldown if chestorder is created
 
 # Nice to have #
+- /ix market order -> confirm also at GUI (right calculation)
 - add goat_horns, suspicious_stew, painting support, items with more than 1 enchantment
 - new orders must be sort down (Because old orders should be fulfilled first if price is equal)
 - /ix fastsell
 - ADMIN: error if no orders, admin enabled and then creation of chestshop!!! (seller uuid not given, its empty)
 - ADMIN FUNCTION not working (no seller or buyer uuid at withdraw in sqlite)
+- logging upgrade -> send all errors to the server
 
 # NOT Important #
 - delete old plugin versions (how?)
@@ -21,14 +21,11 @@
 
 
 /*
-changelog 0.22.1
- - ix withdraw notification only, if there is no empty space in your inventory
- - sell notification at player join can be en- and disabled in the config.yml
- - bugfix (free items from GUI with number keys or F-key)
- - bugfix - Problems with multiple order execution
- - /ix send (improved message)
+changelog 0.22.2
+ - /i gui implemented
+ - /ix send error handling (at wrong user input)
+ - /ix gui improvements -> Limit set price auto price suggestion
 */
-
 
 
 
@@ -47,10 +44,12 @@ import sh.ome.itemex.RAM.TopOrders;
 import sh.ome.itemex.commands.i_command;
 import sh.ome.itemex.database.createDatabase;
 import sh.ome.itemex.events.ChestShop;
-import sh.ome.itemex.events.ClickGUI;
+import sh.ome.itemex.events.ix_ClickGUI;
 import sh.ome.itemex.events.SignShop;
+import sh.ome.itemex.events.i_ClickGUI;
 import sh.ome.itemex.files.CategoryFile;
 import sh.ome.itemex.commands.ix_command;
+import sh.ome.itemex.functions.i_autocompletation;
 import sh.ome.itemex.functions.ix_autocompletation;
 import sh.ome.itemex.functions.sqliteDb;
 import sh.ome.itemex.shedule.DataDifferenceSender;
@@ -71,7 +70,7 @@ public final class Itemex extends JavaPlugin implements Listener {
 
     private static Itemex plugin;
     public static Economy econ = null;
-    public static String version = "0.22.1";
+    public static String version = "0.22.2";
     public static String lang;
     public static String database_type;
     public static String db_name;
@@ -90,7 +89,7 @@ public final class Itemex extends JavaPlugin implements Listener {
     public static char decimal_separator;
     public static char thousand_separator;
     public static String unitLocation;
-
+    public static boolean chestshop;
     public static double broker_fee_buyer;
     public static double broker_fee_seller;
     public static double sell_listing_fee;
@@ -154,10 +153,11 @@ public final class Itemex extends JavaPlugin implements Listener {
         getCommand("ix").setExecutor(new ix_command());
         getCommand("ix").setTabCompleter(new ix_autocompletation());
         getCommand("i").setExecutor(new i_command());
-        getCommand("i").setTabCompleter(new ix_autocompletation());
+        getCommand("i").setTabCompleter(new i_autocompletation());
 
         getServer().getPluginManager().registerEvents(new PlayerJoin(), this);
-        getServer().getPluginManager().registerEvents(new ClickGUI(), this);
+        getServer().getPluginManager().registerEvents(new ix_ClickGUI(), this);
+        getServer().getPluginManager().registerEvents(new i_ClickGUI(), this);
         getServer().getPluginManager().registerEvents(new SignShop(), this);
         getServer().getPluginManager().registerEvents(new ChestShop(), this);
 
@@ -201,6 +201,7 @@ public final class Itemex extends JavaPlugin implements Listener {
         this.itemex_stats = config.getBoolean("itemex_stats");
         this.buy_listing_fee = config.getDouble("buy_listing_fee");
         this.sell_listing_fee = config.getDouble("sell_listing_fee");
+        this.chestshop = config.getBoolean("chestshop");
 
         this.currencySymbol = config.getString("currencySymbol");
         this.decimals = config.getInt("decimals");

@@ -15,14 +15,20 @@ public class i_command implements CommandExecutor {
 
         if (command.getName().equalsIgnoreCase("i")) {
             Player p = (Player) sender;
-            p.sendMessage("i used");
 
-            if (args[0].equals("help")) {
-                p.sendMessage("help output");
+            if(args.length == 0)
+                i_GUI.generateGUI(p, "ITEMEX - BUY ITEM", 0, 0);
+
+            else {
+                if (args[0].equals("gui")) {
+                    i_GUI.generateGUI(p, "ITEMEX - BUY ITEM", 0, 0);
+                }
+                else {
+                    p.sendMessage("/i This command is not implemented!");
+                }
             }
-            else if (args[0].equals("gui")) {
-                i_GUI.generateGUI(p, "ITEMEX - Buy Item", 0, 0);
-            }
+
+
         }
         return false;
     }

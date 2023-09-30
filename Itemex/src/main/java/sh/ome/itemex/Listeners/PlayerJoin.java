@@ -7,7 +7,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import sh.ome.itemex.Itemex;
-import sh.ome.itemex.commands.ix_command;
 import sh.ome.itemex.functions.sqliteDb;
 
 import java.util.List;
@@ -66,8 +65,9 @@ public class PlayerJoin implements Listener {
         }
 
 
-        if(payouts.length != 0 && Itemex.sales_notification)
+        if(payouts.length != 0 && Itemex.sales_notification) {
             e.getPlayer().sendMessage(ChatColor.GREEN + "\n\n----------------------------\nSALES ON ITEMEX\n----------------------------\n" + ChatColor.RESET);
-            e.getPlayer().sendMessage(Itemex.language.getString("pj_last_sales1") + ChatColor.GREEN + format_price(sum) + ChatColor.RESET + Itemex.language.getString("pj_last_sales2") + "\n.\n.");
+            e.getPlayer().sendMessage("XXXXX" + Itemex.language.getString("pj_last_sales1") + ChatColor.GREEN + format_price(sum) + ChatColor.RESET + Itemex.language.getString("pj_last_sales2") + "\n.\n.");
+        }
     }
 }

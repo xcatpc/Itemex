@@ -157,7 +157,7 @@ public class i_GUI {
 
         // -- MENU END -------------------------------------------------------
 
-        if(menu_type.contains("ITEMEX - Buy Item")) {
+        if(menu_type.contains("ITEMEX - BUY ITEM")) {
 
 
             inv.setItem(9, new ItemStack(Material.GREEN_STAINED_GLASS_PANE));    // market activated

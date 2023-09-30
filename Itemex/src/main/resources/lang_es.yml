@@ -78,6 +78,7 @@ help_or_join_disc: "o únete a nuestro Discord: "
 chestshop_instruction: "No puedes abrir una orden límite ChestShop, debes seguir las siguientes instrucciones:\n1. Línea: [ixc]\n2. Línea: S:<Precio de venta>\n3. Línea: B:<Precio de compra>"
 chestshop_amount_in_chest: " en el cofre: "
 chestshop_free_slots: "Espacios libres: "
+chestshop_not_your_chest: "That is not your ChestShop!"
 
 sign_click_m: "Haz clic"
 sign_enable: "Habilitar"

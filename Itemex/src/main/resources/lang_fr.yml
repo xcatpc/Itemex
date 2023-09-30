@@ -78,6 +78,7 @@ help_or_join_disc: "ou rejoins notre Discord : "
 chestshop_instruction: "Tu ne peux pas ouvrir un ordre à cours limité ChestShop, tu dois suivre les instructions suivantes :\n1. Ligne : [ixc]\n2. Ligne : S:<Prix de vente>\n3. Ligne : B:<Prix d'achat>"
 chestshop_amount_in_chest: " dans le coffre : "
 chestshop_free_slots: "Emplacements libres : "
+chestshop_not_your_chest: "That is not your ChestShop!"
 
 sign_click_m: "Clique"
 sign_enable: "Activer"

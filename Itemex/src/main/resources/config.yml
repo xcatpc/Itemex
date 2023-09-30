@@ -54,5 +54,8 @@ webui: true
 # This notificate the player on every start, how much he sold
 sales_notification: true
 
+# Turn on the chestshop feature
+chestshop: true
+
 itemex_stats: true
 

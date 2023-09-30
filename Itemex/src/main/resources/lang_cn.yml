@@ -78,6 +78,7 @@ help_or_join_disc: "或者加入我们的discord: "
 chestshop_instruction: "你不能打开限价订单ChestShop，因为你必须按照以下指示操作：\n第1行：[ixc]\n第2行：S:<卖价>\n第3行：B:<买价>"
 chestshop_amount_in_chest: " 在箱子里： "
 chestshop_free_slots: "空闲插槽： "
+chestshop_not_your_chest: "That is not your ChestShop!"
 
 sign_click_m: "点击"
 sign_enable: "启用"
